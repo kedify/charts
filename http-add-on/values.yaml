@@ -123,6 +123,8 @@ scaler:
   podAnnotations: {}
 
 interceptor:
+  # -- The cluster domain used for in cluster routing with envoy fleet
+  clusterDomain: "cluster.local"
   # -- The image pull secrets for the interceptor component
   imagePullSecrets: []
   # -- The image pull policy for the interceptor component
