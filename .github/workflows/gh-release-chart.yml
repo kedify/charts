@@ -1,0 +1,99 @@
+name: Helm Publish
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create k3s cluster
+        uses: AbsaOSS/k3d-action@v2
+        with:
+          cluster-name: "test-cluster"
+          k3d-version: v5.6.0
+          args: >-
+            --no-lb
+            --k3s-arg "--disable=traefik,servicelb,local-storage@server:*"
+      - name: Smoke test helm rendering and deployability
+        run: |
+          helm template kedify/keda \
+            -n keda \
+            --create-namespace \
+            --set customManagedBy=kedify | kubectl apply -f -
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-admission-webhooks
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-operator-metrics-apiserver
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-operator
+          echo -e "\n\n\n   pods:\n\n"
+          kubectl get pods -A
+
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add the -N suffix to chart's version
+        run: |
+          sed -i keda/Chart.yaml -e 's;^version:.*;version: ${{ github.ref_name }};'
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          charts_dir: "."
+      - name: Create k3s cluster
+        uses: AbsaOSS/k3d-action@v2
+        with:
+          cluster-name: "test-cluster"
+          k3d-version: v5.6.0
+          args: >-
+            --no-lb
+            --k3s-arg "--disable=traefik,servicelb,local-storage@server:*"
+      - name: Smoke test helm installation
+        run: |
+          # exp-backoff - we wait for pages to become available here
+          for i in $(seq 16)
+          do
+            _sec=$(echo "1.5^$i" | bc)
+            echo "Waiting ${_sec} seconds.."
+            sleep ${_sec}
+            helm repo add kedify https://kedify.github.io/charts || continue
+            helm repo update
+            set -x
+            helm upgrade -i keda kedify/keda \
+              -n keda \
+              --create-namespace \
+              --timeout 300s \
+              --wait \
+              --version ${{ github.ref_name }} \
+              --set customManagedBy=kedify && break
+            set +x
+            [ "$i" = "16" ] && exit 1
+          done
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-admission-webhooks
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-operator-metrics-apiserver
+          kubectl wait --timeout=300s -nkeda --for=condition=ready pod -lapp.kubernetes.io/name=keda-operator
+
+          echo -e "\n\n\n   pods:\n\n"
+          kubectl get pods -A
+
+          echo "::group::values.yaml"
+          helm get values -n keda keda
+          echo "::endgroup::"
+
+          echo "::group::resulting YAML manifests"
+          helm get manifest -n keda keda
+          echo "::endgroup::"
+
+          echo -e "\n\nthe following command is supposed to fail:\n\n"
+          helm template keda kedify/keda \
+            --version ${{ github.ref_name }} \
+            --set crds.install=f4lse || true
