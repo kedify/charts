@@ -1,0 +1,58 @@
+name: Helm Publish
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add the -kedifyN suffix to chart's version
+        run: |
+          sed -i keda/Chart.yaml -e 's;^version:.*;version: ${{ github.ref_name }};' \
+                                 -e 's;^appVersion:.*;appVersion: ${{ github.ref_name }};'
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          charts_dir: "."
+      - name: Create k3s cluster
+        uses: AbsaOSS/k3d-action@v2
+        with:
+          cluster-name: "test-cluster"
+          k3d-version: v5.6.0
+          args: >-
+            --no-lb
+            --k3s-arg "--disable=traefik,servicelb,local-storage@server:*"
+      - name: Smoke test helm installation
+        run: |
+          # exp-backoff - we wait for pages to become available here
+          for i in $(seq 16)
+          do
+            helm repo add kedify https://kedify.github.io/charts || continue
+            helm repo update
+            helm upgrade -i keda kedify/keda \
+               -n keda \
+               --create-namespace \
+               --wait \
+               --version ${{ github.ref_name }} \
+               --set customManagedBy=kedify && break
+            [ "$i" = "16" ] && exit 1
+            _sec=$(echo "1.5^$i" | bc)
+            echo "Waiting ${_sec} seconds.."
+            sleep ${_sec}
+          done
+          echo -e "\n\n\n   pods:\n\n"
+          kubectl get pods -A
+          echo -e "\n\n\n   values:\n\n"
+          helm get values -n keda keda
+          echo -e "\n\n\n\n\n\n   manifests:\n\n"
+          helm get manifest -n keda keda
