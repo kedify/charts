@@ -3,9 +3,9 @@ entries:
   external-scaler-azure-cosmos-db:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-08-29T11:54:56.400053025Z"
+    created: "2024-09-30T12:45:29.668655505Z"
     description: Event-based autoscaler for Azure Cosmos DB change feed consumer applications
-    digest: b3dee080220ef638807f45d5f36b14efb3edc60087b02b8cfb67579748fe71e3
+    digest: 02271edf37928e7c1a6de86b5403566b46da645f8ee9b1f598be7a52097513f6
     home: https://github.com/kedacore/external-scaler-azure-cosmos-db
     kubeVersion: '>=v1.17.0-0'
     maintainers:
@@ -25,9 +25,9 @@ entries:
   keda:
   - apiVersion: v2
     appVersion: 2.15.1
-    created: "2024-08-29T11:54:56.404967385Z"
+    created: "2024-09-30T12:45:29.674667679Z"
     description: Event-based autoscaler for workloads on Kubernetes
-    digest: 77af7f2051f922d07282c0fde64b04afd06079c6655282a5540a885b5b3cbb53
+    digest: 3708729b3b0ae95fcda084eb79c0ebe12c18c328f19c8b710b81369904704bbb
     home: https://github.com/kedacore/keda
     icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
     kubeVersion: '>=v1.23.0-0'
@@ -388,6 +388,29 @@ entries:
     version: 0.8.0
   - apiVersion: v2
     appVersion: 0.8.0
+    created: "2024-09-30T12:45:29.67583213Z"
+    description: Event-based autoscaler for HTTP workloads on Kubernetes
+    digest: d3773c4492b58289e58254cf7403a3868c6a5b5b5c1a39ee2659c8affe9dbc4f
+    home: https://github.com/kedacore/http-add-on
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: ahmels@microsoft.com
+      name: Ahmed ElSayed
+    - email: jorge_turrado@hotmail.es
+      name: Jorge Turrado
+    - email: kerkhove.tom@gmail.com
+      name: Tom Kerkhove
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    name: keda-add-ons-http
+    sources:
+    - https://github.com/kedacore/http-add-on
+    type: application
+    urls:
+    - https://kedify.github.io/charts/keda-add-ons-http-v0.8.0-5.tgz
+    version: v0.8.0-5
+  - apiVersion: v2
+    appVersion: 0.8.0
     created: "2024-08-29T11:54:56.405986568Z"
     description: Event-based autoscaler for HTTP workloads on Kubernetes
     digest: 730488dfe27d26eb7d2b9cfdf71efc937d182971d47b77c823c836a9e94f48dc
@@ -501,4 +524,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/keda-add-ons-http-0.7.0.tgz
     version: 0.7.0
-generated: "2024-08-29T11:54:56.399582842Z"
+generated: "2024-09-30T12:45:29.668178647Z"
