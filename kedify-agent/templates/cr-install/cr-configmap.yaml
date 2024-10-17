@@ -1,0 +1,46 @@
+{{- if .Values.agent.createKedifyConfiguration }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-kedifyconfig
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: "post-install,post-upgrade"
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
+    helm.sh/hook-weight: "-2"
+data:
+  content: |
+    apiVersion: install.kedify.io/v1alpha1
+    kind: KedifyConfiguration
+    metadata:
+      name: kedify
+      namespace: {{ .Release.Namespace }}
+    spec:
+      kedaInstallations:
+      - agentAutoUpdate: false
+        httpAddonHelm:
+          appVersion: v0.8.0-15
+          autoUpdate: LatestReleased
+          chartVersion: v0.8.0-8
+          enabled: false
+          values: |
+            ---
+        kedaHelm:
+          appVersion: v2.15.0-0
+          autoUpdate: LatestReleased
+          chartVersion: v2.15.0-0
+          enabled: false
+          values: |-
+            ---
+        mode: Adopt
+        name: keda
+        namespace: {{ .Release.Namespace }}
+        telemetry:
+          controlPlane:
+            interval: 30
+          kedaResources:
+            interval: 30
+          kubernetesResources:
+            interval: 30
+---
+{{- end }}
