@@ -94,7 +94,9 @@ rules:
   - create
   - list
   - watch
+{{- end }}
 
+{{- if .Values.agent.rbac.selfUpdates }}
 # Kedify needs to be able to uninstall itself
 - apiGroups:
   - ""
@@ -128,6 +130,7 @@ rules:
   - kedify-agent
 {{- end }}
 
+# kedify-agent reads API key from here and stores agent_id from fleet install initialization
 - apiGroups:
   - ""
   resources:
@@ -160,7 +163,26 @@ kind: ClusterRole
 metadata:
   name: kedify-manager-role
 rules:
+# to get kube-system UUID for self-registration in fleet installation
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  resourceNames:
+  - kube-system
+# for reporting status about KEDA installation to dashboard
+- apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs:
+  - get
+  - list
+  - watch
 {{- if .Values.agent.rbac.readNodes }}
+# for metrics and metered billing
 - apiGroups:
   - ""
   resources:
@@ -171,6 +193,7 @@ rules:
   - watch
 {{- end }}
 {{- if .Values.agent.rbac.readPods }}
+# for metrics
 - apiGroups:
   - ""
   resources:
@@ -182,13 +205,13 @@ rules:
 {{- end }}
 {{- if .Values.agent.rbac.readMetrics }}
 - apiGroups:
-    - ""
+  - ""
   resources:
-    - namespaces
+  - namespaces
   verbs:
-    - list
-    - watch
-    - get
+  - list
+  - watch
+  - get
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -226,6 +249,7 @@ rules:
   - list
   - watch
 {{- end }}
+{{- if or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon }}
 # required by Kedify to be able to crud CR(D)s related to KEDA
 - apiGroups:
   - apiextensions.k8s.io
@@ -248,11 +272,12 @@ rules:
   - scaledobjects.keda.sh
   - triggerauthentications.keda.sh
 - apiGroups:
-    - apiextensions.k8s.io
+  - apiextensions.k8s.io
   resources:
-    - customresourcedefinitions
+  - customresourcedefinitions
   verbs:
-    - create
+  - create
+{{- end }}
 - apiGroups:
   - keda.sh
   - http.keda.sh
@@ -264,7 +289,16 @@ rules:
   verbs:
   - "*"
 
+{{- if .Values.agent.rbac.ingressAutoWire }}
 # Kedify needs to configure envoy proxy also in other namespaces & deploy it
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -283,7 +317,9 @@ rules:
   - update
   resourceNames:
   - kedify-proxy
+{{- end }}
 
+{{- if .Values.agent.rbac.uninstall }}
 # Kedify needs to be able to uninstall itself
 - apiGroups:
     - rbac.authorization.k8s.io
@@ -293,7 +329,9 @@ rules:
     - list
     - watch
     - delete
+{{- end }}
 
+{{- if .Values.agent.rbac.ingressAutoWire }}
 # required by Kedify agent to be able to do the auto-wiring of communication from {VirtualService, Service, HttpRoute, Ingress, Route}'s original workload to Interceptor
 # Interceptor then forwards the traffic to the original workload (used for activation phase when there is no replicas)
 - apiGroups:
@@ -312,12 +350,20 @@ rules:
   resources:
   - services
   verbs:
-  - get
   - list
-  - patch
-  - update
   - create
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - patch
+  - update
+  resourceNames:
+  - kedify-proxy
+  - keda-add-ons-http-interceptor-proxy
 {{- end }}
 - apiGroups:
   - gateway.networking.k8s.io
@@ -361,6 +407,7 @@ rules:
   - patch
   - update
   - watch
+{{- end }}
 
 {{- if or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon }}
 # Kedify needs to be able to uninstall itself

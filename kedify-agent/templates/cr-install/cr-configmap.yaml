@@ -16,23 +16,18 @@ data:
       name: kedify
       namespace: {{ .Release.Namespace }}
     spec:
+      clusterName: {{ .Values.clusterName }}
       kedaInstallations:
       - agentAutoUpdate: false
         httpAddonHelm:
-          appVersion: v0.8.0-15
-          autoUpdate: LatestReleased
-          chartVersion: v0.8.0-8
-          enabled: false
-          values: |
-            ---
-        kedaHelm:
-          appVersion: v2.15.0-0
-          autoUpdate: LatestReleased
-          chartVersion: v2.15.0-0
-          enabled: false
+          enabled: true
           values: |-
             ---
-        mode: Adopt
+        kedaHelm:
+          enabled: true
+          values: |-
+            ---
+        mode: Disabled
         name: keda
         namespace: {{ .Release.Namespace }}
         telemetry:

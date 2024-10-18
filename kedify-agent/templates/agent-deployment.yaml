@@ -67,6 +67,16 @@ spec:
               value: {{ .Values.agent.rbac.readHpas | quote }}
             - name: RBAC_READ_STATEFUL_SETS
               value: {{ .Values.agent.rbac.readStatefulSets | quote }}
+            - name: RBAC_MANAGE_KUBE_RESOURCES
+              value: {{ .Values.agent.rbac.selfUpdates | quote }}
+            - name: RBAC_MANAGE_CUSTOM_RESOURCE_DEFINITIONS
+              value: {{ or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon | quote }}
+            - name: RBAC_MANAGE_HELM
+              value: {{ or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon | quote }}
+            - name: RBAC_MANAGE_INGRESS_AUTOWIRE
+              value: {{ .Values.agent.rbac.ingressAutoWire | quote }}
+            - name: RBAC_MANAGE_KEDIFY_CONFIG
+              value: {{ .Values.agent.rbac.kedifyConfig | quote }}
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.agent.pullPolicy }}
           livenessProbe:
