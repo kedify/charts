@@ -3,9 +3,9 @@ entries:
   external-scaler-azure-cosmos-db:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-10-11T12:29:51.511889544Z"
+    created: "2024-10-18T14:48:22.035988431Z"
     description: Event-based autoscaler for Azure Cosmos DB change feed consumer applications
-    digest: 84613c3fc44e40b7683f21e381c721382820668aebc2df7a93a23b44b817ea05
+    digest: 5353b2c096a7cd50efc61539557cf2735329f2427ccdec078a568de2082ed82e
     home: https://github.com/kedacore/external-scaler-azure-cosmos-db
     kubeVersion: '>=v1.17.0-0'
     maintainers:
@@ -23,6 +23,27 @@ entries:
     - https://kedify.github.io/charts/external-scaler-azure-cosmos-db-0.1.0.tgz
     version: 0.1.0
   keda:
+  - apiVersion: v2
+    appVersion: 2.15.1
+    created: "2024-10-18T14:48:22.042672796Z"
+    description: Event-based autoscaler for workloads on Kubernetes
+    digest: df92f2df23c10ca9ffd0bf8ec3cac179c86587b97f04623878296071dd99c59f
+    home: https://github.com/kedacore/keda
+    icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: jorge_turrado@hotmail.es
+      name: Jorge Turrado
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    - email: jan@kedify.io
+      name: Jan Wozniak
+    name: keda
+    sources:
+    - https://github.com/kedacore/keda
+    urls:
+    - https://kedify.github.io/charts/keda-2.15.2.tgz
+    version: 2.15.2
   - apiVersion: v2
     appVersion: 2.15.1
     created: "2024-10-11T12:29:51.517615466Z"
@@ -365,9 +386,9 @@ entries:
   keda-add-ons-http:
   - apiVersion: v2
     appVersion: 0.8.0
-    created: "2024-08-12T16:14:21.823016022Z"
+    created: "2024-10-18T14:48:22.043756181Z"
     description: Event-based autoscaler for HTTP workloads on Kubernetes
-    digest: 22dedc6cf4ce5518ed8b8f9e287d2530c610574b2d50c42108babeeed4fcfd4d
+    digest: 1b523da4d62115ad780f9cf6b914bc078ca4f2f2daa6b9413821e55b4d0f089c
     home: https://github.com/kedacore/http-add-on
     kubeVersion: '>=v1.23.0-0'
     maintainers:
@@ -595,26 +616,51 @@ entries:
     version: 0.7.0
   kedify-agent:
   - apiVersion: v2
-    name: kedify-agent
+    appVersion: v0.1.0
+    created: "2024-10-18T14:48:22.049542216Z"
+    dependencies:
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.15.1-0
+    - condition: kedaAddOnsHttp.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.8.0-8
     description: Kedify agent - Helm Chart
-    kubeVersion: ">=v1.23.0-0"
+    digest: 4f7a4c3eedba10eb5572864f724466bb71b26f1cb91dd8d993dc28a1256736ce
+    home: https://github.com/kedify/charts
+    icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
+    sources:
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
     type: application
-    version: "v0.0.0"
-    appVersion: "v0.1.0"
+    urls:
+    - https://kedify.github.io/charts/kedify-agent-v0.0.1.tgz
+    version: v0.0.1
+  - apiVersion: v2
+    appVersion: v0.1.0
     created: "2024-10-18T16:10:31.314412145Z"
     dependencies:
-      - name: keda
-        repository: https://kedify.github.io/charts
-        version: v2.15.1-0
-        condition: keda.enabled
-      - name: keda-add-ons-http
-        repository: https://kedify.github.io/charts
-        version: v0.8.0-8
-        condition: kedaAddOnsHttp.enabled
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.15.1-0
+    - condition: kedaAddOnsHttp.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.8.0-8
+    description: Kedify agent - Helm Chart
     home: https://github.com/kedify/charts
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
     sources:
-      - https://github.com/kedify/agent
-      - https://github.com/kedify/charts
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
+    type: application
     urls:
     - https://kedify.github.io/charts/kedify-agent-v0.0.0.tgz
-generated: "2024-10-11T12:29:51.511446181Z"
+    version: v0.0.0
+generated: "2024-10-18T14:48:22.034847997Z"
