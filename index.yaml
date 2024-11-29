@@ -3,9 +3,9 @@ entries:
   external-scaler-azure-cosmos-db:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-11-28T19:35:24.452305316+01:00"
+    created: "2024-11-29T16:43:31.837269903Z"
     description: Event-based autoscaler for Azure Cosmos DB change feed consumer applications
-    digest: afb7aeeff93267b596d30d44efab6786540905596570f6f04aed4f740ed69bab
+    digest: 1a2fd5b7e617a9c0cbefb595073c8792e41ec1d94d4ecfcd3aed77d75176d664
     home: https://github.com/kedacore/external-scaler-azure-cosmos-db
     kubeVersion: '>=v1.17.0-0'
     maintainers:
@@ -25,9 +25,9 @@ entries:
   keda:
   - apiVersion: v2
     appVersion: v2.16.0-1
-    created: "2024-11-28T19:35:24.63489622+01:00"
+    created: "2024-11-29T16:43:31.843096653Z"
     description: Event-based autoscaler for workloads on Kubernetes
-    digest: e4d57bde3de85da45d4ca33f407089e07ef59c93c6b708b36614c7ab98e6b5e3
+    digest: b04d0c4752f8a1c0f15adf0639189902c896ee936bf427a2630349af60f57a50
     home: https://github.com/kedacore/keda
     icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
     kubeVersion: '>=v1.23.0-0'
@@ -449,9 +449,9 @@ entries:
     version: 0.8.1
   - apiVersion: v2
     appVersion: v0.8.1-9
-    created: "2024-11-28T19:35:24.52317406+01:00"
+    created: "2024-11-29T16:43:31.838377811Z"
     description: Event-based autoscaler for HTTP workloads on Kubernetes
-    digest: 56aa6b3104bbcfef3fb6bbba0c3192643f0ceb119fc348abfdb1178f3a11fc62
+    digest: ab141a3a47c9307a4822b69b9a84464ee03a2694614413cc79dcc017984a446c
     home: https://github.com/kedacore/http-add-on
     kubeVersion: '>=v1.23.0-0'
     maintainers:
@@ -811,19 +811,19 @@ entries:
     - https://kedify.github.io/charts/kedify-agent-v0.0.4.tgz
     version: v0.0.4
   - apiVersion: v2
-    appVersion: v0.1.4
-    created: "2024-11-28T19:35:24.691510507+01:00"
+    appVersion: v0.1.5
+    created: "2024-11-29T16:43:31.849749084Z"
     dependencies:
     - condition: keda.enabled
       name: keda
       repository: https://kedify.github.io/charts
       version: v2.16.0-1
-    - condition: kedaAddOnsHttp.enabled
+    - condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
       name: keda-add-ons-http
       repository: https://kedify.github.io/charts
-      version: v0.8.1-1
+      version: v0.8.1-2
     description: Kedify agent - Helm Chart
-    digest: 744e4f69a17675b1a98b77d6da7c4a442bd7cbe2a55bb428334e8eb947970450
+    digest: 802f14539e81a5e37e82104d203d042da331a77cff09fd8ca71a836c9b0550aa
     home: https://github.com/kedify/charts
     icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
     kubeVersion: '>=v1.23.0-0'
@@ -910,4 +910,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-agent-v0.0.0.tgz
     version: v0.0.0
-generated: "2024-11-28T19:35:24.451963372+01:00"
+generated: "2024-11-29T16:43:31.836867762Z"
