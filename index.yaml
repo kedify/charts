@@ -3,9 +3,9 @@ entries:
   external-scaler-azure-cosmos-db:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-01-14T08:18:44.481654669+01:00"
+    created: "2025-01-15T12:57:58.657559553Z"
     description: Event-based autoscaler for Azure Cosmos DB change feed consumer applications
-    digest: 3e0e0d6e62d012e08f0e28fee7a45daa8edb9118bea0d8f6ea7ef5eb0b2a0f90
+    digest: 7596908007c10c7887c4c8b99ff4c4be423d757049c8b83e3dedb0a707ce4591
     home: https://github.com/kedacore/external-scaler-azure-cosmos-db
     kubeVersion: '>=v1.17.0-0'
     maintainers:
@@ -23,6 +23,25 @@ entries:
     - https://kedify.github.io/charts/external-scaler-azure-cosmos-db-0.1.0.tgz
     version: 0.1.0
   keda:
+  - apiVersion: v2
+    appVersion: 2.16.1
+    created: "2025-01-15T12:57:58.662683947Z"
+    description: Event-based autoscaler for workloads on Kubernetes
+    digest: 4860dfff00f99416151a7fd9c335bc5afc2f107a5c29407055cb2eb9914a376f
+    home: https://github.com/kedacore/keda
+    icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    - email: jan@kedify.io
+      name: Jan Wozniak
+    name: keda
+    sources:
+    - https://github.com/kedacore/keda
+    urls:
+    - https://kedify.github.io/charts/keda-2.16.1.tgz
+    version: 2.16.1
   - apiVersion: v2
     appVersion: v2.16.1-0
     created: "2025-01-14T08:18:44.660127365+01:00"
@@ -445,6 +464,27 @@ entries:
   keda-add-ons-http:
   - apiVersion: v2
     appVersion: 0.9.0
+    created: "2025-01-15T12:57:58.66489652Z"
+    description: Event-based autoscaler for HTTP workloads on Kubernetes
+    digest: c8bed8f76b7adacd46c707da443992b04c2bbab843d56230903b7af0563b900f
+    home: https://github.com/kedacore/http-add-on
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: jorge_turrado@hotmail.es
+      name: Jorge Turrado
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    - email: jan@kedify.io
+      name: Jan Wozniak
+    name: keda-add-ons-http
+    sources:
+    - https://github.com/kedacore/http-add-on
+    type: application
+    urls:
+    - https://kedify.github.io/charts/keda-add-ons-http-0.9.0.tgz
+    version: 0.9.0
+  - apiVersion: v2
+    appVersion: 0.9.0
     created: "2025-01-14T08:18:44.536889852+01:00"
     description: Event-based autoscaler for HTTP workloads on Kubernetes
     digest: 7b93d79c21c6bfcc5384797bdfa5ae74daf8dfd798de9da86cd5ecefacb1cfa2
@@ -814,6 +854,31 @@ entries:
     version: 0.7.0
   kedify-agent:
   - apiVersion: v2
+    appVersion: v0.1.11
+    created: "2025-01-15T12:57:58.671856747Z"
+    dependencies:
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.16.0-1
+    - condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.8.1-2
+    description: Kedify agent - Helm Chart
+    digest: 3990d4f2fbc2d05e7bf7c7cbd911d2cd8ea7d36acb15b4c73e29dbb85fdae31f
+    home: https://github.com/kedify/charts
+    icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
+    sources:
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-agent-v0.0.10.tgz
+    version: v0.0.10
+  - apiVersion: v2
     appVersion: v0.1.10
     created: "2025-01-14T08:18:44.798798219+01:00"
     dependencies:
@@ -1063,4 +1128,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-agent-v0.0.0.tgz
     version: v0.0.0
-generated: "2025-01-14T08:18:44.480907995+01:00"
+generated: "2025-01-15T12:57:58.65710705Z"
