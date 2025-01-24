@@ -1,4 +1,4 @@
-name: Milestones Tracker
+name: kedify-agent milestones tracking with release
 
 on:
   pull_request:
@@ -13,10 +13,13 @@ permissions:
 jobs:
   milestone_tracker:
     runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.milestone_tracking.outputs.should_release }}
     if: github.event.pull_request.merged == true
     steps:
       - uses: actions/checkout@v4
       - name: Ensure correct milestone
+        id: milestone_tracking
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -51,3 +54,17 @@ jobs:
 
           echo "creating release $milestone"
           gh release create -R kedify/charts "$milestone" --latest --title "kedify-agent: $release_tag" --notes "${pr_body}"
+          echo "should_release=true" >> $GITHUB_OUTPUT
+  release:
+    needs: milestone_tracker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Agent Helm Chart
+        uses: wozniakjan/helm-gh-pages@single_chart_path
+        if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          linting: "off"
+          dependencies: "kedify,https://kedify.github.io/charts"
+          charts_dir: "."
+          single_chart_path: "./kedify-agent/"
