@@ -7,6 +7,9 @@ agent:
   orgId: ""
   # you should already have this
   apiKey: ""
+  # if disabled, the Secret called 'kedify-agent' with api key has to be created by some other entity,
+  # otherwise agent won't start
+  createApiKeySecret: true
   # agentId: abcd1234-ab34-..
   kedifyServer: service.kedify.io:443
 
