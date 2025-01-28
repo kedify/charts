@@ -16,17 +16,29 @@
     "Agent": {
       "properties": {
         "apiKey": {
-          "type": "string",
-          "minLength": 10,
-          "pattern": "^kfy_[a-z0-9]*$"
+          "type": "string"
+        },
+        "createApiKeySecret": {
+          "type": "boolean"
         },
         "orgId": {
           "type": "string",
           "format": "uuid"
         }
       },
+      "if": {
+        "properties": {
+          "createApiKeySecret": { "const": true }
+        }
+      },
+      "then": {
+        "properties": {
+          "apiKey": { "pattern": "^kfy_[a-z0-9]*$", "minLength": 10 }
+        }
+      },
       "required": [
         "apiKey",
+        "createApiKeySecret",
         "orgId"
       ]
     }
