@@ -27,7 +27,14 @@
         },
         "agentId": {
           "type": "string",
-          "format": "uuid"
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "format": "uuid"
+            }
+          ]
         }
       },
       "if": {
@@ -48,3 +55,4 @@
     }
   }
 }
+
