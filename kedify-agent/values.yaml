@@ -10,7 +10,8 @@ agent:
   # if disabled, the Secret called 'kedify-agent' with api key has to be created by some other entity,
   # otherwise agent won't start
   createApiKeySecret: true
-  # agentId: abcd1234-ab34-..
+  # if migrating to helm, set this to the value of the agentId from the previous installation
+  agentId: ""
   kedifyServer: service.kedify.io:443
 
   # Can be one of 'debug', 'info', 'error', or any integer value > 0
@@ -73,6 +74,8 @@ agent:
     selfUpdates: false
     # if true, rbac necessary for metrics collection is added
     readMetrics: true
+    # if true, rbac necessary for reading logs is added
+    readLogs: true
     # if true, rbac necessary for reading stateful sets is added
     readStatefulSets: false
     # if true, rbac necessary for reading HPAs (horizontal pod autoscalers) is added
