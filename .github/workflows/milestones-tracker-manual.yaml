@@ -22,7 +22,6 @@ permissions:
 
 jobs:
   milestone_tracker:
-    if: github.event.pull_request.merged == true
     secrets: inherit
 
     uses: ./.github/workflows/milestones-tracker.yaml
