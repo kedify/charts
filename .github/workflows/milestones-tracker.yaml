@@ -59,8 +59,12 @@ jobs:
           release_tag=${milestone#*/}
           pr_body="$(gh pr view $PR_NUMBER --json 'body' --jq '.body')" 
 
-          echo "creating release $milestone"
-          gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
+          if gh release view $milestone > /dev/null; then
+              echo "release $milestone already exists"
+          else
+              echo "creating release $milestone"
+              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
+          fi
           echo "should_release=true" >> $GITHUB_OUTPUT
   release:
     needs: milestone_tracker
