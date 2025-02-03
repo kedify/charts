@@ -66,6 +66,7 @@ jobs:
     needs: milestone_tracker
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Publish ${{ inputs.chart }} Helm Chart
         uses: wozniakjan/helm-gh-pages@single_chart_path
         if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
