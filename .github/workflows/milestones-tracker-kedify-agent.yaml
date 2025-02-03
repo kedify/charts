@@ -1,0 +1,21 @@
+name: kedify-agent milestones tracking with release
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - kedify-agent/**
+
+jobs:
+  milestone_tracker:
+    if: github.event.pull_request.merged == true
+    secrets: inherit
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    uses: ./.github/workflows/milestones-tracker.yaml
+    with:
+      chart: kedify-agent
+      prNumber: ${{ github.event.pull_request.number }}
