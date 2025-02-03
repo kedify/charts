@@ -24,6 +24,17 @@
         "orgId": {
           "type": "string",
           "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "format": "uuid"
+            }
+          ]
         }
       },
       "if": {
@@ -44,3 +55,4 @@
     }
   }
 }
+
