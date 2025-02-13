@@ -74,7 +74,9 @@ jobs:
         run: kubectl create ns keda
 
       - name: Install KEDA chart
-        run: helm install keda ./keda/ --namespace keda
+        run: |
+          helm template keda ./keda/ --namespace keda | grep -ve '--enable-webhook-patching=' > keda.yaml
+          kubectl apply --server-side -f keda.yaml
 
       - name: Generate values
         run: |
