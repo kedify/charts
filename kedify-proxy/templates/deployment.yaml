@@ -6,11 +6,17 @@ metadata:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.deployment.replicas }}
   {{- end }}
   selector:
     matchLabels:
       {{- include "kedify-proxy.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deployment.rollingUpdate }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      {{- toYaml . | nindent 6 }}
+  {{- end }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -23,14 +29,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: envoy
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -69,6 +69,14 @@ spec:
           {{- end }}
       {{- with .Values.volumes }}
       volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 

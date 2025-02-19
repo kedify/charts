@@ -9,5 +9,7 @@ spec:
   selector:
     matchLabels:
       {{- include "kedify-proxy.selectorLabels" . | nindent 6 }}
-  {{- toYaml .Values.podDisruptionBudget | nindent 2 }}
+  {{- with .Values.podDisruptionBudget.spec }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
 {{- end -}}
