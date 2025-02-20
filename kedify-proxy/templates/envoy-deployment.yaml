@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kedify-proxy.fullname" . }}
+  labels:
+    {{- include "kedify-proxy.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "kedify-proxy.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deployment.rollingUpdate }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      {{- toYaml . | nindent 6 }}
+  {{- end }}
+  template:
+    metadata:
+      {{- with .Values.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kedify-proxy.labels" . | nindent 8 }}
+        {{- with .Values.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: envoy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          args:
+            {{- if eq .Values.logging.format "json" }}
+            - "--log-format"
+            - {"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}
+            {{- end }}
+            - "--config-yaml"
+            - "$(ENVOY_CONFIG)"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ENVOY_UID
+              value: {{ .Values.pod.containerSecurityContext.runAsUser | quote }}
+
+            # envoy config https://www.envoyproxy.io/docs/envoy/latest/configuration/overview/overview
+            - name: ENVOY_CONFIG
+              value: |-
+{{ tpl ($.Files.Get "files/envoy-config.yaml") $ | indent 16 }}
+
+          securityContext:
+            {{- toYaml .Values.pod.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
+              protocol: TCP
+            - name: tls
+              containerPort: {{ .Values.service.tlsPort }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+              {{- with .Values.pod.livenessProbe }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+              {{- with .Values.pod.readinessProbe }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+
+      securityContext:
+        {{- toYaml .Values.pod.securityContext | nindent 8 }}
+
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.pod.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
