@@ -26,8 +26,13 @@ spec:
     spec:
       containers:
         - args:
-            - --leader-elect
-            - --zap-log-level={{ .Values.agent.logLevel }}
+          - --leader-elect
+          - --zap-log-level={{ default .Values.agent.logLevel .Values.agent.logging.level }}
+          - --zap-log-format={{ .Values.agent.logging.format }}
+          - --zap-log-time-encoding={{ .Values.agent.logging.timeEncoding }}
+          {{- if .Values.agent.logging.stackTracesEnabled }}
+          - --zap-stacktrace-level=error
+          {{- end }}
           command:
             - /manager
           env:
