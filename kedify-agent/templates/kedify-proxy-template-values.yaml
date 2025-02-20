@@ -1,0 +1,13 @@
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.agent.kedifyProxy.configmapName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "kedify-agent.labels" . | nindent 4 }}
+data:
+  content: |
+    # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
+{{- toYaml .Values.agent.kedifyProxy  | nindent 4 }}

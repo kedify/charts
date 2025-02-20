@@ -1,0 +1,20 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Values.autoscaling.scaledObjectName | default (include "kedify-proxy.fullname" .) }}
+spec:
+  scaleTargetRef:
+    name: {{ include "kedify-proxy.fullname" . }}
+  triggers:
+    - type: tbd
+      metadata:
+        # tbd
+  minReplicaCount: {{ .Values.autoscaling.minReplicaCount }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicaCount }}
+  advanced:
+  {{- with .Values.autoscaling.horizontalPodAutoscalerConfig }}
+    horizontalPodAutoscalerConfig:
+    {{- toYaml . | nindent 6 }}
+  {{- end }}
+{{- end }}
