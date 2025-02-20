@@ -79,6 +79,8 @@ spec:
         - name: KEDA_HTTP_PROXY_TLS_PORT
           value: "{{ .Values.interceptor.tls.port }}"
         {{- end }}
+        - name: KEDIFY_PROXY_ACCESS_LOG_TYPE
+          value: "{{ .Values.kedifyProxy.accessLogType }}"
         {{- range .Values.interceptor.additionalEnvVars }}
         - name: "{{ .name }}"
           value: "{{ .value }}"
