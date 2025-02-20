@@ -26,5 +26,6 @@ jobs:
 
     uses: ./.github/workflows/milestones-tracker.yaml
     with:
+      ghToken: ${{ github.token }}
       chart: ${{ inputs.chart }}
       prNumber: ${{ inputs.prNumber }}
