@@ -1,0 +1,78 @@
+stats_flush_interval: 1s
+stats_sinks:
+- name: kedify_metrics_sink
+  typed_config:
+    "@type": type.googleapis.com/envoy.config.metrics.v3.MetricsServiceConfig
+    transport_api_version: V3
+    report_counters_as_deltas: true
+    emit_tags_as_labels: true
+    grpc_service:
+      envoy_grpc:
+        cluster_name: kedify_metrics_service
+      retry_policy:
+        retry_back_off:
+          base_interval: 0.5s
+          max_interval: 5s
+        num_retries: 100
+        retry_on: connect-failure
+node:
+  id: {{ .Values.config.nodeId }}
+  cluster: xds_cluster
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: {{ .Values.service.adminPort }}
+dynamic_resources:
+  lds_config:
+    api_config_source:
+      api_type: GRPC
+      transport_api_version: V3
+      grpc_services:
+      - envoy_grpc:
+          cluster_name: xds_cluster
+  cds_config:
+    api_config_source:
+      api_type: GRPC
+      transport_api_version: V3
+      grpc_services:
+      - envoy_grpc:
+          cluster_name: xds_cluster
+static_resources:
+  clusters:
+  - name: kedify_metrics_service
+    connect_timeout: 2s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options: {}
+    load_assignment:
+      cluster_name: kedify_metrics_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: "{{ .Values.config.kedifyEnvoyCP }}.{{ .Values.config.kedaNamespace }}.svc.{{ .Values.config.clusterDomain }}"
+                port_value: {{ .Values.config.kedifyMetricsSinkPort }}
+  - name: xds_cluster
+    connect_timeout: 2s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options: {}
+    load_assignment:
+      cluster_name: xds_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: "{{ .Values.config.kedifyEnvoyCP }}.{{ .Values.config.kedaNamespace }}.svc.{{ .Values.config.clusterDomain }}"
+                port_value: {{ .Values.config.kedifyEnvoyCPPort }}
