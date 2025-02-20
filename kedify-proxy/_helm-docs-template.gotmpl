@@ -1,0 +1,58 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+```
+     _         _ _ ___       _            _ __  _ __ _____  ___   _
+    | |_ ___ _| |_|  _|_ _  |_|___       | '_ \| '__/ _ \ \/ / | | |
+    | '_| -_| . | |  _| | |_| | . |      | |_) | | | (_) >  <| |_| |
+    |_,_|___|___|_|_| |_  |_|_|___|      | .__/|_|  \___/_/\_\\__, |
+                      |___|              |_|                  |___/
+```
+
+{{ template "chart.homepageLine" . }}
+
+## Usage
+
+Check available version in OCI repo:
+```
+crane ls ghcr.io/kedify/charts/kedify-proxy | grep -E '^v?[0-9]'
+```
+
+Install specific version:
+```
+helm upgrade -i oci://ghcr.io/kedify/charts/kedify-proxy --version=v0.0.1
+```
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Dependencies
+
+This Helm Chart spawns a Kedify proxy which itself tries to connect to another envoy control plane. In order to see the pod with proxy up and running,
+you need to first install the helm chart for KEDA and KEDA HTTP Addon:
+
+```
+helm repo add kedify https://kedify.github.io/charts
+helm repo update kedify
+helm upgrade -i keda kedifykeda/keda -nkeda --create-namespace --version ${kedaVersion}
+helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version ${httpAddonVersion}
+```
+
+{{ template "chart.valuesSection" . }}
+
+## Releasing
+
+Run the action on this repo called Helm Publish (OCI) - [link](https://github.com/kedify/charts/actions/workflows/gh-release-oci-chart.yml).
+You can provide the desired version of the helm chart as an input to the action or (if not provided) it will create a patch release.
+It will also:
+- create a tag in the repo
+- modifies the `Chart.yaml` with increased version
+- updates the docs in this `README.md` file.
