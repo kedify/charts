@@ -69,6 +69,28 @@ spec:
           value: "{{ .Values.interceptor.tlsHandshakeTimeout }}"
         - name: KEDA_HTTP_EXPECT_CONTINUE_TIMEOUT
           value: "{{ .Values.interceptor.expectContinueTimeout }}"
+        {{- if (and .Values.interceptor .Values.interceptor.customHeaders) }}
+        {{- if .Values.interceptor.customHeaders.interceptor }}
+        {{- if .Values.interceptor.customHeaders.interceptor.request }}
+        - name: KEDA_HTTP_CUSTOM_INTERCEPTOR_REQUEST_HEADERS
+          value: "{{ .Values.interceptor.customHeaders.interceptor.request }}"
+        {{- end }}
+        {{- if .Values.interceptor.customHeaders.interceptor.response }}
+        - name: KEDA_HTTP_CUSTOM_INTERCEPTOR_RESPONSE_HEADERS
+          value: "{{ .Values.interceptor.customHeaders.interceptor.response }}"
+        {{- end }}
+        {{- end }}
+        {{- if .Values.interceptor.customHeaders.kedifyProxy }}
+        {{- if .Values.interceptor.customHeaders.kedifyProxy.request }}
+        - name: KEDA_HTTP_CUSTOM_KEDIFY_PROXY_REQUEST_HEADERS
+          value: "{{ .Values.interceptor.customHeaders.kedifyProxy.request }}"
+        {{- end }}
+        {{- if .Values.interceptor.customHeaders.kedifyProxy.response }}
+        - name: KEDA_HTTP_CUSTOM_KEDIFY_PROXY_RESPONSE_HEADERS
+          value: "{{ .Values.interceptor.customHeaders.kedifyProxy.response }}"
+        {{- end }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.interceptor.tls.enabled }}
         - name: KEDA_HTTP_PROXY_TLS_ENABLED
           value: "true"
