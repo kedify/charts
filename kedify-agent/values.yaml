@@ -14,13 +14,24 @@ agent:
   agentId: ""
   kedifyServer: service.kedify.io:443
 
-  # Can be one of 'debug', 'info', 'error', or any integer value > 0
-  # which corresponds to custom debug levels of increasing verbosity
-  logLevel: info
+  
+  logging:
+    # Log level for the agent
+    # Can be one of 'debug', 'info', 'error', or any integer value > 0
+    # which corresponds to custom debug levels of increasing verbosity
+    level: info
+    # Log format for the agent
+    # allowed values: 'console' or 'json'
+    format: console
+    # Log time encoding for the agent
+    # allowed values are 'epoch', 'millis', 'nano', 'iso8601', 'rfc3339' or 'rfc3339nano'
+    timeEncoding: RFC3339
+    # Display stack traces in the logs
+    stackTracesEnabled: false
 
   kedifyProxy:
     # Log format for kedify-proxy
-    logFormat: plaintext # plaintext or json
+    logFormat: plaintext # 'plaintext' or 'json'
     # enable to set cluster wide deployment (supported only for istio VirtualService and Gatewa API HTTPRoute)
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
