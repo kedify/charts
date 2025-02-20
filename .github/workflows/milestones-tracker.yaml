@@ -3,6 +3,10 @@ name: milestones tracking with release
 on:
   workflow_call:
     inputs:
+      ghToken:
+        description: 'GitHub token'
+        type: string
+        required: true
       chart:
         description: 'chart name'
         type: string
@@ -27,7 +31,7 @@ jobs:
       - name: Ensure correct milestone
         id: milestone_tracking
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ inputs.ghToken }}
           PR_NUMBER: ${{ inputs.prNumber }}
         run: |
           set -euo pipefail
@@ -75,7 +79,7 @@ jobs:
         uses: wozniakjan/helm-gh-pages@single_chart_path
         if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ inputs.ghToken }}
           linting: "off"
           dependencies: "kedify,https://kedify.github.io/charts"
           charts_dir: "."
