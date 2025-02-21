@@ -19,13 +19,11 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  packages: write
 
 jobs:
   milestone_tracker:
-    secrets: inherit
-
     uses: ./.github/workflows/milestones-tracker.yaml
     with:
-      ghToken: ${{ github.token }}
       chart: ${{ inputs.chart }}
       prNumber: ${{ inputs.prNumber }}
