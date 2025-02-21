@@ -238,6 +238,16 @@ interceptor:
     # -- The maximum number of replicas that can be unavailable for the interceptor
     maxUnavailable: 1
 
+  # custom headers added to requests and responses passing through the interceptor and/or kedify-proxy
+  # for multiple headers, separate them with a comma, e.g. h1:v1,h2:v2
+  # customHeaders:
+  #   interceptor:
+  #     request: "X-Kedify-Interceptor:True"
+  #     response: "X-Kedify-Interceptor:True"
+  #   kedifyProxy:
+  #     request: "X-Kedify-Proxy:True"
+  #     response: "X-Kedify-Proxy:True"
+
 # configuration for the images to use for each component
 images:
   # tag is the image tag to use for all images.
