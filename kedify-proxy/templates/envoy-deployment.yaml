@@ -1,7 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kedify-proxy.fullname" . }}
+  name: kedify-proxy
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
 spec:
@@ -74,16 +75,10 @@ spec:
               protocol: TCP
           terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
           livenessProbe:
-            httpGet:
-              path: /ready
-              port: admin
-              {{- with .Values.pod.livenessProbe }}
-              {{- toYaml . | nindent 14 }}
-              {{- end }}
+            {{- with .Values.pod.livenessProbe }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           readinessProbe:
-            httpGet:
-              path: /ready
-              port: admin
             {{- with .Values.pod.readinessProbe }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

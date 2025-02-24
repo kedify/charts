@@ -1,0 +1,139 @@
+{{- if .Values.agent.rbac.create }}
+{{- if .Values.agent.rbac.ingressAutoWire }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: can-install-kedify-proxy
+rules:
+# Kedify needs to configure envoy proxy also in other namespaces & deploy it
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - delete
+  - patch
+  - update
+  resourceNames:
+  - kedify-proxy
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
+  resourceNames:
+  - kedify-proxy
+  - kedify-proxy-admin
+- apiGroups:
+  - "policy/v1"
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
+  resourceNames:
+  - kedify-proxy
+- apiGroups:
+  - "policy/v1"
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - create
+  resourceNames:
+  - kedify-proxy
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
+  resourceNames:
+  - kedify-proxy-template-values
+  - kedify-proxy-template-values-global
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - delete
+  - update
+  - patch
+  resourceNames:
+  - sh.helm.release.v1.kedify-proxy.v1
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+
+{{- if .Values.agent.kedifyProxy.clusterWide }}
+---
+# counterintuitive, but 'clusterWide' => only 1 proxy in the {{ .Release.Namespace }} namespace (hence no need for global RBAC - using RoleBinding&ClusterRole)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kedify-agent-can-install-kedify-proxy
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: can-install-kedify-proxy
+subjects:
+- kind: ServiceAccount
+  name: kedify-agent
+  namespace: {{ .Release.Namespace }}
+{{- else }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kedify-agent-can-install-kedify-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: can-install-kedify-proxy
+subjects:
+- kind: ServiceAccount
+  name: kedify-agent
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- end }}

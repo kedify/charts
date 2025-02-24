@@ -2,7 +2,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.nameOverride | default (include "kedify-proxy.fullname" .) }}
+  name: kedify-proxy
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
     {{- with .Values.service.labels }}
@@ -30,7 +31,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.adminSvcNameOverride | default (printf "%s-%s" (include "kedify-proxy.fullname" .) "admin") }}
+  name: kedify-proxy-admin
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
     {{- with .Values.service.labels }}

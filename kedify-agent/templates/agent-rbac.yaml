@@ -141,6 +141,7 @@ rules:
   - update
   resourceNames:
   - kedify-agent
+  - sh.helm.release.v1.kedify-otel.v1
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -296,40 +297,6 @@ rules:
   verbs:
   - "*"
 
-{{- if .Values.agent.rbac.ingressAutoWire }}
-# Kedify needs to configure envoy proxy also in other namespaces & deploy it
-- apiGroups:
-  - ""
-  resources:
-  - endpoints
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - list
-  - watch
-  - create
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - delete
-  - update
-  resourceNames:
-  - kedify-proxy
-{{- end }}
-
 {{- if .Values.agent.rbac.uninstall }}
 # Kedify needs to be able to uninstall itself
 - apiGroups:
@@ -373,7 +340,6 @@ rules:
   - patch
   - update
   resourceNames:
-  - kedify-proxy
   - keda-add-ons-http-interceptor-proxy
 {{- end }}
 - apiGroups:
