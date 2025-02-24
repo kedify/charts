@@ -25,7 +25,7 @@ spec:
       protocol: TCP
       name: tls
   selector:
-    {{- include "kedify-proxy.selectorLabels" . | nindent 4 }}
+    app: kedify-proxy
 {{- if .Values.service.exposeAdminInterface }}
 ---
 apiVersion: v1
@@ -50,6 +50,6 @@ spec:
       protocol: TCP
       name: admin
   selector:
-    {{- include "kedify-proxy.selectorLabels" . | nindent 4 }}
+    app: kedify-proxy
 {{- end }}
 {{- end }}

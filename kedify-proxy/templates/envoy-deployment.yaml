@@ -11,7 +11,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kedify-proxy.selectorLabels" . | nindent 6 }}
+      app: kedify-proxy
   {{- with .Values.deployment.rollingUpdate }}
   strategy:
     type: RollingUpdate
@@ -25,6 +25,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
+        app: kedify-proxy
         {{- include "kedify-proxy.labels" . | nindent 8 }}
         {{- with .Values.pod.labels }}
         {{- toYaml . | nindent 8 }}
@@ -73,7 +74,6 @@ spec:
             - name: admin
               containerPort: {{ .Values.service.adminPort }}
               protocol: TCP
-          terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
           livenessProbe:
             {{- with .Values.pod.livenessProbe }}
             {{- toYaml . | nindent 12 }}
@@ -92,11 +92,10 @@ spec:
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.imagePullSecrets }}
-
+      terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
       securityContext:
         {{- toYaml .Values.pod.securityContext | nindent 8 }}
-
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
