@@ -35,6 +35,21 @@
               "format": "uuid"
             }
           ]
+        },
+        "billingCloudProvider": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "enum": [
+                "aws",
+                "azure",
+                "gcp"
+              ]
+            }
+          ]
         }
       },
       "if": {
