@@ -1,7 +1,7 @@
 name: kedify-agent milestones tracking with release
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     paths:
       - kedify-agent/**
