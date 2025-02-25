@@ -47,6 +47,8 @@ spec:
                 secretKeyRef:
                   name: kedify-agent
                   key: apikey
+            - name: CLOUD_PROVIDER
+              value: {{ .Values.agent.billingCloudProvider }}
             - name: KEDIFY_PROXY_CHART_VERSION
               value: {{ .Values.agent.kedifyProxy.chartVersion | quote }}
             - name: KEDIFY_PROXY_CLUSTER_WIDE
