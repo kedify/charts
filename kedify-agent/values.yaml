@@ -13,6 +13,9 @@ agent:
   # if migrating to helm, set this to the value of the agentId from the previous installation
   agentId: ""
   kedifyServer: service.kedify.io:443
+  # optional field, if you use a mix of cloud providers for billing, you can specify the cloud provider
+  # for the billing purposes for this Agent (supported values: "aws", "gcp", "azure")
+  billingCloudProvider: ""
 
   
   logging:
