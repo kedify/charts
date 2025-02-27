@@ -43,10 +43,14 @@ pod:
   # -- custom timeouts and thresholds for liveness probe
   livenessProbe: {}
   # -- custom timeouts and thresholds for readiness probe
-  readinessProbe: {}
-    # periodSeconds: 30
-    # initialDelaySeconds: 5
-    # failureThreshold: 2
+  readinessProbe:
+    periodSeconds: 1
+    initialDelaySeconds: 1
+    failureThreshold: 2
+  # -- custom timeout for graceful shutdown, should be larger than: readiness probe threshold * period
+  preStopHookWaitSeconds: 5
+  # -- custom timeout for pod termination, should be larger than: preStopHookWaitSeconds + (readiness probe threshold * period)
+  terminationGracePeriodSeconds: 30
 
 deployment:
   # -- Fixed amount of replicas for the deployment. Use either `.autoscaling` section or this field.

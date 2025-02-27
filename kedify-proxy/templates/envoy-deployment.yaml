@@ -40,6 +40,17 @@ spec:
             - "--config-yaml"
             - "$(ENVOY_CONFIG)"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    echo "Gracefully shutting down kedify-proxy"
+                    exec 3<>/dev/tcp/localhost/{{ .Values.service.adminPort }}
+                    echo -e 'POST /healthcheck/fail HTTP/1.1\r\nHost: localhost\r\nContent-Length:0\r\n\r\n' >&3
+                    sleep {{ .Values.pod.preStopHookWaitSeconds }}
           env:
             - name: ENVOY_UID
               value: {{ .Values.pod.containerSecurityContext.runAsUser | quote }}
@@ -61,6 +72,7 @@ spec:
             - name: admin
               containerPort: {{ .Values.service.adminPort }}
               protocol: TCP
+          terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
           livenessProbe:
             httpGet:
               path: /ready
@@ -72,9 +84,9 @@ spec:
             httpGet:
               path: /ready
               port: admin
-              {{- with .Values.pod.readinessProbe }}
-              {{- toYaml . | nindent 14 }}
-              {{- end }}
+            {{- with .Values.pod.readinessProbe }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}
