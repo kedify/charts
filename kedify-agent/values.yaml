@@ -83,6 +83,9 @@ agent:
     podResourceProfilesEnabled: false
     prpRequiresAnnotatedPods: true
 
+  autowire:
+    serviceSyncPeriod: 500ms
+
   rbac:
     # create the necessary RBAC for kedify agent
     create: true
