@@ -97,6 +97,8 @@ spec:
               value: {{ .Values.agent.rbac.ingressAutoWire | quote }}
             - name: RBAC_MANAGE_KEDIFY_CONFIG
               value: {{ .Values.agent.rbac.kedifyConfig | quote }}
+            - name: KEDIFY_AUTOWIRE_SERVICE_SYNC_PERIOD
+              value: {{ .Values.agent.autowire.serviceSyncPeriod | quote }}
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.agent.pullPolicy }}
           livenessProbe:
