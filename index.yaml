@@ -25,9 +25,9 @@ entries:
   keda:
   - apiVersion: v2
     appVersion: 2.16.1
-    created: "2025-01-24T09:47:42.870439761Z"
+    created: "2025-03-04T17:10:58.516563359Z"
     description: Event-based autoscaler for workloads on Kubernetes
-    digest: 84fc41aec985624809599879a650cc9185d4ba1197b54cab2129e97ee359be65
+    digest: f6acc7b8e4bf15912bb6ef36790916f3432acac2367f3d1dde8d83748ddc331e
     home: https://github.com/kedacore/keda
     icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
     kubeVersion: '>=v1.23.0-0'
@@ -1383,4 +1383,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-agent-v0.0.0.tgz
     version: v0.0.0
-generated: "2025-03-04T17:09:03.18297684Z"
+generated: "2025-03-04T17:10:58.509801677Z"
