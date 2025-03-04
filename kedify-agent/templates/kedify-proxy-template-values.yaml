@@ -1,13 +1,21 @@
-
+{{- if not .Values.agent.kedifyProxy.clusterWide }}
+{{- range $ns, $values := .Values.agent.kedifyProxy.namespacedValues }}
+{{ $merged := merge $values $.Values.agent.kedifyProxy.globalValues }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.agent.kedifyProxy.configmapName }}
-  namespace: {{ .Release.Namespace | quote }}
+  name: kedify-proxy-template-values
+  namespace: {{ $ns | quote }}
+  annotations:
+    http.kedify.io/proxy: values
   labels:
-    {{- include "kedify-agent.labels" . | nindent 4 }}
+    {{- include "kedify-agent.labels" $ | nindent 4 }}
 data:
   content: |
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
-{{- toYaml .Values.agent.kedifyProxy  | nindent 4 }}
+    # this configmap holds the helm chart values for kedify proxy for namespace {{ $ns }} and will take precedence
+    # over the global configmap in the keda namespace
+{{- toYaml $merged | nindent 4 }}
+{{- end }}
+{{- end }}

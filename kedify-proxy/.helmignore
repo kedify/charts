@@ -21,3 +21,10 @@
 .idea/
 *.tmproj
 .vscode/
+
+#tars in root
+/*.tgz
+
+# example values
+/examples
+

@@ -33,17 +33,34 @@ agent:
     stackTracesEnabled: false
 
   kedifyProxy:
-    # enable to set cluster wide deployment (supported only for istio VirtualService and Gatewa API HTTPRoute)
+    # enable to set cluster wide deployment (supported only for istio VirtualService and Gateway API HTTPRoute)
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
+    chart: oci://ghcr.io/kedify/charts/kedify-proxy
     chartVersion: v0.0.1
-    configmapName: kedify-proxy-template-values
+
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
-    # namespace with a ScaledObject
-    values:
+    # namespace.
+    # This is a global template that will be used for all namespaces
+    # (if not overridden by `.agent.kedifyProxy.namespacedValues` while `.agent.kedifyProxy.clusterWide` is on).
+    globalValues:
       logging:
         format: plaintext
+
+    # This is a namespaced helm template that will be used for desired namespaces (if `.agent.kedifyProxy.clusterWide` is off).
+    # example of overriding the global template for namespaces 'prodNamespace' and 'testNamespace':
+    namespacedValues: {}
+      # prodNamespace:
+      #   podDisruptionBudget:
+      #     enabled: true
+      #   logging:
+      #     format: json
+      # testNamespace:
+      #   image:
+      #     tag: v1.33.0-custom-change
+      #   autoscaling:
+      #     enabled: false
 
   # should the KedifyConfiguration and ScalingPolicy CRDs be also part of the release
   createCrds: true
