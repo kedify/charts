@@ -1,7 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kedify-proxy.fullname" . }}
+  name: kedify-proxy
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
 spec:
@@ -10,7 +11,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kedify-proxy.selectorLabels" . | nindent 6 }}
+      app: kedify-proxy
   {{- with .Values.deployment.rollingUpdate }}
   strategy:
     type: RollingUpdate
@@ -35,7 +36,7 @@ spec:
           args:
             {{- if eq .Values.logging.format "json" }}
             - "--log-format"
-            - {"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}
+            - '{"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}'
             {{- end }}
             - "--config-yaml"
             - "$(ENVOY_CONFIG)"
@@ -72,18 +73,11 @@ spec:
             - name: admin
               containerPort: {{ .Values.service.adminPort }}
               protocol: TCP
-          terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
           livenessProbe:
-            httpGet:
-              path: /ready
-              port: admin
-              {{- with .Values.pod.livenessProbe }}
-              {{- toYaml . | nindent 14 }}
-              {{- end }}
+            {{- with .Values.pod.livenessProbe }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           readinessProbe:
-            httpGet:
-              path: /ready
-              port: admin
             {{- with .Values.pod.readinessProbe }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -97,11 +91,10 @@ spec:
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.imagePullSecrets }}
-
+      terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
       securityContext:
         {{- toYaml .Values.pod.securityContext | nindent 8 }}
-
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -8,7 +8,7 @@
 {{- end }}
 
 You have successfully installed the:
- - agent
+ - agent (orgId: {{ .Values.agent.orgId }})
 {{- if .Values.keda.enabled }}
  - keda
 {{- end}}

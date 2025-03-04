@@ -2,7 +2,8 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "kedify-proxy.fullname" . }}
+  name: kedify-proxy
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kedify-proxy.labels" . | nindent 4 }}
 spec:
