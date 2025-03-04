@@ -54,23 +54,23 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
 | pod.securityContext | object | `{}` | pod-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) |
 | pod.containerSecurityContext | object | `{"runAsUser":101}` | container-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) |
 | pod.priorityClassName | string | `""` | [docs](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/) |
-| pod.livenessProbe | object | `{}` | custom timeouts and thresholds for liveness probe |
-| pod.readinessProbe | object | `{}` | custom timeouts and thresholds for readiness probe |
+| pod.livenessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/ready","port":"admin"},"initialDelaySeconds":1,"periodSeconds":1}` | custom timeouts and thresholds for liveness probe |
+| pod.readinessProbe | object | `{"failureThreshold":2,"httpGet":{"path":"/ready","port":"admin"},"initialDelaySeconds":1,"periodSeconds":1}` | custom timeouts and thresholds for readiness probe |
+| pod.preStopHookWaitSeconds | int | `5` | custom timeout for graceful shutdown, should be larger than: readiness probe threshold * period |
+| pod.terminationGracePeriodSeconds | int | `30` | custom timeout for pod termination, should be larger than: preStopHookWaitSeconds + (readiness probe threshold * period) |
 | deployment.replicas | int | `1` | Fixed amount of replicas for the deployment. Use either `.autoscaling` section or this field. |
 | deployment.rollingUpdate | object | `{}` | [docs](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/) |
 | service.enabled | bool | `true` | Should the services be rendered with the helm chart? |
-| service.nameOverride | string | `"kedify-proxy"` | Name of the service that exposes HTTP and TLS ports. If empty, release name is used. |
 | service.type | string | `"ClusterIP"` | [docs](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) |
 | service.annotations | object | `{}` | custom annotations that should be added to both services |
 | service.labels | object | `{}` | custom labels that should be added to both services |
 | service.httpPort | int | `8080` | port for plain text HTTP traffic |
 | service.tlsPort | int | `8443` | port for TLS HTTP traffic |
 | service.exposeAdminInterface | bool | `true` | Should the admin service be also rendered with the helm chart? |
-| service.adminSvcNameOverride | string | `"kedify-proxy-admin"` | Name of the service that exposes admin port for envoy. If empty, `${releaseName}-admin` is used. |
 | service.adminSvcType | string | `"ClusterIP"` | [docs](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) |
 | service.adminPort | int | `9901` | port for admin interface of envoy |
-| resources | object | `{}` | resource definitions for envoy container, see [docs](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) |
-| autoscaling | object | `{"enabled":false,"horizontalPodAutoscalerConfig":{},"maxReplicaCount":3,"minReplicaCount":1,"scaledObjectName":""}` | mutually exclusive with `.deployment.replicas` |
+| resources | object | `{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"250m","memory":"128Mi"}}` | resource definitions for envoy container, see [docs](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) |
+| autoscaling | object | `{"enabled":false,"horizontalPodAutoscalerConfig":{},"maxReplicaCount":3,"minReplicaCount":1,"scaledObjectName":""}` | mutually exclusive with `.deployment.replicas` configure the `.resources` appropriately, because the SO uses cpu and memory scalers |
 | autoscaling.enabled | bool | `false` | Should the KEDA's `ScaledObject` be also rendered with the helm chart? |
 | autoscaling.scaledObjectName | string | `""` | Name of the `ScaledObject` custom resource. If empty, release name is used. |
 | volumes | list | `[]` | Additional volumes on the output Deployment definition. |
