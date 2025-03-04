@@ -49,7 +49,7 @@ rules:
   - kedify-proxy
   - kedify-proxy-admin
 - apiGroups:
-  - "policy/v1"
+  - "policy"
   resources:
   - poddisruptionbudgets
   verbs:
