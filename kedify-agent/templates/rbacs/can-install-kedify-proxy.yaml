@@ -60,7 +60,7 @@ rules:
   resourceNames:
   - kedify-proxy
 - apiGroups:
-  - "policy/v1"
+  - "policy"
   resources:
   - poddisruptionbudgets
   verbs:
