@@ -14,7 +14,7 @@ spec:
       control-plane: kedify-agent
   template:
     metadata:
-      {{- with .Values.agent.volumeMounts }}
+      {{- with .Values.agent.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -38,8 +38,10 @@ spec:
           env:
             - name: KEDIFY_SERVER
               value: {{ .Values.agent.kedifyServer }}
+            {{- with .Values.agent.agentId }}
             - name: KEDIFY_AGENT_ID
-              value: {{ .Values.agent.agentId }}
+              value: {{ . }}
+            {{- end }}
             - name: KEDIFY_ORGANIZATION_ID
               value: {{ .Values.agent.orgId }}
             - name: KEDIFY_API_KEY
@@ -51,6 +53,8 @@ spec:
               value: {{ .Values.agent.billingCloudProvider }}
             - name: KEDIFY_PROXY_CHART_VERSION
               value: {{ .Values.agent.kedifyProxy.chartVersion | quote }}
+            - name: KEDIFY_PROXY_CHART
+              value: {{ .Values.agent.kedifyProxy.chart | quote }}
             - name: KEDIFY_PROXY_CLUSTER_WIDE
               value: {{ .Values.agent.kedifyProxy.clusterWide | quote }}
             - name: HELM_REPOSITORY_CONFIG

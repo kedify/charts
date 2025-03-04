@@ -3,13 +3,17 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ .Values.autoscaling.scaledObjectName | default (include "kedify-proxy.fullname" .) }}
+  namespace: {{ .Release.Namespace }}
 spec:
   scaleTargetRef:
-    name: {{ include "kedify-proxy.fullname" . }}
+    name: "kedify-proxy"
   triggers:
-    - type: tbd
+    - type: cpu
       metadata:
-        # tbd
+        value: "75"
+    - type: memory
+      metadata:
+        value: "75"
   minReplicaCount: {{ .Values.autoscaling.minReplicaCount }}
   maxReplicaCount: {{ .Values.autoscaling.maxReplicaCount }}
   advanced:
