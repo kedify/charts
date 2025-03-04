@@ -6,14 +6,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   scaleTargetRef:
-    name: {{ include "kedify-proxy.fullname" . }}
+    name: "kedify-proxy"
   triggers:
     - type: cpu
       metadata:
-        value: 75
+        value: "75"
     - type: memory
       metadata:
-        value: 75
+        value: "75"
   minReplicaCount: {{ .Values.autoscaling.minReplicaCount }}
   maxReplicaCount: {{ .Values.autoscaling.maxReplicaCount }}
   advanced:

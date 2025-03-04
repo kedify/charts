@@ -25,7 +25,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        app: kedify-proxy
         {{- include "kedify-proxy.labels" . | nindent 8 }}
         {{- with .Values.pod.labels }}
         {{- toYaml . | nindent 8 }}
@@ -37,7 +36,7 @@ spec:
           args:
             {{- if eq .Values.logging.format "json" }}
             - "--log-format"
-            - {"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}
+            - '{"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}'
             {{- end }}
             - "--config-yaml"
             - "$(ENVOY_CONFIG)"

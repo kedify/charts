@@ -24,3 +24,7 @@
 
 #tars in root
 /*.tgz
+
+# example values
+/examples
+
