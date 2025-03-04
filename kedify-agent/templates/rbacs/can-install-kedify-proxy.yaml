@@ -65,8 +65,6 @@ rules:
   - poddisruptionbudgets
   verbs:
   - create
-  resourceNames:
-  - kedify-proxy
 - apiGroups:
   - ""
   resources:
