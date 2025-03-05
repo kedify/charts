@@ -11,9 +11,11 @@ spec:
     - type: cpu
       metadata:
         value: "75"
+      metricType: Utilization
     - type: memory
       metadata:
-        value: "75"
+        value: "90"
+      metricType: Utilization
   minReplicaCount: {{ .Values.autoscaling.minReplicaCount }}
   maxReplicaCount: {{ .Values.autoscaling.maxReplicaCount }}
   advanced:
