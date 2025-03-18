@@ -170,12 +170,12 @@ their default values.
 | `interceptor.pullPolicy` | string | `"Always"` | The image pull policy for the interceptor component |
 | `interceptor.replicas.max` | int | `50` | The maximum number of interceptor replicas that should ever be running |
 | `interceptor.replicas.min` | int | `3` | The minimum number of interceptor replicas that should ever be running |
-| `interceptor.replicas.waitTimeout` | string | `"20s"` | The maximum time the interceptor should wait for an HTTP request to reach a backend before it is considered a failure |
+| `interceptor.replicas.waitTimeout` | string | `"20s"` | The maximum time the interceptor should wait during cold start for an HTTP request to reach a backend before it is considered a failure |
 | `interceptor.resources.limits` | object | `{"cpu":0.5,"memory":"64Mi"}` | The CPU/memory resource limit for the operator component |
 | `interceptor.resources.requests` | object | `{"cpu":"250m","memory":"20Mi"}` | The CPU/memory resource request for the operator component |
 | `interceptor.responseHeaderTimeout` | string | `"500ms"` | How long the interceptor will wait between forwarding a request to a backend and receiving response headers back before failing the request |
 | `interceptor.scaledObject.pollingInterval` | int | `1` | The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor |
-| `interceptor.tcpConnectTimeout` | string | `"500ms"` | How long the interceptor waits to establish TCP connections with backends before failing a request. |
+| `interceptor.tcpConnectTimeout` | string | `"500ms"` | How long the interceptor waits to establish TCP connections with backends before failing a request. This is also used to configure envoy timeouts for both upstream and downstream connections. https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology |
 | `interceptor.tls.allowCertsFromSecrets` | bool | `true` | Allowing RBAC for Secrets for dynamic TLS certificates |
 | `interceptor.tls.cert_path` | string | `""` | Mount path of the certificate file to use with the interceptor proxy TLS server |
 | `interceptor.tls.cert_secret` | string | `""` | Name of the Kubernetes secret that contains the certificates to be used with the interceptor proxy TLS server |
