@@ -18,7 +18,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: KEDA version
-      jsonPath: .status.installations.keda.kedaVersion
+      jsonPath: .status.components.keda.version
       name: Version
       type: string
     - description: Installation mode
@@ -26,7 +26,7 @@ spec:
       name: Mode
       type: string
     - description: HTTTP Addon version
-      jsonPath: .status.installations.keda.httpAddonVersion
+      jsonPath: .status.deployments.httpAddon.version
       name: HTTP-Addon
       priority: 20
       type: string
@@ -35,7 +35,7 @@ spec:
       name: Agent
       type: string
     - description: Health of KEDA Operator
-      jsonPath: .status.installations.keda.deployments.keda-operator.phase
+      jsonPath: .status.components.keda.deployments.keda-operator.phase
       name: KEDA
       type: string
     - description: Health of aggregated API Service (v1beta1.external.metrics.k8s.io)
@@ -43,17 +43,17 @@ spec:
       name: API Service
       type: string
     - description: Health of KEDA's internal Metric Server
-      jsonPath: .status.installations.keda.deployments.keda-operator-metrics-apiserver.phase
+      jsonPath: .status.components.keda.deployments.keda-operator-metrics-apiserver.phase
       name: Metric Server
       priority: 20
       type: string
     - description: Health of KEDA's Admission controller
-      jsonPath: .status.installations.keda.deployments.keda-admission-webhooks.phase
+      jsonPath: .status.components.keda.deployments.keda-admission-webhooks.phase
       name: Admission
       priority: 20
       type: string
     - description: Health of KEDA's HTTP Addon interceptor
-      jsonPath: .status.installations.keda.deployments.keda-add-ons-http-interceptor.phase
+      jsonPath: .status.components.keda.deployments.keda-add-ons-http-interceptor.phase
       name: Interceptor
       priority: 20
       type: string
