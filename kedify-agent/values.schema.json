@@ -22,8 +22,7 @@
           "type": "boolean"
         },
         "orgId": {
-          "type": "string",
-          "format": "uuid"
+          "type": "string"
         },
         "agentId": {
           "type": "string",
@@ -52,21 +51,7 @@
           ]
         }
       },
-      "if": {
-        "properties": {
-          "createApiKeySecret": { "const": true }
-        }
-      },
-      "then": {
-        "properties": {
-          "apiKey": { "pattern": "^kfy_[a-z0-9]*$", "minLength": 10 }
-        }
-      },
-      "required": [
-        "apiKey",
-        "createApiKeySecret",
-        "orgId"
-      ]
+      "required": []
     }
   }
 }
