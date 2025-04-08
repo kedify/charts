@@ -112,11 +112,11 @@ spec:
         {{- end }}
         - name: KEDIFY_PROXY_ACCESS_LOG_TYPE
           value: "{{ .Values.kedifyProxy.accessLogType }}"
-        {{- if and .Values.interceptor.envoy .Values.interceptor.envoy.listener .Values.interceptor.envoy.listener.tcpBacklogSize }}
+        {{- if ((.Values.interceptor.envoy).listener).tcpBacklogSize }}
         - name: KEDIFY_PROXY_LISTENER_TCP_BACKLOG_SIZE
           value: "{{ .Values.interceptor.envoy.listener.tcpBacklogSize }}"
         {{- end }}
-        {{- if and .Values.interceptor.envoy .Values.interceptor.envoy.perConnectionBufferLimitBytes }}
+        {{- if (.Values.interceptor.envoy).perConnectionBufferLimitBytes }}
         - name: KEDIFY_PROXY_PER_CONNECTION_BUFFER_LIMIT_BYTES
           value: "{{ .Values.interceptor.envoy.perConnectionBufferLimitBytes }}"
         {{- end }}
