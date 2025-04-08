@@ -76,7 +76,7 @@ static_resources:
               socket_address:
                 address: "{{ .Values.config.kedifyEnvoyCP }}.{{ .Values.config.kedaNamespace }}.svc.{{ .Values.config.clusterDomain }}"
                 port_value: {{ .Values.config.kedifyEnvoyCPPort }}
-{{- if and .Values.config.overloadManager .Values.config.overloadManager.enabled }}
+{{- if (.Values.config.overloadManager).enabled }}
 overload_manager:
   refresh_interval: {{ .Values.config.overloadManager.refreshInterval }}
   resource_monitors:
