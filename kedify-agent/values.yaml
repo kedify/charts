@@ -1,5 +1,8 @@
 clusterName: "cluster-1"
 
+# when set to true, the schema validation will be disabled
+disableSchemaValidation: false 
+
 agent:
   replicas: 1
 
