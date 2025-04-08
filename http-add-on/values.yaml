@@ -167,11 +167,11 @@ interceptor:
   # -- How long the interceptor waits to establish TCP connections with backends before failing a request.
   # -- This is also used to configure envoy timeouts for both upstream and downstream connections.
   # -- https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology
-  tcpConnectTimeout: 500ms
+  tcpConnectTimeout: 5m
   # -- The interceptor's connection keep alive timeout
   keepAlive: 1s
   # -- How long the interceptor will wait between forwarding a request to a backend and receiving response headers back before failing the request
-  responseHeaderTimeout: 500ms
+  responseHeaderTimeout: 30s
   # -- How often (in milliseconds) the interceptor does a full refresh of its endpoints cache. The interceptor will also use Kubernetes events to stay up-to-date with the endpoints cache changes. This duration is the maximum time it will take to see changes to the endpoints.
   endpointsCachePollingIntervalMS: 20000
   # -- Whether or not the interceptor should force requests to use HTTP/2
@@ -179,7 +179,7 @@ interceptor:
   # -- The maximum number of idle connections allowed in the interceptor's in-memory connection pool. Set to 0 to indicate no limit
   maxIdleConns: 100
   # -- The timeout after which any idle connection is closed and removed from the interceptor's in-memory connection pool.
-  idleConnTimeout: 90s
+  idleConnTimeout: 10m
   # -- The maximum amount of time the interceptor will wait for a TLS handshake. Set to zero to indicate no timeout.
   tlsHandshakeTimeout: 10s
   # -- Special handling for responses with "Expect: 100-continue" response headers. see https://pkg.go.dev/net/http#Transport under the 'ExpectContinueTimeout' field for more details
@@ -240,8 +240,8 @@ interceptor:
     # -- The maximum number of replicas that can be unavailable for the interceptor
     maxUnavailable: 1
 
-  # custom headers added to requests and responses passing through the interceptor and/or kedify-proxy
-  # for multiple headers, separate them with a comma, e.g. h1:v1,h2:v2
+  # # custom headers added to requests and responses passing through the interceptor and/or kedify-proxy
+  # # for multiple headers, separate them with a comma, e.g. h1:v1,h2:v2
   # customHeaders:
   #   interceptor:
   #     request: "X-Kedify-Interceptor:True"
@@ -249,6 +249,12 @@ interceptor:
   #   kedifyProxy:
   #     request: "X-Kedify-Proxy:True"
   #     response: "X-Kedify-Proxy:True"
+  #
+  # # additional tuning parameters for envoy proxy
+  # envoy:
+  #   listener:
+  #     tcpBacklogSize: 128
+  #   perConnectionBufferLimitBytes: 1048576
 
 # configuration for the images to use for each component
 images:
