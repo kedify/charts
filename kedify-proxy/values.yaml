@@ -27,6 +27,16 @@ config:
   kedifyEnvoyCPPort: 5678
   # -- port on kedify interceptor (`.config.kedifyEnvoyCP` host) where metrics from envoy data planes will be sent
   kedifyMetricsSinkPort: 9901
+  # -- overloadManager static configuration
+  # by default, the overload manager is disabled which means that there is no limit on active downstream connections
+  # NOTE: changing any values here restarts all kedify-proxy instances
+  overloadManager:
+    # -- enabled toggle to enable/disable overload manager
+    enabled: false
+    # -- refresh interval for the overload manager
+    refreshInterval: 0.25s
+    # -- max active downstream connections
+    maxActiveDownstreamConnections: 10000
 
 pod:
   # -- custom annotations that should be added to the Kedify proxy pod
