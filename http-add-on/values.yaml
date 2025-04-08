@@ -156,7 +156,7 @@ interceptor:
     # -- The maximum number of interceptor replicas that should ever be running
     max: 50
     # -- The maximum time the interceptor should wait during cold start for an HTTP request to reach a backend before it is considered a failure
-    waitTimeout: 20s
+    waitTimeout: 20m
 
   # configuration for the ScaledObject resource for the
   # interceptor
