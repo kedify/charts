@@ -25,6 +25,8 @@ rules:
   - deployments
   verbs:
   - create
+  - watch
+  - list
 - apiGroups:
   - apps
   resources:
