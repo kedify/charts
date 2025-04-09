@@ -55,22 +55,20 @@ pod:
     httpGet:
       path: /ready
       port: admin
-    periodSeconds: 1
-    initialDelaySeconds: 1
-    failureThreshold: 3
+    periodSeconds: 2
+    initialDelaySeconds: 5
+    failureThreshold: 5
   # -- custom timeouts and thresholds for readiness probe
   readinessProbe:
     httpGet:
       path: /ready
       port: admin
-    # exec:
-    #   command: ["true"]
     periodSeconds: 1
     initialDelaySeconds: 1
     failureThreshold: 2
-  # -- custom timeout for graceful shutdown, should be larger than: readiness probe threshold * period
+  # -- custom timeout for graceful shutdown, should be smaller or equal to terminationGracePeriodSeconds
   preStopHookWaitSeconds: 5
-  # -- custom timeout for pod termination, should be larger than: preStopHookWaitSeconds + (readiness probe threshold * period)
+  # -- custom timeout for pod termination, should be larger or equal to preStopHookWaitSeconds
   terminationGracePeriodSeconds: 30
 
 deployment:
