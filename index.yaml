@@ -1517,4 +1517,15 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-agent-v0.0.0.tgz
     version: v0.0.0
-generated: "2025-04-08T10:35:04.489799423Z"
+  kedify-proxy:
+  - apiVersion: v2
+    appVersion: v1.33.0
+    created: "2025-04-09T12:58:47.268616984Z"
+    description: A Helm chart for Kedify proxy
+    digest: 55f96d3b4d09bd5d3fca50afde96efbb2dfdfedeff758988adfa5276c1c005af
+    name: kedify-proxy
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
+    version: v0.0.2
+generated: "2025-04-09T12:58:47.267763458Z"
