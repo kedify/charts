@@ -40,7 +40,7 @@ agent:
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: oci://ghcr.io/kedify/charts/kedify-proxy
-    chartVersion: v0.0.1
+    chartVersion: v0.0.2
 
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
