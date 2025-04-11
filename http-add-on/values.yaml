@@ -163,6 +163,19 @@ interceptor:
   scaledObject:
     # -- The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
     pollingInterval: 1
+    # -- Use the interceptor's `pendingRequests` metric to scale the interceptor
+    # When using kedify-proxy, this metric is not a good indicator of the load on the interceptor, so it is disabled by default.
+    pendingRequestsTrigger:
+      enabled: false
+    # -- The CPU utilization threshold that KEDA should use to scale the interceptor
+    cpuTrigger:
+      enabled: true
+      target: 75
+    # -- The memory utilization threshold that KEDA should use to scale the interceptor
+    memoryTrigger:
+      enabled: true
+      target: 90
+
 
   # -- How long the interceptor waits to establish TCP connections with backends before failing a request.
   # -- This is also used to configure envoy timeouts for both upstream and downstream connections.
