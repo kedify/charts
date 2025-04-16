@@ -120,6 +120,11 @@ spec:
         - name: KEDIFY_PROXY_PER_CONNECTION_BUFFER_LIMIT_BYTES
           value: "{{ int .Values.interceptor.envoy.perConnectionBufferLimitBytes }}"
         {{- end }}
+        - name: KEDIFY_DEFAULT_MAINTENANCE_PAGE
+          value: |
+            {{ .Values.interceptor.maintenancePage.body }}
+        - name: KEDIFY_DEFAULT_MAINTENANCE_PAGE_RESPONSE_CODE
+          value: "{{ .Values.interceptor.maintenancePage.responseStatusCode }}"
         {{- range .Values.interceptor.additionalEnvVars }}
         - name: "{{ .name }}"
           value: "{{ .value }}"
