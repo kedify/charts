@@ -268,6 +268,23 @@ interceptor:
   #   listener:
   #     tcpBacklogSize: 128
   #   perConnectionBufferLimitBytes: 1048576
+  #
+  # # configuration for kedify-proxy envoy rate limiting
+  #   upstreamRateLimiting:
+  #     # -- The maximum number of connections that Envoy will make to the upstream cluster.
+  #     # If not specified, the default is 8192.
+  #     maxConnections: 8192
+  #     # -- The maximum number of requests per second that the interceptor will allow for upstream requests
+  #     # The maximum number of parallel requests that Envoy will make to the upstream cluster.
+  #     # If not specified, the default is 8192. This limit does not apply to non-HTTP traffic.
+  #     maxRequests: 8192
+  #     # -- The maximum number of pending requests that Envoy will allow to the upstream cluster.
+  #     # If not specified, the default is 8192. This limit is applied as a connection limit for non-HTTP traffic.
+  #     maxPendingRequests: 8192
+  #     # -- The maximum number of parallel retries that Envoy will allow to the upstream cluster.
+  #     # If not specified, the default is 3.
+  #     maxRetries: 3
+
   # -- Maintenance page configuration for the interceptor
   maintenancePage:
     # -- The HTML body displayed when maintenance mode for a certain application is enabled, limited to 256 KiB

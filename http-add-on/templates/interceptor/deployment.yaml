@@ -125,6 +125,22 @@ spec:
             {{ .Values.interceptor.maintenancePage.body }}
         - name: KEDIFY_DEFAULT_MAINTENANCE_PAGE_RESPONSE_CODE
           value: "{{ .Values.interceptor.maintenancePage.responseStatusCode }}"
+        {{- if ((.Values.interceptor.envoy).upstreamRateLimiting).maxConnections }}
+        - name: KEDA_HTTP_PROXY_MAX_UPSTREAM_CONNECTIONS
+          value: "{{ .Values.interceptor.envoy.upstreamRateLimiting.maxConnections }}"
+        {{- end }}
+        {{- if ((.Values.interceptor.envoy).upstreamRateLimiting).maxPendingRequests }}
+        - name: KEDA_HTTP_PROXY_MAX_UPSTREAM_PENDING_REQUESTS
+          value: "{{ .Values.interceptor.envoy.upstreamRateLimiting.maxPendingRequests }}"
+        {{- end }}
+        {{- if ((.Values.interceptor.envoy).upstreamRateLimiting).maxRequests }}
+        - name: KEDA_HTTP_PROXY_MAX_UPSTREAM_REQUESTS
+          value: "{{ .Values.interceptor.envoy.upstreamRateLimiting.maxRequests }}"
+        {{- end }}
+        {{- if ((.Values.interceptor.envoy).upstreamRateLimiting).maxRetries }}
+        - name: KEDA_HTTP_PROXY_MAX_UPSTREAM_RETRIES
+          value: "{{ .Values.interceptor.envoy.upstreamRateLimiting.maxRetries }}"
+        {{- end }}
         {{- range .Values.interceptor.additionalEnvVars }}
         - name: "{{ .name }}"
           value: "{{ .value }}"
