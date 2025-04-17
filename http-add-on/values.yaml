@@ -270,6 +270,7 @@ interceptor:
   #   perConnectionBufferLimitBytes: 1048576
   #
   # # configuration for kedify-proxy envoy rate limiting
+  # # https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_circuit_breakers#circuit-breaking
   #   upstreamRateLimiting:
   #     # -- The maximum number of connections that Envoy will make to the upstream cluster.
   #     # If not specified, the default is 8192.
