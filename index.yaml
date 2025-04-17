@@ -44,9 +44,9 @@ entries:
     version: 2.17.0-rc0
   - apiVersion: v2
     appVersion: 2.16.1
-    created: "2025-03-26T13:40:37.150072649+01:00"
+    created: "2025-04-17T15:28:56.265106871Z"
     description: Event-based autoscaler for workloads on Kubernetes
-    digest: f6acc7b8e4bf15912bb6ef36790916f3432acac2367f3d1dde8d83748ddc331e
+    digest: d80df0e5c6dc18ab50a5069f828c4e97384cdd420ee94570156fe6256390bb49
     home: https://github.com/kedacore/keda
     icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
     kubeVersion: '>=v1.23.0-0'
@@ -1574,4 +1574,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2025-04-17T14:15:58.412908891Z"
+generated: "2025-04-17T15:28:56.259733656Z"
