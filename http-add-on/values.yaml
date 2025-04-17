@@ -268,6 +268,13 @@ interceptor:
   #   listener:
   #     tcpBacklogSize: 128
   #   perConnectionBufferLimitBytes: 1048576
+  # -- Maintenance page configuration for the interceptor
+  maintenancePage:
+    # -- The HTML body displayed when maintenance mode for a certain application is enabled, limited to 256 KiB
+    body: |
+      Service is temporarily under maintenance. Please try again later.
+    # -- The HTTP status code to return when maintenance mode for a certain application is enabled
+    responseStatusCode: 503
 
 # configuration for the images to use for each component
 images:
