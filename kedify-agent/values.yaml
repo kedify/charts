@@ -180,6 +180,9 @@ agent:
   tolerations: []
   affinity: {}
 
+  # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
+  extraArgs: {}
+
 # dependent helm charts
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml
