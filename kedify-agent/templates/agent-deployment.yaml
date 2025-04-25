@@ -33,6 +33,9 @@ spec:
           {{- if .Values.agent.logging.stackTracesEnabled }}
           - --zap-stacktrace-level=error
           {{- end }}
+          {{- range $key, $value := .Values.agent.extraArgs }}
+          - "--{{ $key }}={{ $value }}"
+          {{- end }}
           command:
             - /manager
           env:
