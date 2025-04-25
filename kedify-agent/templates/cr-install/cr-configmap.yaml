@@ -17,8 +17,8 @@ data:
       namespace: {{ .Release.Namespace }}
     spec:
       clusterName: {{ .Values.clusterName }}
-      {{- if .Values.cloudAccountID }}
-      cloudAccountID: "{{ .Values.cloudAccountID }}"
+      {{- if .Values.agent.cloudAccountID }}
+      cloudAccountID: "{{ .Values.agent.cloudAccountID }}"
       {{- end }}
       kedaInstallations:
       - agentAutoUpdate: false
