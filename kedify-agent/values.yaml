@@ -1,4 +1,5 @@
 clusterName: "cluster-1"
+cloudAccountID: ""
 
 # when set to true, the schema validation will be disabled
 disableSchemaValidation: false 
@@ -20,7 +21,6 @@ agent:
   # for the billing purposes for this Agent (supported values: "aws", "gcp", "azure")
   billingCloudProvider: ""
 
-  
   logging:
     # Log level for the agent
     # Can be one of 'debug', 'info', 'error', or any integer value > 0
