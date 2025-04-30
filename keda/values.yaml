@@ -14,21 +14,21 @@ image:
     # -- Image name of KEDA operator
     repository: kedify/keda-operator
     # -- Image tag of KEDA operator. Optional, given app version of Helm chart is used by default
-    tag: "v2.16.1-2"
+    tag: "v2.16.1-3"
   metricsApiServer:
     # -- Image registry of KEDA Metrics API Server
     registry: ghcr.io
     # -- Image name of KEDA Metrics API Server
     repository: kedify/keda-metrics-apiserver
     # -- Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default
-    tag: "v2.16.1-2"
+    tag: "v2.16.1-3"
   webhooks:
     # -- Image registry of KEDA admission-webhooks
     registry: ghcr.io
     # -- Image name of KEDA admission-webhooks
     repository: kedify/keda-admission-webhooks
     # -- Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default
-    tag: "v2.16.1-2"
+    tag: "v2.16.1-3"
   # -- Image pullPolicy for all KEDA components
   pullPolicy: Always
 
