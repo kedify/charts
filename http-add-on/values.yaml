@@ -289,10 +289,20 @@ interceptor:
   # -- Maintenance page configuration for the interceptor
   maintenancePage:
     # -- The HTML body displayed when maintenance mode for a certain application is enabled, limited to 256 KiB
-    body: |
+    body: |-
       Service is temporarily under maintenance. Please try again later.
     # -- The HTTP status code to return when maintenance mode for a certain application is enabled
     responseStatusCode: 503
+
+  # -- Cold start waiting page configuration defaults for the interceptor
+  coldStartWaitingPage:
+    # -- The HTML body displayed when the application has cold-start waiting page enabled, limited to 256 KiB
+    body: |-
+      Service is starting. Please try again later.
+    # -- The HTTP status code to return when the application has cold-start waiting page enabled
+    responseStatusCode: 503
+    # -- Value in the `Retry-After` header to return when the application has cold-start waiting page enabled
+    retryAfter: 60s 
 
 # configuration for the images to use for each component
 images:
