@@ -122,9 +122,16 @@ spec:
         {{- end }}
         - name: KEDIFY_DEFAULT_MAINTENANCE_PAGE
           value: |
-            {{ .Values.interceptor.maintenancePage.body }}
+{{ .Values.interceptor.maintenancePage.body | indent 12 }}
         - name: KEDIFY_DEFAULT_MAINTENANCE_PAGE_RESPONSE_CODE
           value: "{{ .Values.interceptor.maintenancePage.responseStatusCode }}"
+        - name: KEDIFY_DEFAULT_COLD_START_WAITING_PAGE
+          value: |
+{{ .Values.interceptor.coldStartWaitingPage.body | indent 12 }}
+        - name: KEDIFY_DEFAULT_COLD_START_WAITING_PAGE_RESPONSE_CODE
+          value: "{{ .Values.interceptor.coldStartWaitingPage.responseStatusCode }}"
+        - name: KEDIFY_DEFAULT_COLD_START_WAITING_PAGE_RETRY_AFTER
+          value: "{{ .Values.interceptor.coldStartWaitingPage.retryAfter }}"
         {{- if ((.Values.interceptor.envoy).upstreamRateLimiting).maxConnections }}
         - name: KEDIFY_HTTP_PROXY_MAX_UPSTREAM_CONNECTIONS
           value: "{{ int .Values.interceptor.envoy.upstreamRateLimiting.maxConnections }}"
