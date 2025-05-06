@@ -19,8 +19,10 @@ agent:
   # optional field, if you use a mix of cloud providers for billing, you can specify the cloud provider
   # for the billing purposes for this Agent (supported values: "aws", "gcp", "azure")
   billingCloudProvider: ""
+  # optional field, if you use a mix of cloud providers for billing, specify the cloud account ID
+  # for example, if you use AWS, this would be the AWS account ID
+  cloudAccountID: ""
 
-  
   logging:
     # Log level for the agent
     # Can be one of 'debug', 'info', 'error', or any integer value > 0
