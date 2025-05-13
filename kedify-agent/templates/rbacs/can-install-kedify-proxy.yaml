@@ -8,9 +8,9 @@ metadata:
 rules:
 # Kedify needs to configure envoy proxy also in other namespaces & deploy it
 - apiGroups:
-  - ""
+  - discovery.k8s.io
   resources:
-  - endpoints
+  - endpointslices
   verbs:
   - create
   - delete
