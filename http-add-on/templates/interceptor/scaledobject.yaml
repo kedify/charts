@@ -1,4 +1,5 @@
 {{- if or .Values.interceptor.scaledObject.pendingRequestsTrigger.enabled .Values.interceptor.scaledObject.cpuTrigger.enabled .Values.interceptor.scaledObject.memoryTrigger.enabled }}
+{{- if not .Values.interceptor.scaledObject.waitForCrd }}
 # this is the ScaledObject that tells KEDA to scale the interceptor fleet
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -35,4 +36,5 @@ spec:
         value: "{{ .Values.interceptor.scaledObject.memoryTrigger.target }}"
       metricType: Utilization
     {{- end }}
+{{- end }}
 {{- end }}
