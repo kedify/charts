@@ -163,6 +163,8 @@ interceptor:
   scaledObject:
     # -- The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
     pollingInterval: 1
+    # -- when enabled, the scaled object will be installed as post-install hook which waits for the ScaledObject CRD to exist
+    waitForCrd: false
     # -- Use the interceptor's `pendingRequests` metric to scale the interceptor
     # When using kedify-proxy, this metric is not a good indicator of the load on the interceptor, so it is disabled by default.
     pendingRequestsTrigger:
