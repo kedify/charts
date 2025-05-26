@@ -28,8 +28,6 @@ rules:
   - patch
   - create
   - get
-  resourceNames:
-  - {{ .Chart.Name }}-interceptor
 - apiGroups:
   - apiextensions.k8s.io
   resources:

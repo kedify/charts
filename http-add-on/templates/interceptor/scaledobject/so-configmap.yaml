@@ -20,7 +20,6 @@ data:
       labels:
         app.kubernetes.io/component: interceptor
         app.kubernetes.io/name: http-add-on
-        {{- include "keda-http-add-on.labels" . | indent 4 }}
     spec:
       minReplicaCount: {{ .Values.interceptor.replicas.min }}
       maxReplicaCount: {{ .Values.interceptor.replicas.max }}
