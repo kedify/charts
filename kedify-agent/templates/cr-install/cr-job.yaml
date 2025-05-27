@@ -37,7 +37,7 @@ spec:
             path: default-kedifyconfig.yaml
       initContainers:
       - name: wait-crds
-        image: "quay.io/giantswarm/docker-kubectl:1.29.2"
+        image: "ghcr.io/kedify/kubectl:v1.33.1"
         imagePullPolicy: IfNotPresent
         command:
         - sh
@@ -51,7 +51,7 @@ spec:
           done
       containers:
       - name: create-default-kedifyconfig
-        image: "quay.io/giantswarm/docker-kubectl:1.29.2"
+        image: "ghcr.io/kedify/kubectl:v1.33.1"
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
