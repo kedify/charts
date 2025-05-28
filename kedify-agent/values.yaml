@@ -210,7 +210,17 @@ agent:
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml
   enabled: false
+  prometheus:
+    operator:
+      enabled: true
+    metricServer:
+      enabled: true
+    webhooks:
+      enabled: true
 
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
+  interceptor:
+    scaledObject:
+      waitForCrd: true
