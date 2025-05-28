@@ -105,9 +105,14 @@ agent:
   image:
     tag: "v0.2.5"
     repository: ghcr.io/kedify/agent
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   imagePullSecrets: []
 
+  # container image for {post,pre}-install helm hooks that help with CR(D) installation
+  kubectlImage:
+    tag: "v1.33.1"
+    repository: ghcr.io/kedify/kubectl
+    pullPolicy: Always
   # comma-separated list of namespaces where pod utilization metrics should be collected
   # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
   metricsWatchNamespace: ""

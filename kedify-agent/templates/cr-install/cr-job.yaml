@@ -25,6 +25,10 @@ spec:
       securityContext:
         runAsUser: 1000
         runAsGroup: 2000
+      {{- with .Values.agent.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
@@ -37,8 +41,8 @@ spec:
             path: default-kedifyconfig.yaml
       initContainers:
       - name: wait-crds
-        image: "ghcr.io/kedify/kubectl:v1.33.1"
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
         command:
         - sh
         args:
@@ -51,8 +55,8 @@ spec:
           done
       containers:
       - name: create-default-kedifyconfig
-        image: "ghcr.io/kedify/kubectl:v1.33.1"
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
