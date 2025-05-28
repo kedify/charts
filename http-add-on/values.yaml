@@ -404,3 +404,10 @@ securityContext:
 
 kedifyProxy:
   accessLogType: "" # disabled, use 'plaintext' or 'json' to enable
+
+# container image for {post,pre}-install helm hooks that help with CR(D) installation
+kubectlImage:
+  tag: "v1.33.1"
+  repository: ghcr.io/kedify/kubectl
+  pullPolicy: Always
+  pullSecrets: []
