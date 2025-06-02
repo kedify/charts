@@ -66,7 +66,7 @@ spec:
         {{- if .Values.logging.operator.stackTracesEnabled }}
         - "--zap-stacktrace-level=error"
         {{- end }}
-        image: "{{ .Values.images.operator }}:{{ coalesce .Values.images.tag .Values.pinnedImages.operator.tag .Chart.AppVersion }}"
+        image: "{{ .Values.images.operator }}:{{ coalesce .Values.pinnedImages.operator.tag .Values.images.tag .Chart.AppVersion }}"
         imagePullPolicy: '{{ .Values.operator.pullPolicy | default "Always" }}'
         name: "{{ .Chart.Name }}-operator"
         env:
