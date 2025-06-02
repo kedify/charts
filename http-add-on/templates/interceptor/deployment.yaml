@@ -46,7 +46,7 @@ spec:
         {{- if .Values.logging.interceptor.stackTracesEnabled }}
         - "--zap-stacktrace-level=error"
         {{- end }}
-        image: "{{ .Values.images.interceptor }}:{{ .Values.images.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.images.interceptor }}:{{ coalesce .Values.images.tag .Values.pinnedImages.interceptor.tag .Chart.AppVersion }}"
         imagePullPolicy: '{{ .Values.interceptor.pullPolicy | default "Always" }}'
         name: "{{ .Chart.Name }}-interceptor"
         env:
