@@ -1,0 +1,85 @@
+{{- if or .Values.interceptor.scaledObject.pendingRequestsTrigger.enabled .Values.interceptor.scaledObject.cpuTrigger.enabled .Values.interceptor.scaledObject.memoryTrigger.enabled }}
+{{- if .Values.interceptor.scaledObject.waitForCrd }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-interceptor-scaledobject
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: create-interceptor-scaledobject
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
+spec:
+  ttlSecondsAfterFinished: 43200 # 12h
+  backoffLimit: 4
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: create-interceptor-scaledobject
+    spec:
+      restartPolicy: Never
+      serviceAccountName: install-interceptor-so
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 2000
+      {{- with .Values.kubectlImage.pullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      volumes:
+      - name: interceptor-scaledobject
+        configMap:
+          name: interceptor-scaledobject
+          items:
+          - key: content
+            path: interceptor-scaledobject.yaml
+      initContainers:
+      - name: wait-crds
+        image: "{{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+        command:
+        - sh
+        args:
+        - -c
+        - |
+          set -o nounset
+          for i in $(seq 20)
+          do
+            kubectl get crd scaledobjects.keda.sh 2>&1 && exit 0
+            _sec=$(echo "1.5^$i" | bc)
+            echo "Waiting ${_sec} seconds for CRD scaledobjects.keda.sh to exist"
+            sleep ${_sec}
+          done
+      containers:
+      - name: create-interceptor-scaledobject
+        image: "{{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: interceptor-scaledobject
+          mountPath: /data/interceptor-scaledobject.yaml
+          subPath: interceptor-scaledobject.yaml
+        command:
+        - sh
+        args:
+        - -c
+        - |
+          set -o nounset
+          for i in $(seq 20)
+          do
+            kubectl apply -f /data/ 2>&1 && exit 0
+            _sec=$(echo "1.5^$i" | bc)
+            echo "Waiting ${_sec} seconds.."
+            sleep ${_sec}
+          done
+          exit 1
+{{- end }}
+{{- end }}

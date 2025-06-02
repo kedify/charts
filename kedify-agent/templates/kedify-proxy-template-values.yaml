@@ -1,6 +1,12 @@
 {{- if not .Values.agent.kedifyProxy.clusterWide }}
-{{- range $ns, $values := .Values.agent.kedifyProxy.namespacedValues }}
-{{ $merged := merge $values $.Values.agent.kedifyProxy.globalValues }}
+{{- $namespacesValues := keys .Values.agent.kedifyProxy.namespacedValues }}
+{{- $namespacesEnvoyConfigs := keys .Values.agent.kedifyProxy.namespacedEnvoyConfigs }}
+{{- $allNamespaces := concat $namespacesValues $namespacesEnvoyConfigs | sortAlpha | uniq }}
+{{- range $ns := $allNamespaces }}
+{{- $values := index $.Values.agent.kedifyProxy.namespacedValues $ns | default dict }}
+{{- $envoyConfigsRoute := (index $.Values.agent.kedifyProxy.namespacedEnvoyConfigs $ns | default dict).route | default dict }}
+{{- $mergedValues := merge $values $.Values.agent.kedifyProxy.globalValues }}
+{{- $mergedEnvoyConfigsRoute := merge $envoyConfigsRoute $.Values.agent.kedifyProxy.globalEnvoyConfigs.route }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,6 +22,9 @@ data:
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # this configmap holds the helm chart values for kedify proxy for namespace {{ $ns }} and will take precedence
     # over the global configmap in the keda namespace
-{{- toYaml $merged | nindent 4 }}
+{{- toYaml $mergedValues | nindent 4 }}
+  envoy-config-route: |
+    route:
+{{- toYaml $mergedEnvoyConfigsRoute | nindent 6 }}
 {{- end }}
 {{- end }}

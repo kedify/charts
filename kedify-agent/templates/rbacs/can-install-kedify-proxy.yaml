@@ -105,24 +105,6 @@ rules:
   - secrets
   verbs:
   - create
-
-{{- if .Values.agent.kedifyProxy.clusterWide }}
----
-# counterintuitive, but 'clusterWide' => only 1 proxy in the {{ .Release.Namespace }} namespace (hence no need for global RBAC - using RoleBinding&ClusterRole)
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: kedify-agent-can-install-kedify-proxy
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: can-install-kedify-proxy
-subjects:
-- kind: ServiceAccount
-  name: kedify-agent
-  namespace: {{ .Release.Namespace }}
-{{- else }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -136,6 +118,5 @@ subjects:
 - kind: ServiceAccount
   name: kedify-agent
   namespace: {{ .Release.Namespace }}
-{{- end }}
 {{- end }}
 {{- end }}

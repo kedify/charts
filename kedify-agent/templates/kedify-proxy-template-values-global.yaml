@@ -12,3 +12,6 @@ data:
   content: |
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
 {{- toYaml .Values.agent.kedifyProxy.globalValues | nindent 4 }}
+  envoy-config-route: |
+    route:
+{{- toYaml .Values.agent.kedifyProxy.globalEnvoyConfigs.route | nindent 6 }}

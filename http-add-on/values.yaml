@@ -163,6 +163,8 @@ interceptor:
   scaledObject:
     # -- The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
     pollingInterval: 1
+    # -- when enabled, the scaled object will be installed as post-install hook which waits for the ScaledObject CRD to exist
+    waitForCrd: false
     # -- Use the interceptor's `pendingRequests` metric to scale the interceptor
     # When using kedify-proxy, this metric is not a good indicator of the load on the interceptor, so it is disabled by default.
     pendingRequestsTrigger:
@@ -314,7 +316,7 @@ images:
   # the build for the latest commit to the `main` branch,
   # and you can target any other commit with `sha-<GIT_SHA[0:7]>`
   # -- Image tag for the http add on. This tag is applied to the images listed in `images.operator`, `images.interceptor`, and `images.scaler`. Optional, given app version of Helm chart is used by default
-  tag: v0.10.0-7
+  tag: v0.10.0-10
   # -- Image name for the operator image component
   operator: ghcr.io/kedify/http-add-on-operator
   # -- Image name for the interceptor image component
@@ -327,6 +329,16 @@ images:
     name: gcr.io/kubebuilder/kube-rbac-proxy
     # -- Image tag for the Kube RBAC Proxy image component
     tag: v0.16.0
+
+# set of pinned images to use for the components
+# this is useful when you want to use a specific image version for a component
+pinnedImages:
+  interceptor:
+    tag: ""
+  scaler:
+    tag: ""
+  operator:
+    tag: ""
 
 rbac:
   # -- Install aggregate roles for edit and view
@@ -402,3 +414,10 @@ securityContext:
 
 kedifyProxy:
   accessLogType: "" # disabled, use 'plaintext' or 'json' to enable
+
+# container image for {post,pre}-install helm hooks that help with CR(D) installation
+kubectlImage:
+  tag: "v1.33.1"
+  repository: ghcr.io/kedify/kubectl
+  pullPolicy: Always
+  pullSecrets: []
