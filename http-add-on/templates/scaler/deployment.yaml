@@ -47,7 +47,7 @@ spec:
         {{- if .Values.logging.scaler.stackTracesEnabled }}
         - "--zap-stacktrace-level=error"
         {{- end }}
-        image: "{{ .Values.images.scaler }}:{{ coalesce .Values.images.tag .Values.pinnedImages.scaler.tag .Chart.AppVersion }}"
+        image: "{{ .Values.images.scaler }}:{{ coalesce .Values.pinnedImages.scaler.tag .Values.images.tag .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.scaler.pullPolicy | default "Always" }}
         name: "{{ .Chart.Name }}-external-scaler"
         ports:
