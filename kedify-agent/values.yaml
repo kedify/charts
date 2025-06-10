@@ -54,11 +54,15 @@ agent:
         format: plaintext
 
     # configuration options for kedify-proxy envoy fleet xDS
-    # see available options:
-    # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#config-route-v3-routeaction
     globalEnvoyConfigs:
+      # see available options:
+      # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#config-route-v3-routeaction
       route:
         idle_timeout: 3600s # 1 hour
+      # see available options:
+      # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto
+      cluster:
+        lb_policy: ROUND_ROBIN
 
     # This is a namespaced helm template that will be used for desired namespaces (if `.agent.kedifyProxy.clusterWide` is off).
     # example of overriding the global template for namespaces 'prodNamespace' and 'testNamespace':

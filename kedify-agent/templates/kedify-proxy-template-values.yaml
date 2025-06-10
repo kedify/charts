@@ -4,9 +4,12 @@
 {{- $allNamespaces := concat $namespacesValues $namespacesEnvoyConfigs | sortAlpha | uniq }}
 {{- range $ns := $allNamespaces }}
 {{- $values := index $.Values.agent.kedifyProxy.namespacedValues $ns | default dict }}
-{{- $envoyConfigsRoute := (index $.Values.agent.kedifyProxy.namespacedEnvoyConfigs $ns | default dict).route | default dict }}
+{{- $envoyConfig := index $.Values.agent.kedifyProxy.namespacedEnvoyConfigs $ns | default dict }}
+{{- $envoyConfigRoute := $envoyConfig.route | default dict }}
+{{- $envoyConfigCluster := $envoyConfig.cluster | default dict }}
 {{- $mergedValues := merge $values $.Values.agent.kedifyProxy.globalValues }}
-{{- $mergedEnvoyConfigsRoute := merge $envoyConfigsRoute $.Values.agent.kedifyProxy.globalEnvoyConfigs.route }}
+{{- $mergedEnvoyConfigRoute := merge $envoyConfigRoute $.Values.agent.kedifyProxy.globalEnvoyConfigs.route }}
+{{- $mergedEnvoyConfigCluster := merge $envoyConfigCluster $.Values.agent.kedifyProxy.globalEnvoyConfigs.cluster }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -25,6 +28,8 @@ data:
 {{- toYaml $mergedValues | nindent 4 }}
   envoy-config-route: |
     route:
-{{- toYaml $mergedEnvoyConfigsRoute | nindent 6 }}
+{{- toYaml $mergedEnvoyConfigRoute | nindent 6 }}
+  envoy-config-cluster: |
+{{- toYaml $mergedEnvoyConfigCluster | nindent 4 }}
 {{- end }}
 {{- end }}

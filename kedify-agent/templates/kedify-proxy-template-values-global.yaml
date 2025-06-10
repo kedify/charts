@@ -15,3 +15,5 @@ data:
   envoy-config-route: |
     route:
 {{- toYaml .Values.agent.kedifyProxy.globalEnvoyConfigs.route | nindent 6 }}
+  envoy-config-cluster: |
+{{- toYaml .Values.agent.kedifyProxy.globalEnvoyConfigs.cluster | nindent 4 }}
