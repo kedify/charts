@@ -596,6 +596,27 @@ entries:
     version: v2.13.1-0
   keda-add-ons-http:
   - apiVersion: v2
+    appVersion: v0.10.0-12
+    created: "2025-06-11T14:29:47.264516557Z"
+    description: Event-based autoscaler for HTTP workloads on Kubernetes
+    digest: 3a97525a7007bb3dce6a1cc7d77ab67286de6e843ebf9d6d23675244f42ba781
+    home: https://github.com/kedacore/http-add-on
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: jorge_turrado@hotmail.es
+      name: Jorge Turrado
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    - email: jan@kedify.io
+      name: Jan Wozniak
+    name: keda-add-ons-http
+    sources:
+    - https://github.com/kedacore/http-add-on
+    type: application
+    urls:
+    - https://kedify.github.io/charts/keda-add-ons-http-v0.10.0-12.tgz
+    version: v0.10.0-12
+  - apiVersion: v2
     appVersion: v0.10.0-11
     created: "2025-06-04T18:49:35.262424511Z"
     description: Event-based autoscaler for HTTP workloads on Kubernetes
@@ -1976,4 +1997,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2025-06-09T11:19:06.98705248Z"
+generated: "2025-06-11T14:29:47.263083736Z"
