@@ -22,9 +22,6 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: install-crs
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 2000
       {{- with .Values.agent.imagePullSecrets }}
       imagePullSecrets:
       {{- toYaml . | nindent 8 }}
@@ -53,12 +50,18 @@ spec:
             echo "Waiting for CRD kedifyconfigurations.install.kedify.io to exist"
             sleep 5
           done
+        {{- with .Values.agent.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
       - name: create-default-kedifyconfig
         image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
         imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
+        {{- with .Values.agent.securityContext }}
         securityContext:
-          readOnlyRootFilesystem: true
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         volumeMounts:
         - name: default-kedifyconfig
           mountPath: /data/default-kedifyconfig.yaml

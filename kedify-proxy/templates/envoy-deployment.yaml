@@ -77,9 +77,10 @@ spec:
                     log "Timeout reached with active connections: $active_connections, terminating anyway"
                     exit 1
           env:
+            {{- if .Values.pod.containerSecurityContext.runAsUser }}
             - name: ENVOY_UID
               value: {{ .Values.pod.containerSecurityContext.runAsUser | quote }}
-
+            {{- end }}
             # envoy config https://www.envoyproxy.io/docs/envoy/latest/configuration/overview/overview
             - name: ENVOY_CONFIG
               value: |-
