@@ -41,7 +41,7 @@ agent:
     # enable to set cluster wide deployment (supported only for istio VirtualService and Gateway API HTTPRoute)
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
-    chart: /helm/kedify/kedify-proxy.tgz
+    chart: oci://ghcr.io/kedify/charts/kedify-proxy
     chartVersion: v0.0.3
 
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
