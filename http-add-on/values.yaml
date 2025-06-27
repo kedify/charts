@@ -348,6 +348,7 @@ rbac:
 # @default -- [See below](#KEDA-is-secure-by-default)
 securityContext:
   allowPrivilegeEscalation: false
+  runAsNonRoot: true
   capabilities:
     drop:
     - ALL

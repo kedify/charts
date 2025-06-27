@@ -47,7 +47,14 @@ pod:
   securityContext: {}
   # -- container-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
   containerSecurityContext:
-    runAsUser: 101
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+      - ALL
   # -- [docs](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)
   priorityClassName: ""
   # -- custom timeouts and thresholds for liveness probe
