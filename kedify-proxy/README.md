@@ -1,6 +1,6 @@
 # kedify-proxy
 
-![Version: v0.0.1](https://img.shields.io/badge/Version-v0.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.33.0](https://img.shields.io/badge/AppVersion-v1.33.0-informational?style=flat-square)
+![Version: v0.0.3](https://img.shields.io/badge/Version-v0.0.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.34.1](https://img.shields.io/badge/AppVersion-v1.34.1-informational?style=flat-square)
 
 A Helm chart for Kedify proxy
 
@@ -190,8 +190,76 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                </td>
           </tr>
           <tr>
+               <td id="config--overloadManager">
+               <a href="./values.yaml#L33">config.overloadManager</a><br/>
+               (object)
+               </td>
+               <td>
+               overloadManager static configuration by default, the overload manager is disabled which means that there is no limit on active downstream connections NOTE: changing any values here restarts all kedify-proxy instances
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+{
+  "enabled": false,
+  "maxActiveDownstreamConnections": 10000,
+  "refreshInterval": "0.25s"
+}
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
+               <td id="config--overloadManager--enabled">
+               <a href="./values.yaml#L35">config.overloadManager.enabled</a><br/>
+               (bool)
+               </td>
+               <td>
+               enabled toggle to enable/disable overload manager
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+false
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
+               <td id="config--overloadManager--refreshInterval">
+               <a href="./values.yaml#L37">config.overloadManager.refreshInterval</a><br/>
+               (string)
+               </td>
+               <td>
+               refresh interval for the overload manager
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+"0.25s"
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
+               <td id="config--overloadManager--maxActiveDownstreamConnections">
+               <a href="./values.yaml#L39">config.overloadManager.maxActiveDownstreamConnections</a><br/>
+               (int)
+               </td>
+               <td>
+               max active downstream connections
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+10000
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
                <td id="pod--annotations">
-               <a href="./values.yaml#L33">pod.annotations</a><br/>
+               <a href="./values.yaml#L43">pod.annotations</a><br/>
                (object)
                </td>
                <td>
@@ -207,7 +275,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--labels">
-               <a href="./values.yaml#L35">pod.labels</a><br/>
+               <a href="./values.yaml#L45">pod.labels</a><br/>
                (object)
                </td>
                <td>
@@ -223,7 +291,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--securityContext">
-               <a href="./values.yaml#L37">pod.securityContext</a><br/>
+               <a href="./values.yaml#L47">pod.securityContext</a><br/>
                (object)
                </td>
                <td>
@@ -239,7 +307,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--containerSecurityContext">
-               <a href="./values.yaml#L39">pod.containerSecurityContext</a><br/>
+               <a href="./values.yaml#L49">pod.containerSecurityContext</a><br/>
                (object)
                </td>
                <td>
@@ -249,7 +317,17 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                     <div style="max-width: 200px;">
 <pre lang="json">
 {
-  "runAsUser": 101
+  "allowPrivilegeEscalation": false,
+  "capabilities": {
+    "drop": [
+      "ALL"
+    ]
+  },
+  "readOnlyRootFilesystem": true,
+  "runAsNonRoot": true,
+  "seccompProfile": {
+    "type": "RuntimeDefault"
+  }
 }
 </pre>
 </div>
@@ -257,7 +335,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--priorityClassName">
-               <a href="./values.yaml#L42">pod.priorityClassName</a><br/>
+               <a href="./values.yaml#L59">pod.priorityClassName</a><br/>
                (string)
                </td>
                <td>
@@ -273,7 +351,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--livenessProbe">
-               <a href="./values.yaml#L44">pod.livenessProbe</a><br/>
+               <a href="./values.yaml#L61">pod.livenessProbe</a><br/>
                (object)
                </td>
                <td>
@@ -283,13 +361,13 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                     <div style="max-width: 200px;">
 <pre lang="json">
 {
-  "failureThreshold": 3,
+  "failureThreshold": 5,
   "httpGet": {
     "path": "/ready",
     "port": "admin"
   },
-  "initialDelaySeconds": 1,
-  "periodSeconds": 1
+  "initialDelaySeconds": 5,
+  "periodSeconds": 2
 }
 </pre>
 </div>
@@ -297,7 +375,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--readinessProbe">
-               <a href="./values.yaml#L52">pod.readinessProbe</a><br/>
+               <a href="./values.yaml#L69">pod.readinessProbe</a><br/>
                (object)
                </td>
                <td>
@@ -321,11 +399,11 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--preStopHookWaitSeconds">
-               <a href="./values.yaml#L62">pod.preStopHookWaitSeconds</a><br/>
+               <a href="./values.yaml#L77">pod.preStopHookWaitSeconds</a><br/>
                (int)
                </td>
                <td>
-               custom timeout for graceful shutdown, should be larger than: readiness probe threshold * period
+               custom timeout for graceful shutdown, should be smaller or equal to terminationGracePeriodSeconds
                </td>
                <td>
                     <div style="max-width: 200px;">
@@ -337,11 +415,11 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="pod--terminationGracePeriodSeconds">
-               <a href="./values.yaml#L64">pod.terminationGracePeriodSeconds</a><br/>
+               <a href="./values.yaml#L79">pod.terminationGracePeriodSeconds</a><br/>
                (int)
                </td>
                <td>
-               custom timeout for pod termination, should be larger than: preStopHookWaitSeconds + (readiness probe threshold * period)
+               custom timeout for pod termination, should be larger or equal to preStopHookWaitSeconds
                </td>
                <td>
                     <div style="max-width: 200px;">
@@ -353,7 +431,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="deployment--replicas">
-               <a href="./values.yaml#L68">deployment.replicas</a><br/>
+               <a href="./values.yaml#L83">deployment.replicas</a><br/>
                (int)
                </td>
                <td>
@@ -369,7 +447,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="deployment--rollingUpdate">
-               <a href="./values.yaml#L70">deployment.rollingUpdate</a><br/>
+               <a href="./values.yaml#L85">deployment.rollingUpdate</a><br/>
                (object)
                </td>
                <td>
@@ -385,7 +463,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="service--enabled">
-               <a href="./values.yaml#L77">service.enabled</a><br/>
+               <a href="./values.yaml#L92">service.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -401,7 +479,7 @@ true
           </tr>
           <tr>
                <td id="service--type">
-               <a href="./values.yaml#L79">service.type</a><br/>
+               <a href="./values.yaml#L94">service.type</a><br/>
                (string)
                </td>
                <td>
@@ -417,7 +495,7 @@ true
           </tr>
           <tr>
                <td id="service--annotations">
-               <a href="./values.yaml#L81">service.annotations</a><br/>
+               <a href="./values.yaml#L96">service.annotations</a><br/>
                (object)
                </td>
                <td>
@@ -433,7 +511,7 @@ true
           </tr>
           <tr>
                <td id="service--labels">
-               <a href="./values.yaml#L83">service.labels</a><br/>
+               <a href="./values.yaml#L98">service.labels</a><br/>
                (object)
                </td>
                <td>
@@ -449,7 +527,7 @@ true
           </tr>
           <tr>
                <td id="service--httpPort">
-               <a href="./values.yaml#L85">service.httpPort</a><br/>
+               <a href="./values.yaml#L100">service.httpPort</a><br/>
                (int)
                </td>
                <td>
@@ -465,7 +543,7 @@ true
           </tr>
           <tr>
                <td id="service--tlsPort">
-               <a href="./values.yaml#L87">service.tlsPort</a><br/>
+               <a href="./values.yaml#L102">service.tlsPort</a><br/>
                (int)
                </td>
                <td>
@@ -481,7 +559,7 @@ true
           </tr>
           <tr>
                <td id="service--exposeAdminInterface">
-               <a href="./values.yaml#L89">service.exposeAdminInterface</a><br/>
+               <a href="./values.yaml#L104">service.exposeAdminInterface</a><br/>
                (bool)
                </td>
                <td>
@@ -497,7 +575,7 @@ true
           </tr>
           <tr>
                <td id="service--adminSvcType">
-               <a href="./values.yaml#L91">service.adminSvcType</a><br/>
+               <a href="./values.yaml#L106">service.adminSvcType</a><br/>
                (string)
                </td>
                <td>
@@ -513,7 +591,7 @@ true
           </tr>
           <tr>
                <td id="service--adminPort">
-               <a href="./values.yaml#L93">service.adminPort</a><br/>
+               <a href="./values.yaml#L108">service.adminPort</a><br/>
                (int)
                </td>
                <td>
@@ -529,7 +607,7 @@ true
           </tr>
           <tr>
                <td id="resources">
-               <a href="./values.yaml#L96">resources</a><br/>
+               <a href="./values.yaml#L111">resources</a><br/>
                (object)
                </td>
                <td>
@@ -554,7 +632,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling">
-               <a href="./values.yaml#L106">autoscaling</a><br/>
+               <a href="./values.yaml#L121">autoscaling</a><br/>
                (object)
                </td>
                <td>
@@ -576,7 +654,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling--enabled">
-               <a href="./values.yaml#L108">autoscaling.enabled</a><br/>
+               <a href="./values.yaml#L123">autoscaling.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -592,7 +670,7 @@ false
           </tr>
           <tr>
                <td id="autoscaling--scaledObjectName">
-               <a href="./values.yaml#L110">autoscaling.scaledObjectName</a><br/>
+               <a href="./values.yaml#L125">autoscaling.scaledObjectName</a><br/>
                (string)
                </td>
                <td>
@@ -608,7 +686,7 @@ false
           </tr>
           <tr>
                <td id="volumes">
-               <a href="./values.yaml#L125">volumes</a><br/>
+               <a href="./values.yaml#L140">volumes</a><br/>
                (list)
                </td>
                <td>
@@ -624,7 +702,7 @@ false
           </tr>
           <tr>
                <td id="volumeMounts">
-               <a href="./values.yaml#L132">volumeMounts</a><br/>
+               <a href="./values.yaml#L147">volumeMounts</a><br/>
                (list)
                </td>
                <td>
@@ -640,7 +718,7 @@ false
           </tr>
           <tr>
                <td id="nodeSelector">
-               <a href="./values.yaml#L138">nodeSelector</a><br/>
+               <a href="./values.yaml#L153">nodeSelector</a><br/>
                (object)
                </td>
                <td>
@@ -656,7 +734,7 @@ false
           </tr>
           <tr>
                <td id="tolerations">
-               <a href="./values.yaml#L140">tolerations</a><br/>
+               <a href="./values.yaml#L155">tolerations</a><br/>
                (list)
                </td>
                <td>
@@ -672,7 +750,7 @@ false
           </tr>
           <tr>
                <td id="topologySpreadConstraints">
-               <a href="./values.yaml#L142">topologySpreadConstraints</a><br/>
+               <a href="./values.yaml#L157">topologySpreadConstraints</a><br/>
                (list)
                </td>
                <td>
@@ -688,7 +766,7 @@ false
           </tr>
           <tr>
                <td id="affinity">
-               <a href="./values.yaml#L144">affinity</a><br/>
+               <a href="./values.yaml#L159">affinity</a><br/>
                (object)
                </td>
                <td>
@@ -704,7 +782,7 @@ false
           </tr>
           <tr>
                <td id="podDisruptionBudget">
-               <a href="./values.yaml#L147">podDisruptionBudget</a><br/>
+               <a href="./values.yaml#L162">podDisruptionBudget</a><br/>
                (object)
                </td>
                <td>
@@ -723,7 +801,7 @@ false
           </tr>
           <tr>
                <td id="noBanner">
-               <a href="./values.yaml#L158">noBanner</a><br/>
+               <a href="./values.yaml#L173">noBanner</a><br/>
                (bool)
                </td>
                <td>
@@ -739,7 +817,7 @@ false
           </tr>
           <tr>
                <td id="extraObjects">
-               <a href="./values.yaml#L161">extraObjects</a><br/>
+               <a href="./values.yaml#L176">extraObjects</a><br/>
                (list)
                </td>
                <td>
