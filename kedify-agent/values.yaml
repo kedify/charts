@@ -201,7 +201,7 @@ agent:
   securityContext:
     runAsNonRoot: true
     allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
+    readOnlyRootFilesystem: false
     seccompProfile:
       type: RuntimeDefault
     capabilities:

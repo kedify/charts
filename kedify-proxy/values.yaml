@@ -47,6 +47,7 @@ pod:
   securityContext: {}
   # -- container-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
   containerSecurityContext:
+    runAsUser: 101
     runAsNonRoot: true
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
