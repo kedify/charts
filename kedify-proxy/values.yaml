@@ -15,6 +15,11 @@ logging:
   # -- Use: `plaintext` or `json`
   format: plaintext
 
+# -- Extra program arguments that should be passed to Envoy, consult [docs](https://www.envoyproxy.io/docs/envoy/latest/operations/cli)
+extraArgs: {}
+  # component-log-level: tracing:trace,connection:debug
+  # drain-strategy: immediate
+
 config:
   nodeId: kedify-proxy
   # -- namespace where Kedify HTTP addon is deployed
