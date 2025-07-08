@@ -38,6 +38,10 @@ spec:
             - "--log-format"
             - '{"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}'
             {{- end }}
+            {{- range $key, $value := .Values.extraArgs }}
+            - "--{{ $key }}"
+            - "{{ $value }}"
+            {{- end }}
             - "--config-yaml"
             - "$(ENVOY_CONFIG)"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
