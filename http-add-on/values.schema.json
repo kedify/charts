@@ -267,9 +267,16 @@
 							"required": [],
 							"properties": {
 								"pollingInterval": {
-									"type": "number",
-									"minimum": 0,
-									"default": 1
+									"anyOf": [
+										{
+											"type": "number",
+											"minimum": 0
+										},
+										{
+											"type": "null"
+										}
+									],
+									"default": null
 								}
 							}
 						},
