@@ -64,7 +64,7 @@ jobs:
           fi
           export newVersion=${version}
           echo "newVersion=${version}" >> ${GITHUB_OUTPUT}
-          yq '.version = env(newVersion)' ${{ inputs.chart }}/Chart.yaml
+          yq -i '.version = env(newVersion)' ${{ inputs.chart }}/Chart.yaml
 
       - name: Generate docs for helm chart - helmchart/otel-add-on/README.md
         uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
