@@ -43,7 +43,6 @@ jobs:
     needs: [test]
     permissions:
       # required by appany/helm-oci-chart-releaser so that the implicit secrets.GITHUB_TOKEN can be used for pushing the OCI artifact to ghcr.io registry
-      # and by stefanzweifel/git-auto-commit-action to be able to push a commit
       contents: write
       packages: write
     steps:
@@ -51,26 +50,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Bump the version if requested
-        id: version
-        run: |
-          set -xeuo pipefail
-          version=${{ inputs.version }}
-          if [[ $version == "" ]]; then
-            name=$(yq '.name' ${{ inputs.chart }}/Chart.yaml)
-            last_version=$(yq '.version' ${{ inputs.chart }}/Chart.yaml)
-            version=$(echo "$last_version" | awk  -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-          fi
-          export newVersion=${version}
-          echo "newVersion=${version}" >> ${GITHUB_OUTPUT}
-          yq '.version = env(newVersion)' ${{ inputs.chart }}/Chart.yaml
-
-      - name: Generate docs for helm chart - helmchart/otel-add-on/README.md
-        uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
-        with:
-          args: |
-            --template-files=${{ inputs.chart }}/_helm-docs-template.gotmpl --sort-values-order=file --chart-search-root=${{ inputs.chart }} --ignore-non-descriptions
 
       - name: Publish Helm chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
@@ -82,24 +61,6 @@ jobs:
           registry: ghcr.io
           registry_username: kedify
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push the commit w/ version bump and docs
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          file_pattern: '${{ inputs.chart }}/Chart.yaml ${{ inputs.chart }}/README.md'
-          push_options: '--force'
-          commit_options: '--no-verify --signoff'
-
-      - name: Push Tag
-        # forked repo that supports 'force_update'
-        uses: erodozer/github-tag-action@f6b899a1d8497fca054ba1026828cbb8496b7d9e
-        with:
-          github_token: ${{ secrets.PAT_TOKEN }}
-          fetch_all_tags: true
-          force_update: true
-          create_annotated_tag: true
-          tag_prefix: ""
-          custom_tag: ${{ inputs.chart }}-${{ steps.version.outputs.newVersion }}
 
       - name: Print Summary
         run: |
