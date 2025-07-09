@@ -161,8 +161,8 @@ interceptor:
   # configuration for the ScaledObject resource for the
   # interceptor
   scaledObject:
-    # -- The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
-    pollingInterval: 1
+    # -- The interval (in seconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
+    pollingInterval: null
     # -- when enabled, the scaled object will be installed as post-install hook which waits for the ScaledObject CRD to exist
     waitForCrd: false
     # -- Use the interceptor's `pendingRequests` metric to scale the interceptor
