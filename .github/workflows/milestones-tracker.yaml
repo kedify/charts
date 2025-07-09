@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.milestone_tracking.outputs.should_release }}
+      version: ${{ steps.milestone_tracking.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - name: Ensure correct milestone
@@ -67,6 +68,7 @@ jobs:
               gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
           fi
           echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "version=$release_tag" >> $GITHUB_OUTPUT
   release:
     needs: milestone_tracker
     runs-on: ubuntu-latest
@@ -81,3 +83,9 @@ jobs:
           dependencies: "kedify,https://kedify.github.io/charts"
           charts_dir: "."
           single_chart_path: "./${{ inputs.chart }}/"
+      - name: Publish OCI ${{ inputs.chart }} Helm Chart
+        if: "${{ needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-proxy' }}"
+        uses: ./github/workflows/gh-release-oci-chart.yaml
+        with:
+          version: ${{ needs.milestone_tracker.outputs.version }}
+          chart: ${{ inputs.chart }}
