@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "the workflow will figure out the correct chart version (patch++) but optionally this can be overwritten here"
+        description: "new version of the helm chart that should be released"
         required: false
         default: ''
         type: string
@@ -16,7 +16,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: "the workflow will figure out the correct chart version (patch++) but optionally this can be overwritten here"
+        description: "new version of the helm chart that should be released"
         required: false
         default: ''
         type: string
@@ -43,7 +43,6 @@ jobs:
     needs: [test]
     permissions:
       # required by appany/helm-oci-chart-releaser so that the implicit secrets.GITHUB_TOKEN can be used for pushing the OCI artifact to ghcr.io registry
-      # and by stefanzweifel/git-auto-commit-action to be able to push a commit
       contents: write
       packages: write
     steps:
@@ -52,68 +51,30 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Bump the version if requested
-        id: version
-        run: |
-          set -xeuo pipefail
-          version=${{ inputs.version }}
-          if [[ $version == "" ]]; then
-            name=$(yq '.name' ${{ inputs.chart }}/Chart.yaml)
-            last_version=$(yq '.version' ${{ inputs.chart }}/Chart.yaml)
-            version=$(echo "$last_version" | awk  -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-          fi
-          export newVersion=${version}
-          echo "newVersion=${version}" >> ${GITHUB_OUTPUT}
-          yq '.version = env(newVersion)' ${{ inputs.chart }}/Chart.yaml
-
-      - name: Generate docs for helm chart - helmchart/otel-add-on/README.md
-        uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
-        with:
-          args: |
-            --template-files=${{ inputs.chart }}/_helm-docs-template.gotmpl --sort-values-order=file --chart-search-root=${{ inputs.chart }} --ignore-non-descriptions
-
       - name: Publish Helm chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
         with:
           name: ${{ inputs.chart }}
           repository: kedify/charts
-          tag: ${{ steps.version.outputs.newVersion }}
+          tag: ${{ inputs.version }}
           path: ${{ inputs.chart }}
           registry: ghcr.io
           registry_username: kedify
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push the commit w/ version bump and docs
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          file_pattern: '${{ inputs.chart }}/Chart.yaml ${{ inputs.chart }}/README.md'
-          push_options: '--force'
-          commit_options: '--no-verify --signoff'
-
-      - name: Push Tag
-        # forked repo that supports 'force_update'
-        uses: erodozer/github-tag-action@f6b899a1d8497fca054ba1026828cbb8496b7d9e
-        with:
-          github_token: ${{ secrets.PAT_TOKEN }}
-          fetch_all_tags: true
-          force_update: true
-          create_annotated_tag: true
-          tag_prefix: ""
-          custom_tag: ${{ inputs.chart }}-${{ steps.version.outputs.newVersion }}
 
       - name: Print Summary
         run: |
           <<EOF>> ${GITHUB_STEP_SUMMARY} cat
           # Success :rocket:
           
-          Helm chart \`${{ inputs.chart }}@${{ steps.version.outputs.newVersion }}\` has been published.
+          Helm chart \`${{ inputs.chart }}@${{ inputs.version }}\` has been published.
           
           Continue with:
           
           \`\`\`
-          helm template oci://ghcr.io/kedify/charts/${{ inputs.chart }} --version=${{ steps.version.outputs.newVersion }}
+          helm template oci://ghcr.io/kedify/charts/${{ inputs.chart }} --version=${{ inputs.version }}
           # or
-          helm upgrade -i foo oci://ghcr.io/kedify/charts/${{ inputs.chart }} --version=${{ steps.version.outputs.newVersion }}
+          helm upgrade -i foo oci://ghcr.io/kedify/charts/${{ inputs.chart }} --version=${{ inputs.version }}
           # or
           crane ls ghcr.io/kedify/charts/${{ inputs.chart }} --full-ref
           \`\`\`
