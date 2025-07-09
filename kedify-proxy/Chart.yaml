@@ -2,7 +2,7 @@ apiVersion: v2
 name: kedify-proxy
 description: A Helm chart for Kedify proxy
 type: application
-version: v0.0.5
+version: v0.0.6
 
 # This is the version number of the application being deployed. Kedify proxy is based on Envoy proxy so it is a version of 
 # Envoy proxy container image (envoyproxy/envoy)
