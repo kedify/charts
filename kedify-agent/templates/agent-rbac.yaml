@@ -210,6 +210,18 @@ rules:
   - get
   - list
   - watch
+{{- if .Values.agent.features.podResourceProfilesEnabled }}
+  # for pod resource profiles
+  - patch
+  - update
+# for pod resource profiles
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - "*"
+{{- end }}
 {{- end }}
 {{- if .Values.agent.rbac.readMetrics }}
 - apiGroups:
