@@ -94,7 +94,8 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-validations:
-                - rule: has(self.limits) || has(self.requests)
+                - message: Specify limits or requests or both
+                  rule: has(self.limits) || has(self.requests)
               paused:
                 default: false
                 description: Paused if set to true, can make the controller ignore
@@ -106,7 +107,8 @@ spec:
                   Priority in case multiple (unpaused) PodResourceProfile CRs matches, only the one with
                   the highest priority will be applied. If not specified, it is 0 and if multiple
                   PodResourceProfile with the same priority matches the pod's label selector, then
-                  lexicographically smaller is picked
+                  the next one that's closest to now() is chosen. Again if multiple match, then
+                  lexicographically smaller is picked (CR name).
                 type: integer
               selector:
                 description: |-
@@ -162,10 +164,18 @@ spec:
                   if target is specified, don't use the selector
                 properties:
                   kind:
+                    description: |-
+                      Kind specifies the target workload whose containers will be obtaining the resource updates
+                      Caveat: if set to 'scaledobject' the ScaledObject has to have its
+                              '.spec.scaleTargetRef.kind' equal to 'deployment' or 'statefulset' so that
+                              we can reach to its pods transitively.DeepCopy  In other words not every
+                              scalable CR will work here. For MachindeDeployments this feature doesn't
+                              make sense.
                     enum:
                     - deployment
                     - daemonset
                     - statefulset
+                    - scaledobject
                     type: string
                   name:
                     minLength: 1
@@ -197,7 +207,7 @@ spec:
                       no startupProbe is defined and container is running and has\n
                       \ passed the postStart lifecycle hook. The null value must be
                       treated the\n  same as false.\n\t  field: pod.status.containerStatuses.started\n\t
-                      \  time: pod.status.containerStatuses.state.running.startedAt)\n\n\n-
+                      \  time: pod.status.containerStatuses.state.running.startedAt\n\n\n-
                       'podReady': means the pod is able to service requests and should
                       be added\n  to the load balancing pools of all matching services\n
                       \  field: pod.status.conditions[?(.type=='Ready')].status\n
@@ -208,13 +218,27 @@ spec:
                       'podRunning' means the pod has been bound to a node and all
                       the\n  containers have been started. At least one container
                       is still running\n  or is in the process of being restarted.\n
-                      \   field: pod.status.phase\n     time: pod.status.startTime.time"
+                      \   field: pod.status.phase\n     time: pod.status.startTime.time\n\n\n-
+                      'deactivated' This is specific to KEDA and works only with\n
+                      \               .target.kind == scaledobject.\n  It denotes
+                      a state of a ScaledObject whose triggers are not active. This\n
+                      \ is useful for throttling the CPU for a workloads that are
+                      not being\n  actively used - stand-by mode.\n    field: scaledobject.conditions[?(.type=='Active')].status\n
+                      \    time: scaledobject.conditions[?(.type=='Active')].lastTransitionTime\n
+                      \    when the aforementioned field goes from true (active) ->
+                      false (passive)\n\n\n- 'activated' Dual event to 'deactivated'.\n
+                      \   field: scaledobject.conditions[?(.type=='Active')].status\n
+                      \    time: time: scaledobject.conditions[?(.type=='Active')].lastTransitionTime\n
+                      \    when the aforementioned field goes from true (passive)
+                      -> false (active)"
                     enum:
                     - containerReady
                     - containerStarted
                     - podReady
                     - podScheduled
                     - podRunning
+                    - deactivated
+                    - activated
                     type: string
                   delay:
                     description: |-
@@ -227,11 +251,18 @@ spec:
                 - delay
                 type: object
             required:
+            - containerName
             - newResources
             - trigger
             type: object
             x-kubernetes-validations:
-            - rule: has(self.target) != has(self.selector)
+            - message: PodResourceProfile must have either a pod selector or target
+                specified
+              rule: has(self.target) != has(self.selector)
+            - message: '''(de)activated'' triggers can be used only with ScaledObjects
+                as targets. See .spec.target.kind'
+              rule: '!has(self.trigger.after) || !self.trigger.after.endsWith(''activated'')
+                || (has(self.target) && self.target.kind == ''scaledobject'' && self.trigger.after.endsWith(''activated''))'
           status:
             description: PodResourceProfileStatus defines the observed state of PodResourceProfile
             properties:
