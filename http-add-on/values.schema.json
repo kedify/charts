@@ -105,7 +105,7 @@
 							"description": "Tolerations for pod scheduling",
 							"type": "array",
 							"items": {
-								"type": "string"
+								"type": "object"
 							}
 						},
 						"affinity": {
@@ -175,7 +175,7 @@
 						"tolerations": {
 							"type": "array",
 							"items": {
-								"type": "string"
+								"type": "object"
 							}
 						},
 						"affinity": {
@@ -335,7 +335,7 @@
 						"tolerations": {
 							"type": "array",
 							"items": {
-								"type": "string"
+								"type": "object"
 							}
 						},
 						"affinity": {
