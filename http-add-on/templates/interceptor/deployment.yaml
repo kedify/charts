@@ -148,6 +148,8 @@ spec:
         - name: KEDIFY_HTTP_PROXY_MAX_UPSTREAM_RETRIES
           value: "{{ int .Values.interceptor.envoy.upstreamRateLimiting.maxRetries }}"
         {{- end }}
+        - name: KEDIFY_STRICT_ENDPOINT_SLICE_READINESS
+          value: "{{ .Values.interceptor.strictEndpointSliceReadiness }}"
         {{- range .Values.interceptor.additionalEnvVars }}
         - name: "{{ .name }}"
           value: "{{ .value }}"
