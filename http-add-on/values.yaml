@@ -158,6 +158,14 @@ interceptor:
     # -- The maximum time the interceptor should wait during cold start for an HTTP request to reach a backend before it is considered a failure
     waitTimeout: 20m
 
+
+  # -- Whether the interceptor should wait for endpoints in the EndpointSlice to be strictly ready before starting to serve traffic
+  strictEndpointSliceReadiness:
+    # disabling is the default behavior, treating EndpointSlice condition.ready nil as ready, as described in
+    # https://github.com/kubernetes/api/blob/v0.33.0/discovery/v1/types.go#L137-L144
+    # when this is enabled, the condition has to be set and has to be true
+    enabled: false
+
   # configuration for the ScaledObject resource for the
   # interceptor
   scaledObject:
