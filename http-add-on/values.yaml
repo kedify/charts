@@ -121,6 +121,9 @@ scaler:
       memory: 256Mi
   # -- Annotations to be added to the scaler pods
   podAnnotations: {}
+  # -- prometheus metrics endpoint
+  metrics:
+    port: 2223
 
 interceptor:
   # -- The cluster domain used for in cluster routing with envoy fleet
@@ -430,3 +433,11 @@ kubectlImage:
   repository: ghcr.io/kedify/kubectl
   pullPolicy: Always
   pullSecrets: []
+
+# -- gRPC bridge between external-scaler and interceptor
+# serves as a replacement of the legacy REST /queue endpoint
+grpcBridge:
+  enabled: false
+  port: 50051
+  # setting this too high can prolong scale from zero
+  metricPushPeriod: 1s

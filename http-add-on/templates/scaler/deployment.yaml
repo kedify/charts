@@ -53,7 +53,17 @@ spec:
         ports:
         - containerPort: {{ .Values.scaler.grpcPort }}
           name: grpc
+        {{- if .Values.grpcBridge.enabled }}
+        - containerPort: {{ .Values.grpcBridge.port }}
+          name: grpc-bridge
+        {{- end }}
+        - containerPort: {{ .Values.scaler.metrics.port }}
+          name: metrics
         env:
+        - name: KEDIFY_GRPC_BRIDGE_ENABLED
+          value: "{{ .Values.grpcBridge.enabled }}"
+        - name: KEDIFY_GRPC_BRIDGE_PORT
+          value: "{{ .Values.grpcBridge.port }}"
         - name: KEDA_HTTP_SCALER_TARGET_ADMIN_DEPLOYMENT
           value: "{{ .Chart.Name }}-interceptor"
         - name: KEDA_HTTP_SCALER_PORT

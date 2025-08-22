@@ -50,6 +50,14 @@ spec:
         imagePullPolicy: '{{ .Values.interceptor.pullPolicy | default "Always" }}'
         name: "{{ .Chart.Name }}-interceptor"
         env:
+        - name: KEDIFY_GRPC_BRIDGE_ENABLED
+          value: "{{ .Values.grpcBridge.enabled }}"
+        - name: KEDIFY_GRPC_BRIDGE_PORT
+          value: "{{ .Values.grpcBridge.port }}"
+        - name: KEDIFY_GRPC_METRIC_PUSH_PERIOD
+          value: "{{ .Values.grpcBridge.metricPushPeriod }}"
+        - name: KEDIFY_EXTERNAL_SCALER_SERVICE_NAME
+          value: "{{ .Chart.Name }}-{{ .Values.scaler.service }}"
         - name: KEDA_HTTP_CLUSTER_DOMAIN 
           value: "{{ .Values.interceptor.clusterDomain }}"
         - name: KEDA_HTTP_CURRENT_NAMESPACE
