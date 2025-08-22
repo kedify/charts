@@ -4,6 +4,6 @@ dependencies:
   version: v2.17.2-0
 - name: keda-add-ons-http
   repository: https://kedify.github.io/charts
-  version: v0.10.0-18
-digest: sha256:4c8331475712e886cc5fcb32aa9fd44a54841453f79cb0333f6fbaa0543fbef4
-generated: "2025-08-11T21:28:39.256903726+02:00"
+  version: v0.10.0-19
+digest: sha256:559fdf13ba58a53f0b2bf0f9771c5b432cf11019d42bb084d86ab07030f79006
+generated: "2025-08-22T15:33:18.805944606+02:00"
