@@ -1525,6 +1525,31 @@ entries:
     version: 0.7.0
   kedify-agent:
   - apiVersion: v2
+    appVersion: v0.2.19
+    created: "2025-08-25T12:13:23.627203731Z"
+    dependencies:
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.17.2-0
+    - condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.10.0-19
+    description: Kedify agent - Helm Chart
+    digest: 01207256fc8d22511cc6f8a5316ec225927f48af025208c9a45b824555b52a1e
+    home: https://github.com/kedify/charts
+    icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
+    sources:
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-agent-v0.2.19.tgz
+    version: v0.2.19
+  - apiVersion: v2
     appVersion: v0.2.18
     created: "2025-08-22T13:59:42.071993056Z"
     dependencies:
@@ -2455,4 +2480,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2025-08-22T13:59:42.064666997Z"
+generated: "2025-08-25T12:13:23.619708263Z"
