@@ -165,6 +165,35 @@ agent:
     # if true, enables sync of KedifyConfiguration between cluster and the dashboard
     kedifyConfig: false
 
+  # A set of rules as documented here : https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+  # Can be used in combination with presets that create a cluster role to add additional rules.
+  # This is useful when agent should be creating also custom resources when installing kedify proxy.
+  extraRbacRules: []
+    # - apiGroups:
+    #   - 'cilium.io'
+    #   resources:
+    #   - 'ciliumnetworkpolicies'
+    #   verbs:
+    #   - '*'
+
+  # Array of extra K8s manifests to deploy together with Kedify Agent
+  extraObjects: []
+    # - apiVersion: "cilium.io/v2"
+    #   kind: CiliumNetworkPolicy
+    #   metadata:
+    #     name: "kedify-agent-netpol"
+    #   spec:
+    #     endpointSelector:
+    #       matchLabels:
+    #         control-plane: kedify-agent
+    #     egress:
+    #       - toFQDNs:
+    #         - matchName: service.kedify.io
+    #         toPorts:
+    #         - ports:
+    #           - port: "443"
+    #             protocol: TCP
+
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
