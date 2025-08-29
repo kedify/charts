@@ -6,4 +6,4 @@ version: v0.0.6
 
 # This is the version number of the application being deployed. Kedify proxy is based on Envoy proxy so it is a version of 
 # Envoy proxy container image (envoyproxy/envoy)
-appVersion: "v1.34.1"
+appVersion: "v1.35.1"
