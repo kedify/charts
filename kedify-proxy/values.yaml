@@ -42,6 +42,13 @@ config:
     refreshInterval: 0.25s
     # -- max active downstream connections
     maxActiveDownstreamConnections: 10000
+  # -- gRPC xDS specific configuration
+  xds:
+    # -- keepalive settings for gRPC xDS connection to Kedify control plane
+    keepaliveInterval: 30s
+    keepaliveTimeout: 5s
+    # -- timeout for initial connection to the Kedify control plane
+    connectTimeout: 2s
 
 pod:
   # -- custom annotations that should be added to the Kedify proxy pod
