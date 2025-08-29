@@ -58,6 +58,14 @@ spec:
           value: "{{ .Values.grpcBridge.metricPushPeriod }}"
         - name: KEDIFY_EXTERNAL_SCALER_SERVICE_NAME
           value: "{{ .Chart.Name }}-{{ .Values.scaler.service }}"
+        - name: KEDIFY_XDS_MAX_CONCURRENT_STREAMS
+          value: "{{ .Values.interceptor.xds.maxConcurrentStreams }}"
+        - name: KEDIFY_XDS_KEEPALIVE_TIME
+          value: "{{ .Values.interceptor.xds.keepalive.time }}"
+        - name: KEDIFY_XDS_KEEPALIVE_TIMEOUT
+          value: "{{ .Values.interceptor.xds.keepalive.timeout }}"
+        - name: KEDIFY_XDS_KEEPALIVE_ENFORCEMENT_POLICY_MIN_TIME
+          value: "{{ .Values.interceptor.xds.keepalive.enforcementPolicyMinTime }}"
         - name: KEDA_HTTP_CLUSTER_DOMAIN 
           value: "{{ .Values.interceptor.clusterDomain }}"
         - name: KEDA_HTTP_CURRENT_NAMESPACE

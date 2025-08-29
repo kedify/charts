@@ -315,7 +315,20 @@ interceptor:
     # -- The HTTP status code to return when the application has cold-start waiting page enabled
     responseStatusCode: 503
     # -- Value in the `Retry-After` header to return when the application has cold-start waiting page enabled
-    retryAfter: 60s 
+    retryAfter: 60s
+  # -- Configuration options for the envoy xDS control-plane
+  xds:
+    # maximum number of concurrent streams that can be opened to the XDS server
+    maxConcurrentStreams: 1000000
+    # H2 keepalive settings for the gRPC connection to the XDS server
+    # https://grpc.io/docs/guides/keepalive/
+    keepalive:
+      # duration after which if the client doesn't see any activity it pings the server to see if the transport is still alive
+      time: 30s
+      # duration the client waits for a response from the server after sending a keepalive ping
+      timeout: 5s
+      # minimum amount of time a client should wait before sending a keepalive ping
+      enforcementPolicyMinTime: 30s
 
 # configuration for the images to use for each component
 images:
