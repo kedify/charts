@@ -329,6 +329,11 @@ interceptor:
       timeout: 5s
       # minimum amount of time a client should wait before sending a keepalive ping
       enforcementPolicyMinTime: 30s
+  # Whether to create a fallback catch-all wildcard route in the envoy fleet that points to interceptor
+  # when enabled, this will always also enable internal metric accounting in the interceptor
+  # this is mutually exclusive with path embedded health checks because those also create wildcard route
+  fallbackCatchAllRoute:
+    enabled: false
 
 # configuration for the images to use for each component
 images:
