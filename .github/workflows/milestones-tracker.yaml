@@ -85,7 +85,12 @@ jobs:
           single_chart_path: "./${{ inputs.chart }}/"
       - name: Publish OCI ${{ inputs.chart }} Helm Chart
         if: "${{ needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-proxy' }}"
-        uses: ./github/workflows/gh-release-oci-chart.yaml
+        uses: appany/helm-oci-chart-releaser@v0.3.0
         with:
-          version: ${{ needs.milestone_tracker.outputs.version }}
-          chart: ${{ inputs.chart }}
+          name: ${{ inputs.chart }}
+          repository: kedify/charts
+          tag: ${{ needs.milestone_tracker.outputs.version }}
+          path: ${{ inputs.chart }}
+          registry: ghcr.io
+          registry_username: kedify
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
