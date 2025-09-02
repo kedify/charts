@@ -1,11 +1,8 @@
 clusterName: "cluster-1"
-
 # when set to true, the schema validation will be disabled
-disableSchemaValidation: false 
-
+disableSchemaValidation: false
 agent:
   replicas: 1
-
   # you should already have this
   orgId: ""
   # you should already have this
@@ -22,7 +19,6 @@ agent:
   # optional field, if you use a mix of cloud providers for billing, specify the cloud account ID
   # for example, if you use AWS, this would be the AWS account ID
   cloudAccountID: ""
-
   logging:
     # Log level for the agent
     # Can be one of 'debug', 'info', 'error', or any integer value > 0
@@ -36,14 +32,12 @@ agent:
     timeEncoding: RFC3339
     # Display stack traces in the logs
     stackTracesEnabled: false
-
   kedifyProxy:
     # enable to set cluster wide deployment (supported only for istio VirtualService and Gateway API HTTPRoute)
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: /helm/kedify/kedify-proxy.tgz
-    chartVersion: v0.0.6
-
+    chartVersion: v0.0.7
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
     # namespace.
@@ -52,7 +46,6 @@ agent:
     globalValues:
       logging:
         format: plaintext
-
     # configuration options for kedify-proxy envoy fleet xDS
     globalEnvoyConfigs:
       # see available options:
@@ -63,34 +56,31 @@ agent:
       # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto
       cluster:
         lb_policy: ROUND_ROBIN
-
     # This is a namespaced helm template that will be used for desired namespaces (if `.agent.kedifyProxy.clusterWide` is off).
     # example of overriding the global template for namespaces 'prodNamespace' and 'testNamespace':
     namespacedValues: {}
-      # prodNamespace:
-      #   podDisruptionBudget:
-      #     enabled: true
-      #   logging:
-      #     format: json
-      # testNamespace:
-      #   image:
-      #     tag: v1.33.0-custom-change
-      #   autoscaling:
-      #     enabled: false
+    # prodNamespace:
+    #   podDisruptionBudget:
+    #     enabled: true
+    #   logging:
+    #     format: json
+    # testNamespace:
+    #   image:
+    #     tag: v1.33.0-custom-change
+    #   autoscaling:
+    #     enabled: false
 
     # Similarly to globalValues -> namespacedValues, this is a namespaced config for globalEnvoyConfigs
     namespacedEnvoyConfigs: {}
-      # default:
-      #   route:
-      #     idle_timeout: 7200s # 2 hours
-      # test:
-      #   route:
-      #     idle_timeout: 1800s # 30 minutes
-
+    # default:
+    #   route:
+    #     idle_timeout: 7200s # 2 hours
+    # test:
+    #   route:
+    #     idle_timeout: 1800s # 30 minutes
   # should the KedifyConfiguration and ScalingPolicy CRDs be also part of the release
   createCrds: true
   createKedifyConfiguration: true
-
   # default kedify config that will be created if createKedifyConfiguration is enabled
   kedifyConfiguration:
     agentAutoUpdate: false
@@ -105,13 +95,11 @@ agent:
       kubernetesResources:
         interval: 30
         disabled: true
-
   image:
     tag: "v0.2.19"
     repository: ghcr.io/kedify/agent
     pullPolicy: Always
   imagePullSecrets: []
-
   # container image for {post,pre}-install helm hooks that help with CR(D) installation
   kubectlImage:
     tag: "v1.33.1"
@@ -129,10 +117,8 @@ agent:
   features:
     podResourceProfilesEnabled: false
     prpRequiresAnnotatedPods: true
-
   autowire:
     serviceSyncPeriod: 500ms
-
   rbac:
     # create the necessary RBAC for kedify agent
     create: true
@@ -164,35 +150,34 @@ agent:
     ingressAutoWire: true
     # if true, enables sync of KedifyConfiguration between cluster and the dashboard
     kedifyConfig: false
-
   # A set of rules as documented here : https://kubernetes.io/docs/reference/access-authn-authz/rbac/
   # Can be used in combination with presets that create a cluster role to add additional rules.
   # This is useful when agent should be creating also custom resources when installing kedify proxy.
   extraRbacRules: []
-    # - apiGroups:
-    #   - 'cilium.io'
-    #   resources:
-    #   - 'ciliumnetworkpolicies'
-    #   verbs:
-    #   - '*'
+  # - apiGroups:
+  #   - 'cilium.io'
+  #   resources:
+  #   - 'ciliumnetworkpolicies'
+  #   verbs:
+  #   - '*'
 
   # Array of extra K8s manifests to deploy together with Kedify Agent
   extraObjects: []
-    # - apiVersion: "cilium.io/v2"
-    #   kind: CiliumNetworkPolicy
-    #   metadata:
-    #     name: "kedify-agent-netpol"
-    #   spec:
-    #     endpointSelector:
-    #       matchLabels:
-    #         control-plane: kedify-agent
-    #     egress:
-    #       - toFQDNs:
-    #         - matchName: service.kedify.io
-    #         toPorts:
-    #         - ports:
-    #           - port: "443"
-    #             protocol: TCP
+  # - apiVersion: "cilium.io/v2"
+  #   kind: CiliumNetworkPolicy
+  #   metadata:
+  #     name: "kedify-agent-netpol"
+  #   spec:
+  #     endpointSelector:
+  #       matchLabels:
+  #         control-plane: kedify-agent
+  #     egress:
+  #       - toFQDNs:
+  #         - matchName: service.kedify.io
+  #         toPorts:
+  #         - ports:
+  #           - port: "443"
+  #             protocol: TCP
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -200,12 +185,10 @@ agent:
     # Automatically mount a ServiceAccount's API credentials?
     automount: true
     # Annotations to add to the service account
-    annotations: {} 
-
+    annotations: {}
   podAnnotations:
     kubectl.kubernetes.io/default-container: manager
   podLabels: {}
-
   resources:
     limits:
       cpu: 500m
@@ -213,7 +196,6 @@ agent:
     requests:
       cpu: 10m
       memory: 300Mi
-
   # Additional volumes on the output agent's Deployment definition.
   volumes: []
   # - name: foo
@@ -235,15 +217,12 @@ agent:
       type: RuntimeDefault
     capabilities:
       drop:
-      - ALL
-
+        - ALL
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
-
 # dependent helm charts
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml
@@ -255,7 +234,6 @@ keda:
       enabled: true
     webhooks:
       enabled: true
-
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
