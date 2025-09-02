@@ -59,7 +59,7 @@ spec:
         - name: KEDIFY_EXTERNAL_SCALER_SERVICE_NAME
           value: "{{ .Chart.Name }}-{{ .Values.scaler.service }}"
         - name: KEDIFY_XDS_MAX_CONCURRENT_STREAMS
-          value: "{{ .Values.interceptor.xds.maxConcurrentStreams }}"
+          value: "{{ .Values.interceptor.xds.maxConcurrentStreams | int64 }}"
         - name: KEDIFY_XDS_KEEPALIVE_TIME
           value: "{{ .Values.interceptor.xds.keepalive.time }}"
         - name: KEDIFY_XDS_KEEPALIVE_TIMEOUT
