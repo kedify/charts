@@ -66,6 +66,8 @@ spec:
           value: "{{ .Values.interceptor.xds.keepalive.timeout }}"
         - name: KEDIFY_XDS_KEEPALIVE_ENFORCEMENT_POLICY_MIN_TIME
           value: "{{ .Values.interceptor.xds.keepalive.enforcementPolicyMinTime }}"
+        - name: KEDIFY_ENVOY_ENABLE_FALLBACK_CATCH_ALL_ROUTE
+          value: "{{ .Values.interceptor.fallbackCatchAllRoute.enabled }}"
         - name: KEDA_HTTP_CLUSTER_DOMAIN 
           value: "{{ .Values.interceptor.clusterDomain }}"
         - name: KEDA_HTTP_CURRENT_NAMESPACE
