@@ -30,12 +30,6 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
-      {{- with .Values.agent.tolerations }}
-      {{- toYaml . | nindent 6 }}
-      {{- end }}
       volumes:
       - name: default-kedifyconfig
         configMap:
@@ -93,6 +87,10 @@ spec:
       {{- end }}
       {{- with .Values.agent.affinity }}
       affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations }}
+      tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 {{- end }}
