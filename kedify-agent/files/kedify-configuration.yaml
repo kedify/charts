@@ -27,7 +27,7 @@ spec:
       name: Mode
       type: string
     - description: HTTTP Addon version
-      jsonPath: .status.deployments.httpAddon.version
+      jsonPath: .status.components.httpAddon.version
       name: HTTP-Addon
       priority: 20
       type: string
@@ -54,7 +54,7 @@ spec:
       priority: 20
       type: string
     - description: Health of KEDA's HTTP Addon interceptor
-      jsonPath: .status.components.keda.deployments.keda-add-ons-http-interceptor.phase
+      jsonPath: .status.components.httpAddon.deployments.keda-add-ons-http-interceptor.phase
       name: Interceptor
       priority: 20
       type: string
