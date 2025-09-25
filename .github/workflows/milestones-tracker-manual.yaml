@@ -1,0 +1,30 @@
+name: manual milestones tracking with release
+
+on:
+  workflow_dispatch:
+    inputs:
+      chart:
+        description: "chart to trigger workflow for milestones tracking and release"
+        required: true
+        type: choice
+        options:
+        - kedify-agent
+        - keda
+        - http-add-on
+      prNumber:
+        description: "categorize PR through milestones tracking and run a release if correct labels and milestones are set"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  packages: write
+
+jobs:
+  milestone_tracker:
+    uses: ./.github/workflows/milestones-tracker.yaml
+    with:
+      chart: ${{ inputs.chart }}
+      prNumber: ${{ inputs.prNumber }}
