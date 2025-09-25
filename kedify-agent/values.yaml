@@ -115,7 +115,7 @@ agent:
   nameOverride: ""
   fullnameOverride: ""
   features:
-    podResourceProfilesEnabled: false
+    podResourceProfilesEnabled: true
     prpRequiresAnnotatedPods: true
   autowire:
     serviceSyncPeriod: 500ms
