@@ -82,11 +82,11 @@ jobs:
           cat <<EOF > keda-values.yaml
           image:
             keda:
-              tag: main
+              tag: kedify-main
             metricsApiServer:
-              tag: main
+              tag: kedify-main
             webhooks:
-              tag: main
+              tag: kedify-main
 
       - name: Install KEDA chart
         run: helm install keda ./keda/ --namespace keda --values keda-values.yaml
@@ -97,12 +97,9 @@ jobs:
           additionalLabels:
             random: value
           images:
-            tag: canary
+            tag: kedify-main
           rbac:
             aggregateToDefaultRoles: true
-          interceptor:
-            replicas:
-              min: 1
           EOF
 
       - name: Template Helm chart

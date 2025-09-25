@@ -1,0 +1,202 @@
+image:
+  # -- Image to use for the Deployment
+  repository: envoyproxy/envoy
+  # -- Image pull policy, consult [docs](https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy)
+  pullPolicy: IfNotPresent
+  # -- Image version to use for the Deployment, if not specified, it defaults to `.Chart.AppVersion`
+  tag: ""
+
+# -- Required for private image registries, consult [docs](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+logging:
+  # -- Use: `plaintext` or `json`
+  format: plaintext
+
+# -- Extra program arguments that should be passed to Envoy, consult [docs](https://www.envoyproxy.io/docs/envoy/latest/operations/cli)
+extraArgs: {}
+  # component-log-level: tracing:trace,connection:debug
+  # drain-strategy: immediate
+
+config:
+  nodeId: kedify-proxy
+  # -- namespace where Kedify HTTP addon is deployed
+  kedaNamespace: keda
+  # CLUSTER_LOCAL_DOMAIN > ISTIO_CLUSTER_DOMAIN > cluster.local
+  clusterDomain: cluster.local
+  # -- service name of Kedify interceptor that serves as a control plane for configuration xDS and metrics
+  kedifyEnvoyCP: keda-add-ons-http-interceptor-kedify-proxy-metric-sink
+  # -- port on kedify interceptor (`.config.kedifyEnvoyCP` host) from which the xDS config should be pulled
+  kedifyEnvoyCPPort: 5678
+  # -- port on kedify interceptor (`.config.kedifyEnvoyCP` host) where metrics from envoy data planes will be sent
+  kedifyMetricsSinkPort: 9901
+  # -- overloadManager static configuration
+  # by default, the overload manager is disabled which means that there is no limit on active downstream connections
+  # NOTE: changing any values here restarts all kedify-proxy instances
+  overloadManager:
+    # -- enabled toggle to enable/disable overload manager
+    enabled: false
+    # -- refresh interval for the overload manager
+    refreshInterval: 0.25s
+    # -- max active downstream connections
+    maxActiveDownstreamConnections: 10000
+  # -- gRPC xDS specific configuration
+  xds:
+    # -- keepalive settings for gRPC xDS connection to Kedify control plane
+    keepaliveInterval: 30s
+    keepaliveTimeout: 5s
+    # -- timeout for initial connection to the Kedify control plane
+    connectTimeout: 2s
+
+pod:
+  # -- custom annotations that should be added to the Kedify proxy pod
+  annotations: {}
+  # -- custom labels that should be added to the Kedify proxy pod
+  labels: {}
+  # -- pod-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+  securityContext: {}
+  # -- container-lvl securityContext [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+  containerSecurityContext:
+    runAsUser: 101
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+      - ALL
+  # -- [docs](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)
+  priorityClassName: ""
+  # -- custom timeouts and thresholds for liveness probe
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: admin
+    periodSeconds: 2
+    initialDelaySeconds: 5
+    failureThreshold: 5
+  # -- custom timeouts and thresholds for readiness probe
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: admin
+    periodSeconds: 1
+    initialDelaySeconds: 1
+    failureThreshold: 2
+  # -- custom timeout for graceful shutdown, should be smaller or equal to terminationGracePeriodSeconds
+  preStopHookWaitSeconds: 5
+  # -- custom timeout for pod termination, should be larger or equal to preStopHookWaitSeconds
+  terminationGracePeriodSeconds: 30
+
+deployment:
+  # -- Fixed amount of replicas for the deployment. Use either `.autoscaling` section or this field.
+  replicas: 1
+  # -- [docs](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/)
+  rollingUpdate: {}
+  # rollingUpdate:
+  #   maxSurge: 25%
+  #   maxUnavailable: 25%
+
+service:
+  # -- Should the services be rendered with the helm chart?
+  enabled: true
+  # -- [docs](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+  type: ClusterIP
+  # -- custom annotations that should be added to both services
+  annotations: {}
+  # -- custom labels that should be added to both services
+  labels: {}
+  # -- port for plain text HTTP traffic
+  httpPort: 8080
+  # -- port for TLS HTTP traffic
+  tlsPort: 8443
+  # -- Should the admin service be also rendered with the helm chart?
+  exposeAdminInterface: true
+  # -- [docs](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+  adminSvcType: ClusterIP
+  # -- port for admin interface of envoy
+  adminPort: 9901
+
+# -- resource definitions for envoy container, see [docs](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+resources:
+  requests:
+    cpu: 250m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# -- mutually exclusive with `.deployment.replicas`
+# configure the `.resources` appropriately, because the SO uses cpu and memory scalers
+autoscaling:
+  # -- Should the KEDA's `ScaledObject` be also rendered with the helm chart?
+  enabled: false
+  # -- Name of the `ScaledObject` custom resource. If empty, release name is used.
+  scaledObjectName: ""
+  # see [docs](https://keda.sh/docs/latest/reference/scaledobject-spec/#minreplicacount)
+  minReplicaCount: 1
+  # see [docs](https://keda.sh/docs/latest/reference/scaledobject-spec/#maxreplicacount)
+  maxReplicaCount: 3
+  # see [docs](https://keda.sh/docs/latest/reference/scaledobject-spec/#horizontalpodautoscalerconfig)
+  horizontalPodAutoscalerConfig: {}
+  # horizontalPodAutoscalerConfig:
+  #   behavior:
+  #     scaleDown:
+  #       stabilizationWindowSeconds: 10
+  #     scaleUp:
+  #       stabilizationWindowSeconds: 10
+
+# -- Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# -- Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+# -- [details](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
+nodeSelector: {}
+# -- [details](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
+tolerations: []
+# -- [details](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+topologySpreadConstraints: []
+# -- [details](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity)
+affinity: {}
+
+# -- [details](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) (not rendered by default)
+podDisruptionBudget:
+  enabled: false
+  spec: {}
+  # spec:
+  #   # mutually exclusive with minAvailable
+  #   maxUnavailable: 1
+  #   # mutually exclusive with maxUnavailable
+  #   minAvailable: 1
+  #   unhealthyPodEvictionPolicy: IfHealthyBudget
+
+# -- should the ascii logo be printed when this helm chart is installed
+noBanner: false
+
+# -- Array of extra K8s manifests to deploy
+extraObjects: []
+  # - apiVersion: "cilium.io/v2"
+  #   kind: CiliumNetworkPolicy
+  #   metadata:
+  #     name: "kedify-proxy-netpol"
+  #   spec:
+  #     endpointSelector:
+  #       matchLabels:
+  #         app: kedify-proxy
+  #     egress:
+  #       - toPorts:
+  #         - ports:
+  #           - port: "8080"
+  #             protocol: TCP

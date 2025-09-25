@@ -1,0 +1,157 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedify-proxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kedify-proxy.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: kedify-proxy
+  {{- with .Values.deployment.rollingUpdate }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      {{- toYaml . | nindent 6 }}
+  {{- end }}
+  template:
+    metadata:
+      {{- with .Values.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kedify-proxy.labels" . | nindent 8 }}
+        {{- with .Values.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: envoy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          args:
+            {{- if eq .Values.logging.format "json" }}
+            - "--log-format"
+            - '{"Timestamp":"%Y-%m-%dT%T.%F","ThreadId":"%t","SourceLine":"%s:%#","Level":"%l","Message":"%j"}'
+            {{- end }}
+            {{- range $key, $value := .Values.extraArgs }}
+            - "--{{ $key }}"
+            - "{{ $value }}"
+            {{- end }}
+            - "--config-yaml"
+            - "$(ENVOY_CONFIG)"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    function log() {
+                      echo "[$(date -u +'%Y-%m-%d %T.%3N')][1][info][prestop-hook] $1" > /proc/1/fd/1
+                    }
+                    log "Gracefully shutting down kedify-proxy"
+                    exec 3<>/dev/tcp/localhost/{{ .Values.service.adminPort }}
+                    echo -e 'POST /healthcheck/fail HTTP/1.1\r\nHost: preStopHook\r\nContent-Length:0\r\nConnection: close\r\n\r\n' >&3
+                    response=$(cat <&3)
+
+                    timeout={{ .Values.pod.terminationGracePeriodSeconds }}
+                    interval=1
+                    elapsed=0
+
+                    while [[ "$elapsed" -lt "$timeout" ]]; do
+                      exec 3<>/dev/tcp/localhost/{{ .Values.service.adminPort }}
+                      echo -e 'GET /stats?filter=http.kedify-proxy.downstream_cx_active HTTP/1.1\r\nHost: preStopHook\r\nConnection: close\r\n\r\n' >&3
+                      response=$(cat <&3)
+                      active_connections=$(echo "$response" | awk '/http.kedify-proxy.downstream_cx_active:/{print $2}')
+                      log "Try $elapsed/$timeout; active connections: $active_connections"
+                      if [[ "$active_connections" -eq 0 ]]; then
+                        log "No active connections, terminating in {{ .Values.pod.preStopHookWaitSeconds }} seconds"
+                        sleep {{ .Values.pod.preStopHookWaitSeconds }}
+                        exit 0
+                      fi
+                      sleep $interval
+                      elapsed=$((elapsed + interval))
+                    done
+                    log "Timeout reached with active connections: $active_connections, terminating anyway"
+                    exit 1
+          env:
+            {{- if and .Values.pod.containerSecurityContext.runAsUser (not .Values.openshift) }}
+            - name: ENVOY_UID
+              value: {{ .Values.pod.containerSecurityContext.runAsUser | quote }}
+            {{- end }}
+            # envoy config https://www.envoyproxy.io/docs/envoy/latest/configuration/overview/overview
+            - name: ENVOY_CONFIG
+              value: |-
+{{ tpl ($.Files.Get "files/envoy-config.yaml") $ | indent 16 }}
+
+          securityContext:
+            {{- if .Values.openshift }}
+            {{- toYaml (omit .Values.pod.containerSecurityContext "runAsUser") | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.pod.containerSecurityContext | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
+              protocol: TCP
+            - name: tls
+              containerPort: {{ .Values.service.tlsPort }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- with .Values.pod.livenessProbe }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            {{- with .Values.pod.readinessProbe }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.pod.securityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.pod.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
