@@ -77,16 +77,27 @@ jobs:
       - name: Create KEDA namespace
         run: kubectl create ns keda
 
-      - name: Install KEDA chart
+      - name: Generate values
         run: |
-          helm template keda ./keda/ --namespace keda | grep -ve '--enable-webhook-patching=' > keda.yaml
-          kubectl apply --server-side -f keda.yaml
+          cat <<EOF > keda-values.yaml
+          image:
+            keda:
+              tag: kedify-main
+            metricsApiServer:
+              tag: kedify-main
+            webhooks:
+              tag: kedify-main
+
+      - name: Install KEDA chart
+        run: helm install keda ./keda/ --namespace keda --values keda-values.yaml
 
       - name: Generate values
         run: |
           cat <<EOF > test-values.yaml
           additionalLabels:
             random: value
+          images:
+            tag: kedify-main
           rbac:
             aggregateToDefaultRoles: true
           EOF

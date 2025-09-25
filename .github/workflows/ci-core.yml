@@ -182,10 +182,7 @@ jobs:
       run: helm template keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml
 
     - name: Install Helm chart
-      run: |
-        # temporary workaround for upstream unreleased CLI argument
-        sed -i 's/^.*--enable-webhook-patching=.*$//' ./keda/templates/manager/deployment.yaml
-        helm install keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml --wait
+      run: helm install keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml --wait
 
     - name: Show Kubernetes resources (KEDA)
       run: kubectl get all --namespace ${{ matrix.namespace }}

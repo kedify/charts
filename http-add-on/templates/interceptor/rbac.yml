@@ -7,14 +7,6 @@ metadata:
     {{- include "keda-http-add-on.labels" . | indent 4 }}
   name: {{ .Chart.Name }}-interceptor
 rules:
-- apiGroups:
-  - discovery.k8s.io
-  resources:
-  - endpointslices
-  verbs:
-  - get
-  - list
-  - watch
 {{- if .Values.interceptor.tls.allowCertsFromSecrets}}
 - apiGroups:
   - ""
