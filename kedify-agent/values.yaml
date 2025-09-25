@@ -1,0 +1,242 @@
+clusterName: "cluster-1"
+# when set to true, the schema validation will be disabled
+disableSchemaValidation: false
+agent:
+  replicas: 1
+  # you should already have this
+  orgId: ""
+  # you should already have this
+  apiKey: ""
+  # if disabled, the Secret called 'kedify-agent' with api key has to be created by some other entity,
+  # otherwise agent won't start
+  createApiKeySecret: true
+  # if migrating to helm, set this to the value of the agentId from the previous installation
+  agentId: ""
+  kedifyServer: service.kedify.io:443
+  # optional field, if you use a mix of cloud providers for billing, you can specify the cloud provider
+  # for the billing purposes for this Agent (supported values: "aws", "gcp", "azure")
+  billingCloudProvider: ""
+  # optional field, if you use a mix of cloud providers for billing, specify the cloud account ID
+  # for example, if you use AWS, this would be the AWS account ID
+  cloudAccountID: ""
+  logging:
+    # Log level for the agent
+    # Can be one of 'debug', 'info', 'error', or any integer value > 0
+    # which corresponds to custom debug levels of increasing verbosity
+    level: info
+    # Log format for the agent
+    # allowed values: 'console' or 'json'
+    format: console
+    # Log time encoding for the agent
+    # allowed values are 'epoch', 'millis', 'nano', 'iso8601', 'rfc3339' or 'rfc3339nano'
+    timeEncoding: RFC3339
+    # Display stack traces in the logs
+    stackTracesEnabled: false
+  kedifyProxy:
+    # enable to set cluster wide deployment (supported only for istio VirtualService and Gateway API HTTPRoute)
+    # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
+    clusterWide: false
+    chart: /helm/kedify/kedify-proxy.tgz
+    chartVersion: v0.0.7
+    # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
+    # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
+    # namespace.
+    # This is a global template that will be used for all namespaces
+    # (if not overridden by `.agent.kedifyProxy.namespacedValues` while `.agent.kedifyProxy.clusterWide` is on).
+    globalValues:
+      logging:
+        format: plaintext
+    # configuration options for kedify-proxy envoy fleet xDS
+    globalEnvoyConfigs:
+      # see available options:
+      # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#config-route-v3-routeaction
+      route:
+        idle_timeout: 3600s # 1 hour
+      # see available options:
+      # https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto
+      cluster:
+        lb_policy: ROUND_ROBIN
+    # This is a namespaced helm template that will be used for desired namespaces (if `.agent.kedifyProxy.clusterWide` is off).
+    # example of overriding the global template for namespaces 'prodNamespace' and 'testNamespace':
+    namespacedValues: {}
+    # prodNamespace:
+    #   podDisruptionBudget:
+    #     enabled: true
+    #   logging:
+    #     format: json
+    # testNamespace:
+    #   image:
+    #     tag: v1.33.0-custom-change
+    #   autoscaling:
+    #     enabled: false
+
+    # Similarly to globalValues -> namespacedValues, this is a namespaced config for globalEnvoyConfigs
+    namespacedEnvoyConfigs: {}
+    # default:
+    #   route:
+    #     idle_timeout: 7200s # 2 hours
+    # test:
+    #   route:
+    #     idle_timeout: 1800s # 30 minutes
+  # should the KedifyConfiguration and ScalingPolicy CRDs be also part of the release
+  createCrds: true
+  createKedifyConfiguration: true
+  # default kedify config that will be created if createKedifyConfiguration is enabled
+  kedifyConfiguration:
+    agentAutoUpdate: false
+    mode: Disabled
+    telemetry:
+      controlPlane:
+        interval: 30
+        disabled: false
+      kedaResources:
+        interval: 30
+        disabled: false
+      kubernetesResources:
+        interval: 30
+        disabled: true
+  image:
+    tag: "v0.2.21"
+    repository: ghcr.io/kedify/agent
+    pullPolicy: Always
+  imagePullSecrets: []
+  # container image for {post,pre}-install helm hooks that help with CR(D) installation
+  kubectlImage:
+    tag: "v1.33.1"
+    repository: ghcr.io/kedify/kubectl
+    pullPolicy: Always
+  # comma-separated list of namespaces where pod utilization metrics should be collected
+  # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
+  metricsWatchNamespace: ""
+  # if anything else than 'false', the log will not print the ascii logo
+  noBanner: false
+  # if anything else than 'false', the log will not contain colors
+  noColor: false
+  nameOverride: ""
+  fullnameOverride: ""
+  features:
+    podResourceProfilesEnabled: false
+    prpRequiresAnnotatedPods: true
+  autowire:
+    serviceSyncPeriod: 500ms
+  rbac:
+    # create the necessary RBAC for kedify agent
+    create: true
+    # set this to true if the agent should be able to install the KEDA
+    shouldBeAbleToInstallKeda: false
+    # set this to true if the agent should be able to install the KEDA http addon
+    shouldBeAbleToInstallHttpAddon: false
+    # if true, rbac necessary for self-updates is added
+    selfUpdates: false
+    # if true, rbac necessary for metrics collection is added
+    readMetrics: true
+    # if true, rbac necessary for reading logs is added
+    readLogs: true
+    # if true, rbac necessary for reading stateful sets is added
+    readStatefulSets: false
+    # if true, rbac necessary for reading HPAs (horizontal pod autoscalers) is added
+    readHpas: false
+    # if true, rbac necessary for reading Nodes is added
+    readNodes: true
+    # if true, rbac necessary for reading Pods is added
+    readPods: true
+    # if true, rbac necessary for reading Deployments is added for all namespaces
+    readDeploymentsClusterwide: true
+    # if true, rbac necessary for reading Deployments is added
+    readDeployments: true
+    # if true, rbac necessary for reading Services is added
+    readServices: true
+    # if true, ingress auto-wire capability with fallback is enabled
+    ingressAutoWire: true
+    # if true, enables sync of KedifyConfiguration between cluster and the dashboard
+    kedifyConfig: false
+  # A set of rules as documented here : https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+  # Can be used in combination with presets that create a cluster role to add additional rules.
+  # This is useful when agent should be creating also custom resources when installing kedify proxy.
+  extraRbacRules: []
+  # - apiGroups:
+  #   - 'cilium.io'
+  #   resources:
+  #   - 'ciliumnetworkpolicies'
+  #   verbs:
+  #   - '*'
+
+  # Array of extra K8s manifests to deploy together with Kedify Agent
+  extraObjects: []
+  # - apiVersion: "cilium.io/v2"
+  #   kind: CiliumNetworkPolicy
+  #   metadata:
+  #     name: "kedify-agent-netpol"
+  #   spec:
+  #     endpointSelector:
+  #       matchLabels:
+  #         control-plane: kedify-agent
+  #     egress:
+  #       - toFQDNs:
+  #         - matchName: service.kedify.io
+  #         toPorts:
+  #         - ports:
+  #           - port: "443"
+  #             protocol: TCP
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
+    # Annotations to add to the service account
+    annotations: {}
+  podAnnotations:
+    kubectl.kubernetes.io/default-container: manager
+  podLabels: {}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 10m
+      memory: 300Mi
+  # Additional volumes on the output agent's Deployment definition.
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  podSecurityContext: {}
+  securityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
+  extraArgs: {}
+# dependent helm charts
+keda:
+  # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml
+  enabled: false
+  prometheus:
+    operator:
+      enabled: true
+    metricServer:
+      enabled: true
+    webhooks:
+      enabled: true
+keda-add-ons-http:
+  # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
+  enabled: false
+  interceptor:
+    scaledObject:
+      waitForCrd: true

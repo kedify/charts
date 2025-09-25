@@ -1,0 +1,41 @@
+{{- if .Values.agent.createKedifyConfiguration }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-kedifyconfig
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: "post-install,post-upgrade"
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
+    helm.sh/hook-weight: "-2"
+data:
+  content: |
+    apiVersion: install.kedify.io/v1alpha1
+    kind: KedifyConfiguration
+    metadata:
+      name: kedify
+      namespace: {{ .Release.Namespace }}
+    spec:
+      clusterName: {{ .Values.clusterName }}
+      {{- if .Values.agent.cloudAccountID }}
+      cloudAccountID: "{{ .Values.agent.cloudAccountID }}"
+      {{- end }}
+      kedaInstallations:
+      - agentAutoUpdate: false
+        name: keda
+        httpAddonHelm:
+          enabled: true
+          values: |-
+            ---
+        otelAddonHelm:
+          enabled: true
+          values: |-
+            ---
+        kedaHelm:
+          enabled: true
+          values: |-
+            ---
+        namespace: {{ .Release.Namespace }}
+{{ toYaml .Values.agent.kedifyConfiguration | indent 8 }}
+---
+{{- end }}

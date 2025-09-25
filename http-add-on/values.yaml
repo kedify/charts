@@ -52,7 +52,7 @@ logging:
 # operator-specific configuration values
 operator:
   # -- Number of replicas, oerator k8s resources will not be installed if this is set to 0
-  replicas: 1
+  replicas: 0
   # -- The image pull secrets for the operator component
   imagePullSecrets: []
   # -- The namespace to watch for new `HTTPScaledObject`s. Leave this blank (i.e. `""`) to tell the operator to watch all namespaces.
@@ -93,7 +93,7 @@ operator:
 
 scaler:
   # -- Number of replicas
-  replicas: 3
+  replicas: 1
   # -- The image pull secrets for the scaler component
   imagePullSecrets: []
   # -- The name of the Kubernetes `Service` for the scaler component
@@ -115,14 +115,19 @@ scaler:
   resources:
     limits:
       cpu: 0.5
-      memory: 64Mi
+      memory: 512Mi
     requests:
       cpu: 250m
-      memory: 20Mi
+      memory: 256Mi
   # -- Annotations to be added to the scaler pods
   podAnnotations: {}
+  # -- prometheus metrics endpoint
+  metrics:
+    port: 2223
 
 interceptor:
+  # -- The cluster domain used for in cluster routing with envoy fleet
+  clusterDomain: "cluster.local"
   # -- The image pull secrets for the interceptor component
   imagePullSecrets: []
   # -- The image pull policy for the interceptor component
@@ -143,34 +148,64 @@ interceptor:
     service: interceptor-proxy
     # -- The port on which the interceptor's proxy service will listen for live HTTP traffic
     port: 8080
+  metrics:
+    # -- The name of the Kubernetes `Service` for the metrics.
+    service: interceptor-metrics
+    # -- The port to host metrics.
+    port: 2223
   replicas:
     # -- The minimum number of interceptor replicas that should ever be running
-    min: 3
+    min: 1
     # -- The maximum number of interceptor replicas that should ever be running
-    max: 50
-    # -- The maximum time the interceptor should wait for an HTTP request to reach a backend before it is considered a failure
-    waitTimeout: 20s
+    max: 3
+    # -- The maximum time the interceptor should wait during cold start for an HTTP request to reach a backend before it is considered a failure
+    waitTimeout: 20m
+
+
+  # -- Whether the interceptor should wait for endpoints in the EndpointSlice to be strictly ready before starting to serve traffic
+  strictEndpointSliceReadiness:
+    # disabling is the default behavior, treating EndpointSlice condition.ready nil as ready, as described in
+    # https://github.com/kubernetes/api/blob/v0.33.0/discovery/v1/types.go#L137-L144
+    # when this is enabled, the condition has to be set and has to be true
+    enabled: false
 
   # configuration for the ScaledObject resource for the
   # interceptor
   scaledObject:
-    # -- The interval (in milliseconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
-    pollingInterval: 1
+    # -- The interval (in seconds) that KEDA should poll the external scaler to fetch scaling metrics about the interceptor
+    pollingInterval: null
+    # -- when enabled, the scaled object will be installed as post-install hook which waits for the ScaledObject CRD to exist
+    waitForCrd: false
+    # -- Use the interceptor's `pendingRequests` metric to scale the interceptor
+    # When using kedify-proxy, this metric is not a good indicator of the load on the interceptor, so it is disabled by default.
+    pendingRequestsTrigger:
+      enabled: false
+    # -- The CPU utilization threshold that KEDA should use to scale the interceptor
+    cpuTrigger:
+      enabled: true
+      target: 75
+    # -- The memory utilization threshold that KEDA should use to scale the interceptor
+    memoryTrigger:
+      enabled: true
+      target: 90
+
 
   # -- How long the interceptor waits to establish TCP connections with backends before failing a request.
-  tcpConnectTimeout: 500ms
+  # -- This is also used to configure envoy timeouts for both upstream and downstream connections.
+  # -- https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology
+  tcpConnectTimeout: 5m
   # -- The interceptor's connection keep alive timeout
   keepAlive: 1s
   # -- How long the interceptor will wait between forwarding a request to a backend and receiving response headers back before failing the request
-  responseHeaderTimeout: 500ms
+  responseHeaderTimeout: 30s
   # -- How often (in milliseconds) the interceptor does a full refresh of its endpoints cache. The interceptor will also use Kubernetes events to stay up-to-date with the endpoints cache changes. This duration is the maximum time it will take to see changes to the endpoints.
-  endpointsCachePollingIntervalMS: 250
+  endpointsCachePollingIntervalMS: 20000
   # -- Whether or not the interceptor should force requests to use HTTP/2
-  forceHTTP2: false
+  forceHTTP2: true
   # -- The maximum number of idle connections allowed in the interceptor's in-memory connection pool. Set to 0 to indicate no limit
   maxIdleConns: 100
   # -- The timeout after which any idle connection is closed and removed from the interceptor's in-memory connection pool.
-  idleConnTimeout: 90s
+  idleConnTimeout: 10m
   # -- The maximum amount of time the interceptor will wait for a TLS handshake. Set to zero to indicate no timeout.
   tlsHandshakeTimeout: 10s
   # -- Special handling for responses with "Expect: 100-continue" response headers. see https://pkg.go.dev/net/http#Transport under the 'ExpectContinueTimeout' field for more details
@@ -188,7 +223,7 @@ interceptor:
     # -- The CPU/memory resource limit for the operator component
     limits:
       cpu: 0.5
-      memory: 64Mi
+      memory: 512Mi
     # -- The CPU/memory resource request for the operator component
     requests:
       cpu: 250m
@@ -198,24 +233,107 @@ interceptor:
   # configuration of tls for the interceptor
   tls:
     # -- Whether a TLS server should be started on the interceptor proxy
-    enabled: false
+    enabled: true
     # -- Mount path of the certificate file to use with the interceptor proxy TLS server
-    cert_path: /certs/tls.crt
+    cert_path: ""
     # -- Mount path of the certificate key file to use with the interceptor proxy TLS server
-    key_path: /certs/tls.key
+    key_path: ""
     # -- Name of the Kubernetes secret that contains the certificates to be used with the interceptor proxy TLS server
-    cert_secret: keda-tls-certs
+    cert_secret: ""
     # -- Port that the interceptor proxy TLS server should be started on
     port: 8443
+    # -- Allowing RBAC for Secrets for dynamic TLS certificates
+    allowCertsFromSecrets: true
+  # configure prometheus and otel collectors
+  # additionalEnvVars:
+  #  - name: OTEL_PROM_EXPORTER_ENABLED
+  #    value: true
+  #  - name: OTEL_PROM_EXPORTER_PORT
+  #    value: 2223
+  #  - name: OTEL_EXPORTER_OTLP_METRICS_ENABLED
+  #    value: true
+  #  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+  #    value: http://opentelemetry-collector.open-telemetry-system:4318
+  #  - name: OTEL_METRIC_EXPORT_INTERVAL
+  #    value: 1
 
   # configuration of pdb for the interceptor
   pdb:
     # -- Whether to install the `PodDisruptionBudget` for the interceptor
-    enabled: true
+    enabled: false
     # -- The minimum number of replicas that should be available for the interceptor
     minAvailable: 0
     # -- The maximum number of replicas that can be unavailable for the interceptor
     maxUnavailable: 1
+
+  # # custom headers added to requests and responses passing through the interceptor and/or kedify-proxy
+  # # for multiple headers, separate them with a comma, e.g. h1:v1,h2:v2
+  # customHeaders:
+  #   interceptor:
+  #     request: "X-Kedify-Interceptor:True"
+  #     response: "X-Kedify-Interceptor:True"
+  #   kedifyProxy:
+  #     request: "X-Kedify-Proxy:True"
+  #     response: "X-Kedify-Proxy:True"
+  #
+  # # additional tuning parameters for envoy proxy
+  # envoy:
+  #   listener:
+  #     tcpBacklogSize: 128
+  #   perConnectionBufferLimitBytes: 1048576
+  #
+  # # configuration for kedify-proxy envoy rate limiting
+  # # https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_circuit_breakers#circuit-breaking
+  #   upstreamRateLimiting:
+  #     # -- The maximum number of connections that Envoy will make to the upstream cluster.
+  #     # If not specified, the default is 8192.
+  #     maxConnections: 8192
+  #     # -- The maximum number of requests per second that the interceptor will allow for upstream requests
+  #     # The maximum number of parallel requests that Envoy will make to the upstream cluster.
+  #     # If not specified, the default is 8192. This limit does not apply to non-HTTP traffic.
+  #     maxRequests: 8192
+  #     # -- The maximum number of pending requests that Envoy will allow to the upstream cluster.
+  #     # If not specified, the default is 8192. This limit is applied as a connection limit for non-HTTP traffic.
+  #     maxPendingRequests: 8192
+  #     # -- The maximum number of parallel retries that Envoy will allow to the upstream cluster.
+  #     # If not specified, the default is 3.
+  #     maxRetries: 3
+
+  # -- Maintenance page configuration for the interceptor
+  maintenancePage:
+    # -- The HTML body displayed when maintenance mode for a certain application is enabled, limited to 256 KiB
+    body: |-
+      Service is temporarily under maintenance. Please try again later.
+    # -- The HTTP status code to return when maintenance mode for a certain application is enabled
+    responseStatusCode: 503
+
+  # -- Cold start waiting page configuration defaults for the interceptor
+  coldStartWaitingPage:
+    # -- The HTML body displayed when the application has cold-start waiting page enabled, limited to 256 KiB
+    body: |-
+      Service is starting. Please try again later.
+    # -- The HTTP status code to return when the application has cold-start waiting page enabled
+    responseStatusCode: 503
+    # -- Value in the `Retry-After` header to return when the application has cold-start waiting page enabled
+    retryAfter: 60s
+  # -- Configuration options for the envoy xDS control-plane
+  xds:
+    # maximum number of concurrent streams that can be opened to the XDS server
+    maxConcurrentStreams: 1000000
+    # H2 keepalive settings for the gRPC connection to the XDS server
+    # https://grpc.io/docs/guides/keepalive/
+    keepalive:
+      # duration after which if the client doesn't see any activity it pings the server to see if the transport is still alive
+      time: 30s
+      # duration the client waits for a response from the server after sending a keepalive ping
+      timeout: 5s
+      # minimum amount of time a client should wait before sending a keepalive ping
+      enforcementPolicyMinTime: 30s
+  # Whether to create a fallback catch-all wildcard route in the envoy fleet that points to interceptor
+  # when enabled, this will always also enable internal metric accounting in the interceptor
+  # this is mutually exclusive with path embedded health checks because those also create wildcard route
+  fallbackCatchAllRoute:
+    enabled: false
 
 # configuration for the images to use for each component
 images:
@@ -227,19 +345,29 @@ images:
   # the build for the latest commit to the `main` branch,
   # and you can target any other commit with `sha-<GIT_SHA[0:7]>`
   # -- Image tag for the http add on. This tag is applied to the images listed in `images.operator`, `images.interceptor`, and `images.scaler`. Optional, given app version of Helm chart is used by default
-  tag: ""
+  tag: v0.10.0-21
   # -- Image name for the operator image component
-  operator: ghcr.io/kedacore/http-add-on-operator
+  operator: ghcr.io/kedify/http-add-on-operator
   # -- Image name for the interceptor image component
-  interceptor: ghcr.io/kedacore/http-add-on-interceptor
+  interceptor: ghcr.io/kedify/http-add-on-interceptor
   # -- Image name for the scaler image component
-  scaler: ghcr.io/kedacore/http-add-on-scaler
+  scaler: ghcr.io/kedify/http-add-on-scaler
   # the kube-rbac-proxy image to use
   kubeRbacProxy:
     # -- Image name for the Kube RBAC Proxy image component
     name: gcr.io/kubebuilder/kube-rbac-proxy
     # -- Image tag for the Kube RBAC Proxy image component
-    tag: v0.13.0
+    tag: v0.16.0
+
+# set of pinned images to use for the components
+# this is useful when you want to use a specific image version for a component
+pinnedImages:
+  interceptor:
+    tag: ""
+  scaler:
+    tag: ""
+  operator:
+    tag: ""
 
 rbac:
   # -- Install aggregate roles for edit and view
@@ -249,11 +377,14 @@ rbac:
 # @default -- [See below](#KEDA-is-secure-by-default)
 securityContext:
   allowPrivilegeEscalation: false
+  runAsNonRoot: true
   capabilities:
     drop:
     - ALL
   privileged: false
   readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
   # runAsUser: 1000
   # runAsGroup: 1000
   # operator:
@@ -291,10 +422,10 @@ securityContext:
 
 # --  [Pod security context] for all pods
 # @default -- [See below](#KEDA-is-secure-by-default)
-podSecurityContext:
-  fsGroup: 1000
-  supplementalGroups:
-  - 1000
+# podSecurityContext:
+#   fsGroup: 1000
+#   supplementalGroups:
+#   - 1000
   # operator:
     # runAsNonRoot: true
     # runAsUser: 1000
@@ -329,3 +460,21 @@ profiling:
     enabled: false
     # -- Expose profiling on a specific port
     port: 8087
+
+kedifyProxy:
+  accessLogType: "" # disabled, use 'plaintext' or 'json' to enable
+
+# container image for {post,pre}-install helm hooks that help with CR(D) installation
+kubectlImage:
+  tag: "v1.33.1"
+  repository: ghcr.io/kedify/kubectl
+  pullPolicy: Always
+  pullSecrets: []
+
+# -- gRPC bridge between external-scaler and interceptor
+# serves as a replacement of the legacy REST /queue endpoint
+grpcBridge:
+  enabled: false
+  port: 50051
+  # setting this too high can prolong scale from zero
+  metricPushPeriod: 1s

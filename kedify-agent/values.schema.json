@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "schema for values.yaml for kedify agent helm chart",
+  "defs": {
+    "Top-lvl": {
+      "properties": {
+        "disableSchemaValidation": {
+          "type": "boolean",
+          "default": false
+        },
+        "agent": {
+          "$ref": "#/defs/Agent"
+        }
+      },
+      "required": [
+        "agent"
+      ],
+      "if": {
+        "properties": {
+          "disableSchemaValidation": { "const": false }
+        },
+        "required": ["disableSchemaValidation"]
+      },
+      "then": {
+        "required": ["agent"]
+      }
+    },
+    "Agent": {
+      "properties": {
+        "apiKey": {
+          "type": "string"
+        },
+        "createApiKeySecret": {
+          "type": "boolean"
+        },
+        "orgId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "format": "uuid"
+            }
+          ]
+        },
+        "billingCloudProvider": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "enum": [
+                "aws",
+                "azure",
+                "gcp"
+              ]
+            }
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "createApiKeySecret": { "const": true }
+        }
+      },
+      "then": {
+        "properties": {
+          "apiKey": { "pattern": "^kfy_[a-z0-9]*$", "minLength": 10 }
+        }
+      },
+      "required": [
+        "apiKey",
+        "createApiKeySecret",
+        "orgId"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disableSchemaValidation": { "const": false }
+        },
+        "required": ["disableSchemaValidation"]
+      },
+      "then": {
+        "$ref": "#/defs/Top-lvl"
+      }
+    }
+  ]
+}

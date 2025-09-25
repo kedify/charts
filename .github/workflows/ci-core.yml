@@ -90,13 +90,6 @@ jobs:
     - name: Generate values
       run: |
         cat <<EOF > test-values.yaml
-        image:
-          keda:
-            tag: main
-          metricsApiServer:
-            tag: main
-          webhooks:
-            tag: main
         podIdentity:
           azureWorkload:
             enabled: ${{ matrix.enableAzureWorkloadIdentity }}
@@ -189,7 +182,10 @@ jobs:
       run: helm template keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml
 
     - name: Install Helm chart
-      run: helm install keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml --wait
+      run: |
+        # temporary workaround for upstream unreleased CLI argument
+        sed -i 's/^.*--enable-webhook-patching=.*$//' ./keda/templates/manager/deployment.yaml
+        helm install keda ./keda/ --namespace ${{ matrix.namespace }} --values test-values.yaml --wait
 
     - name: Show Kubernetes resources (KEDA)
       run: kubectl get all --namespace ${{ matrix.namespace }}

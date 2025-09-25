@@ -1,0 +1,87 @@
+{{- if .Values.agent.createCrds }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "crdInstall" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    # create hook dependencies in the right order
+    "helm.sh/hook-weight": "-1"
+    {{- include "crdInstallAnnotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
+    role: {{ include "crdInstallSelector" . | quote }}
+spec:
+  ttlSecondsAfterFinished: 43200 # 12h
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
+    spec:
+      serviceAccountName: {{ include "crdInstall" . }}
+      {{- with .Values.agent.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: kubectl
+        image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
+        command:
+        - sh
+        - -c
+        - |
+          set -o errexit ; set -o xtrace ; set -o nounset
+          # piping stderr to stdout means kubectl's errors are surfaced
+          # in the pod's logs.
+          kubectl apply -f /data/ 2>&1
+        {{- with .Values.agent.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+{{- range $path, $_ := .Files.Glob "files/**" }}
+        - name: {{ $path | base | trimSuffix ".yaml" }}
+          mountPath: /data/{{ $path | base }}
+          subPath: {{ $path | base }}
+{{- end }}
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+      volumes:
+{{ $currentScope := . }}
+{{- range $path, $_ := .Files.Glob "files/**" }}
+    {{- with $currentScope }}
+      - name: {{ $path | base | trimSuffix ".yaml" }}
+        configMap:
+          name: {{ include "crdInstall" . }}-{{ $path | base | trimSuffix ".yaml" }}
+          items:
+          - key: content
+            path: {{ $path | base }}
+{{- end }}
+{{- end }}
+      restartPolicy: Never
+      {{- with .Values.agent.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  backoffLimit: 4
+{{- end }}
