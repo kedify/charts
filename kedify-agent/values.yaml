@@ -240,3 +240,9 @@ keda-add-ons-http:
   interceptor:
     scaledObject:
       waitForCrd: true
+otel-add-on:
+  # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
+  enabled: false
+  fullnameOverride: kedify-otel-scaler
+  otelOperator:
+    enabled: true
