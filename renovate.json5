@@ -20,6 +20,11 @@
       // paused, because the image tag is being updated by PR from a gh action on agent's repo
       "enabled": false,
     },
+    {
+      "packageNames": [
+        "ghcr.io/kedify/charts/otel-add-on", // helm chart
+      ],
+    },
   ],
   "regexManagers": [
     {
@@ -29,6 +34,15 @@
       "depNameTemplate": "ghcr.io/kedify/agent",
       "matchStrings": [
         "tag:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+    {
+      // kedify OTel Addon
+      "fileMatch": ["^kedify-agent/Chart.yaml$"],
+      "datasourceTemplate": "docker", // not a typo, OCI helm charts are use 'docker' template
+      "depNameTemplate": "ghcr.io/kedify/charts/otel-add-on",
+      "matchStrings": [
+        "repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
       ],
     },
   ],

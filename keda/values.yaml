@@ -623,7 +623,7 @@ volumes:
 prometheus:
   metricServer:
     # -- Enable metric server Prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- HTTP port used for exposing metrics server prometheus metrics
     port: 8080
     # -- HTTP port name for exposing metrics server prometheus metrics
@@ -680,7 +680,7 @@ prometheus:
       metricRelabelings: []
   operator:
     # -- Enable KEDA Operator prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- Port used for exposing KEDA Operator prometheus metrics
     port: 8080
     # -- App Protocol for service when scraping metrics endpoint
@@ -753,7 +753,7 @@ prometheus:
         #   labels:
   webhooks:
     # -- Enable KEDA admission webhooks prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- Port used for exposing KEDA admission webhooks prometheus metrics
     port: 8080
     # -- App Protocol for service when scraping metrics endpoint

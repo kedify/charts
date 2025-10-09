@@ -15,6 +15,10 @@ dependencies:
     repository: https://kedify.github.io/charts
     version: v0.11.0-0
     condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+  - name: otel-add-on
+    repository: oci://ghcr.io/kedify/charts
+    version: v0.1.2
+    condition: otelAddOn.enabled,otel-add-on.enabled
 home: https://github.com/kedify/charts
 sources:
   - https://github.com/kedify/agent
