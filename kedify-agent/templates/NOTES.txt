@@ -12,9 +12,12 @@ You have successfully installed the:
 {{- if .Values.keda.enabled }}
  - keda
 {{- end}}
-{{- if (or (and .Values.kedaAddOnsHttp .Values.kedaAddOnsHttp.enabled) (and (index .Values "keda-add-ons-http") (index .Values "keda-add-ons-http").enabled)) }}
+{{- if (or ((.Values.kedaAddOnsHttp).enabled) (and (index .Values "keda-add-ons-http") (index .Values "keda-add-ons-http").enabled)) }}
  - keda-add-ons-http
 {{- end}}
-{{- if (or (and .Values.otelAddOn .Values.otelAddOn.enabled) (and (index .Values "otel-add-on") (index .Values "otel-add-on").enabled)) }}
+{{- if (or ((.Values.otelAddOn).enabled) (and (index .Values "otel-add-on") (index .Values "otel-add-on").enabled)) }}
  - keda-add-ons-otel
+{{- end}}
+{{- if (or ((.Values.kedifyPredictor).enabled) (and (index .Values "kedify-predictor") (index .Values "kedify-predictor").enabled)) }}
+ - kedify-predictor
 {{- end}}

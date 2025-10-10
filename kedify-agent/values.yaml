@@ -246,3 +246,9 @@ otel-add-on:
   fullnameOverride: kedify-otel-scaler
   otelOperator:
     enabled: true
+kedify-predictor:
+  # for all available values, check: https://github.com/kedify/keda-prophet/blob/main/helmchart/kedify-predictor/values.yaml
+  enabled: false
+  fullnameOverride: kedify-predictor
+  kedaPredictionController:
+    enabled: true
