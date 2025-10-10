@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: podresourceprofiles.keda.kedify.io
 spec:
   group: keda.kedify.io
@@ -191,13 +191,13 @@ spec:
                   after:
                     default: containerReady
                     description: "After specifies the event or the state pod/container
-                      needs to be in when we start counting (see Delay)\n\n\nAllowed
+                      needs to be in when we start counting (see Delay)\n\nAllowed
                       values are:\n- 'containerReady': specifies whether the container
                       is currently passing its\n  readiness check. The value will
                       change as readiness probes keep executing.\n  If no readiness
                       probes are specified, this field defaults to true once the\n
                       \ container is fully started.\n   field: pod.status.containerStatuses.ready\n
-                      \   time: pod.status.containerStatuses.state.running.startedAt\n\n\n-
+                      \   time: pod.status.containerStatuses.state.running.startedAt\n\n-
                       'containerStarted': indicates whether the container has finished
                       its\n  postStart  lifecycle hook and passed its startup probe.
                       Initialized as\n  false, becomes true after startupProbe is
@@ -207,18 +207,18 @@ spec:
                       no startupProbe is defined and container is running and has\n
                       \ passed the postStart lifecycle hook. The null value must be
                       treated the\n  same as false.\n\t  field: pod.status.containerStatuses.started\n\t
-                      \  time: pod.status.containerStatuses.state.running.startedAt\n\n\n-
+                      \  time: pod.status.containerStatuses.state.running.startedAt\n\n-
                       'podReady': means the pod is able to service requests and should
                       be added\n  to the load balancing pools of all matching services\n
                       \  field: pod.status.conditions[?(.type=='Ready')].status\n
-                      \   time: pod.status.conditions[?(.type=='Ready')].lastTransitionTime\n\n\n-
+                      \   time: pod.status.conditions[?(.type=='Ready')].lastTransitionTime\n\n-
                       'podScheduled': represents status of the scheduling process
                       for this pod\n   field: pod.status.conditions[?(.type=='PodScheduled')].status\n
-                      \   time: pod.status.conditions[?(.type=='PodScheduled')].lastTransitionTime\n\n\n-
+                      \   time: pod.status.conditions[?(.type=='PodScheduled')].lastTransitionTime\n\n-
                       'podRunning' means the pod has been bound to a node and all
                       the\n  containers have been started. At least one container
                       is still running\n  or is in the process of being restarted.\n
-                      \   field: pod.status.phase\n     time: pod.status.startTime.time\n\n\n-
+                      \   field: pod.status.phase\n     time: pod.status.startTime.time\n\n-
                       'deactivated' This is specific to KEDA and works only with\n
                       \               .target.kind == scaledobject.\n  It denotes
                       a state of a ScaledObject whose triggers are not active. This\n
@@ -226,7 +226,7 @@ spec:
                       not being\n  actively used - stand-by mode.\n    field: scaledobject.conditions[?(.type=='Active')].status\n
                       \    time: scaledobject.conditions[?(.type=='Active')].lastTransitionTime\n
                       \    when the aforementioned field goes from true (active) ->
-                      false (passive)\n\n\n- 'activated' Dual event to 'deactivated'.\n
+                      false (passive)\n\n- 'activated' Dual event to 'deactivated'.\n
                       \   field: scaledobject.conditions[?(.type=='Active')].status\n
                       \    time: time: scaledobject.conditions[?(.type=='Active')].lastTransitionTime\n
                       \    when the aforementioned field goes from true (passive)
@@ -268,16 +268,8 @@ spec:
             properties:
               conditions:
                 items:
-                  description: "Condition contains details for one aspect of the current
-                    state of this API Resource.\n---\nThis struct is intended for
-                    direct use as an array at the field path .status.conditions.  For
-                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                    observations of a foo's current state.\n\t    // Known .status.conditions.type
-                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                    \   // other fields\n\t}"
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -318,12 +310,7 @@ spec:
                       - Unknown
                       type: string
                     type:
-                      description: |-
-                        type of condition in CamelCase or in foo.example.com/CamelCase.
-                        ---
-                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                        useful (see .node.status.conditions), the ability to deconflict is important.
-                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
                       maxLength: 316
                       pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                       type: string
