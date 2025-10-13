@@ -156,7 +156,7 @@ spec:
 {{- end }}
 
 {{- /*
-ConfigMap necessary for creating the custom objects by post/pre-instal hook. It actually holds the content,
+ConfigMap necessary for creating the custom objects by post/pre-install hook. It actually holds the content,
 of the extra objects till their CRDs are available in the k8s cluster.
 */}}
 {{- define "postInstallConfigmap" -}}
