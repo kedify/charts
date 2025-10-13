@@ -61,7 +61,7 @@ subjects:
 
 
 {{- /*
-Job necessary for creating the custom objects by post/pre-instal hook
+Job necessary for creating the custom objects by post/pre-install hook
 */}}
 {{- define "postInstallJob" -}}
 {{- $stuff := dict "preOrPost" "post" "ns" .Release.Namespace "objects" .Values.agent.extraPostInstallObjects "agent" .Values.agent }}
