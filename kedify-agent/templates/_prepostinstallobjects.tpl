@@ -1,5 +1,5 @@
 {{- /*
-Rbac necessary for creating the custom objects by post/pre-instal hook
+Rbac necessary for creating the custom objects by post/pre-install hook
 */}}
 {{- define "postInstallRbac" -}}
 {{- $stuff := dict "preOrPost" "post" "ns" .Release.Namespace "objects" .Values.agent.extraPostInstallObjects }}
