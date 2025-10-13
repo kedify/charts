@@ -19,7 +19,6 @@ metadata:
   namespace: {{ .ns }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
-    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-2"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -28,12 +27,11 @@ metadata:
   name: {{ printf "create-manifests-%s" .preOrPost }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
-    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-2"
 rules:
 {{- range .objects }}
 - apiGroups:
-  - {{ .apiVersion }}
+  - {{ regexReplaceAll "^v1$" (regexReplaceAll "/.*" .apiVersion "") "\"\"" }}
   resources:
   - {{ lower .kind }}s
   verbs:
@@ -48,7 +46,6 @@ metadata:
   name: {{ printf "create-manifests-%s" .preOrPost }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
-    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -87,7 +84,6 @@ metadata:
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
     helm.sh/hook-weight: "-1"
-    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
 spec:
   ttlSecondsAfterFinished: 43200 # 12h
   backoffLimit: 4
@@ -125,8 +121,8 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-{{- range $i, $o := .objects }}
         volumeMounts:
+{{- range $i, $o := .objects }}
         - name: {{ printf "extra-resource-%d" $i }}
           mountPath: {{ printf "/data/extra-resource-%d.yaml" $i }}
           subPath: {{ printf "extra-resource-%d.yaml" $i }}
