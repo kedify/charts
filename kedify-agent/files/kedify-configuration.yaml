@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: kedifyconfigurations.install.kedify.io
 spec:
   group: install.kedify.io
@@ -27,7 +27,7 @@ spec:
       name: Mode
       type: string
     - description: HTTTP Addon version
-      jsonPath: .status.deployments.httpAddon.version
+      jsonPath: .status.components.httpAddon.version
       name: HTTP-Addon
       priority: 20
       type: string
@@ -54,7 +54,7 @@ spec:
       priority: 20
       type: string
     - description: Health of KEDA's HTTP Addon interceptor
-      jsonPath: .status.components.keda.deployments.keda-add-ons-http-interceptor.phase
+      jsonPath: .status.components.httpAddon.deployments.keda-add-ons-http-interceptor.phase
       name: Interceptor
       priority: 20
       type: string
@@ -89,8 +89,10 @@ spec:
             description: KedifyConfigurationSpec defines the desired state of KedifyConfiguration
             properties:
               cloudAccountID:
-                description: CloudAccountID is the ID of the cloud account of the
-                  user, ie AWS customer account ID
+                description: |-
+                  CloudAccountID is the optional ID of the cloud account of the user,
+                  find your cloud account IDs in the Kedify Dashboard https://dashboard.kedify.io/organization-details
+                pattern: ^(aws:|gcp:|kfy:)[a-zA-Z0-9][a-zA-Z0-9-]*$
                 type: string
               clusterName:
                 description: ClusterName is the name of this k8s cluster in the Kedify
