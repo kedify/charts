@@ -179,6 +179,12 @@ agent:
   #           - port: "443"
   #             protocol: TCP
 
+  # Array of extra K8s manifests that will be rendered and installed before the Kedify Agent release
+  extraPreInstallObjects: []
+
+  # Array of extra K8s manifests that will be rendered and installed after the Kedify Agent release
+  extraPostInstallObjects: []
+
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
