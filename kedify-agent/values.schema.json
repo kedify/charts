@@ -48,18 +48,14 @@
             }
           ]
         },
-        "billingCloudProvider": {
+        "cloudAccountID": {
           "type": "string",
           "anyOf": [
             {
               "maxLength": 0
             },
             {
-              "enum": [
-                "aws",
-                "azure",
-                "gcp"
-              ]
+              "pattern": "^(aws:|gcp:|kfy:)[a-zA-Z0-9][a-zA-Z0-9-]*$"
             }
           ]
         }
