@@ -19,6 +19,7 @@ metadata:
   namespace: {{ .ns }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-2"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -38,6 +39,7 @@ rules:
   - patch
   - create
   - get
+  - list
 {{- end}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -46,6 +48,7 @@ metadata:
   name: {{ printf "create-manifests-%s" .preOrPost }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -83,6 +86,7 @@ metadata:
     app: {{ printf "create-manifests-%s" .preOrPost }}
   annotations:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
     helm.sh/hook-weight: "-1"
 spec:
   ttlSecondsAfterFinished: 43200 # 12h
