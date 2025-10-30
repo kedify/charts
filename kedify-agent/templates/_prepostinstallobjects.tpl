@@ -30,6 +30,12 @@ metadata:
     helm.sh/hook: {{ printf "%s-install,%s-upgrade" .preOrPost .preOrPost }}
     helm.sh/hook-weight: "-2"
 rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - list
 {{- range .objects }}
 - apiGroups:
   - {{ regexReplaceAll "^v1$" (regexReplaceAll "/.*" .apiVersion "") "\"\"" }}
