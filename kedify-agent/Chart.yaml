@@ -21,7 +21,7 @@ dependencies:
     condition: otelAddOn.enabled,otel-add-on.enabled
   - name: kedify-predictor
     repository: oci://ghcr.io/kedify/charts
-    version: v0.0.1
+    version: v0.0.2
     condition: kedifyPredictor.enabled,kedify-predictor.enabled
 home: https://github.com/kedify/charts
 sources:
