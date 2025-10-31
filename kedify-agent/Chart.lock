@@ -4,12 +4,12 @@ dependencies:
   version: v2.18.0-1
 - name: keda-add-ons-http
   repository: https://kedify.github.io/charts
-  version: v0.11.0-1
+  version: v0.11.0-2
 - name: otel-add-on
   repository: oci://ghcr.io/kedify/charts
   version: v0.1.2
 - name: kedify-predictor
   repository: oci://ghcr.io/kedify/charts
   version: v0.0.2
-digest: sha256:c60136d647897d8c1b6c5b4d765a45785a7855b05b5395c20694a5dec2521ea8
-generated: "2025-10-30T14:38:02.444368+01:00"
+digest: sha256:393ff471f4e052fabe3279a375bfcd1ad2318127f576ce59d668a0349c97d437
+generated: "2025-10-31T18:02:05.797475696Z"
