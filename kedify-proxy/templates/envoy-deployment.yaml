@@ -106,6 +106,9 @@ spec:
             - name: admin
               containerPort: {{ .Values.service.adminPort }}
               protocol: TCP
+            - name: inference
+              containerPort: {{ .Values.service.inferencePort }}
+              protocol: TCP
           livenessProbe:
             {{- with .Values.pod.livenessProbe }}
             {{- toYaml . | nindent 12 }}

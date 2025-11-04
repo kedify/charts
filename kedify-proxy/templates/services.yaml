@@ -24,6 +24,10 @@ spec:
       targetPort: tls
       protocol: TCP
       name: tls
+    - port: {{ .Values.service.inferencePort }}
+      targetPort: inference
+      protocol: TCP
+      name: inference
   selector:
     app: kedify-proxy
 {{- if .Values.service.exposeAdminInterface }}
