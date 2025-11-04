@@ -113,6 +113,8 @@ service:
   httpPort: 8080
   # -- port for TLS HTTP traffic
   tlsPort: 8443
+  # -- port for inference traffic
+  inferencePort: 9002
   # -- Should the admin service be also rendered with the helm chart?
   exposeAdminInterface: true
   # -- [docs](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
