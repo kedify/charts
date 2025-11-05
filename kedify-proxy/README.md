@@ -1,6 +1,6 @@
 # kedify-proxy
 
-![Version: v0.0.7](https://img.shields.io/badge/Version-v0.0.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.35.1](https://img.shields.io/badge/AppVersion-v1.35.1-informational?style=flat-square)
+![Version: v0.0.8](https://img.shields.io/badge/Version-v0.0.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.35.1](https://img.shields.io/badge/AppVersion-v1.35.1-informational?style=flat-square)
 
 A Helm chart for Kedify proxy
 
@@ -627,8 +627,24 @@ true
                </td>
           </tr>
           <tr>
+               <td id="service--inferencePort">
+               <a href="./values.yaml#L117">service.inferencePort</a><br/>
+               (int)
+               </td>
+               <td>
+               port for inference traffic
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+9002
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
                <td id="service--exposeAdminInterface">
-               <a href="./values.yaml#L117">service.exposeAdminInterface</a><br/>
+               <a href="./values.yaml#L119">service.exposeAdminInterface</a><br/>
                (bool)
                </td>
                <td>
@@ -644,7 +660,7 @@ true
           </tr>
           <tr>
                <td id="service--adminSvcType">
-               <a href="./values.yaml#L119">service.adminSvcType</a><br/>
+               <a href="./values.yaml#L121">service.adminSvcType</a><br/>
                (string)
                </td>
                <td>
@@ -660,7 +676,7 @@ true
           </tr>
           <tr>
                <td id="service--adminPort">
-               <a href="./values.yaml#L121">service.adminPort</a><br/>
+               <a href="./values.yaml#L123">service.adminPort</a><br/>
                (int)
                </td>
                <td>
@@ -676,7 +692,7 @@ true
           </tr>
           <tr>
                <td id="resources">
-               <a href="./values.yaml#L124">resources</a><br/>
+               <a href="./values.yaml#L126">resources</a><br/>
                (object)
                </td>
                <td>
@@ -701,7 +717,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling">
-               <a href="./values.yaml#L134">autoscaling</a><br/>
+               <a href="./values.yaml#L136">autoscaling</a><br/>
                (object)
                </td>
                <td>
@@ -723,7 +739,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling--enabled">
-               <a href="./values.yaml#L136">autoscaling.enabled</a><br/>
+               <a href="./values.yaml#L138">autoscaling.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -739,7 +755,7 @@ false
           </tr>
           <tr>
                <td id="autoscaling--scaledObjectName">
-               <a href="./values.yaml#L138">autoscaling.scaledObjectName</a><br/>
+               <a href="./values.yaml#L140">autoscaling.scaledObjectName</a><br/>
                (string)
                </td>
                <td>
@@ -755,7 +771,7 @@ false
           </tr>
           <tr>
                <td id="volumes">
-               <a href="./values.yaml#L153">volumes</a><br/>
+               <a href="./values.yaml#L155">volumes</a><br/>
                (list)
                </td>
                <td>
@@ -771,7 +787,7 @@ false
           </tr>
           <tr>
                <td id="volumeMounts">
-               <a href="./values.yaml#L160">volumeMounts</a><br/>
+               <a href="./values.yaml#L162">volumeMounts</a><br/>
                (list)
                </td>
                <td>
@@ -787,7 +803,7 @@ false
           </tr>
           <tr>
                <td id="nodeSelector">
-               <a href="./values.yaml#L166">nodeSelector</a><br/>
+               <a href="./values.yaml#L168">nodeSelector</a><br/>
                (object)
                </td>
                <td>
@@ -803,7 +819,7 @@ false
           </tr>
           <tr>
                <td id="tolerations">
-               <a href="./values.yaml#L168">tolerations</a><br/>
+               <a href="./values.yaml#L170">tolerations</a><br/>
                (list)
                </td>
                <td>
@@ -819,7 +835,7 @@ false
           </tr>
           <tr>
                <td id="topologySpreadConstraints">
-               <a href="./values.yaml#L170">topologySpreadConstraints</a><br/>
+               <a href="./values.yaml#L172">topologySpreadConstraints</a><br/>
                (list)
                </td>
                <td>
@@ -835,7 +851,7 @@ false
           </tr>
           <tr>
                <td id="affinity">
-               <a href="./values.yaml#L172">affinity</a><br/>
+               <a href="./values.yaml#L174">affinity</a><br/>
                (object)
                </td>
                <td>
@@ -851,7 +867,7 @@ false
           </tr>
           <tr>
                <td id="podDisruptionBudget">
-               <a href="./values.yaml#L175">podDisruptionBudget</a><br/>
+               <a href="./values.yaml#L177">podDisruptionBudget</a><br/>
                (object)
                </td>
                <td>
@@ -870,7 +886,7 @@ false
           </tr>
           <tr>
                <td id="noBanner">
-               <a href="./values.yaml#L186">noBanner</a><br/>
+               <a href="./values.yaml#L188">noBanner</a><br/>
                (bool)
                </td>
                <td>
@@ -886,7 +902,7 @@ false
           </tr>
           <tr>
                <td id="extraObjects">
-               <a href="./values.yaml#L189">extraObjects</a><br/>
+               <a href="./values.yaml#L191">extraObjects</a><br/>
                (list)
                </td>
                <td>

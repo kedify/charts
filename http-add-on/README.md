@@ -1,6 +1,6 @@
 # keda-add-ons-http
 
-![Version: v0.10.0-21](https://img.shields.io/badge/Version-v0.10.0--21-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.10.0-21](https://img.shields.io/badge/AppVersion-v0.10.0--21-informational?style=flat-square)
+![Version: v0.11.0-3](https://img.shields.io/badge/Version-v0.11.0--3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.11.0-3](https://img.shields.io/badge/AppVersion-v0.11.0--3-informational?style=flat-square)
 
 Event-based autoscaler for HTTP workloads on Kubernetes
 
@@ -117,7 +117,7 @@ Kubernetes: `>=v1.23.0-0`
 | interceptor.coldStartWaitingPage.responseStatusCode | int | `503` | The HTTP status code to return when the application has cold-start waiting page enabled |
 | interceptor.coldStartWaitingPage.retryAfter | string | `"60s"` | Value in the `Retry-After` header to return when the application has cold-start waiting page enabled |
 | interceptor.xds | object | `{"keepalive":{"enforcementPolicyMinTime":"30s","time":"30s","timeout":"5s"},"maxConcurrentStreams":1000000}` | Configuration options for the envoy xDS control-plane |
-| images.tag | string | `"v0.10.0-21"` | Image tag for the http add on. This tag is applied to the images listed in `images.operator`, `images.interceptor`, and `images.scaler`. Optional, given app version of Helm chart is used by default |
+| images.tag | string | `"v0.11.0-3"` | Image tag for the http add on. This tag is applied to the images listed in `images.operator`, `images.interceptor`, and `images.scaler`. Optional, given app version of Helm chart is used by default |
 | images.operator | string | `"ghcr.io/kedify/http-add-on-operator"` | Image name for the operator image component |
 | images.interceptor | string | `"ghcr.io/kedify/http-add-on-interceptor"` | Image name for the interceptor image component |
 | images.scaler | string | `"ghcr.io/kedify/http-add-on-scaler"` | Image name for the scaler image component |

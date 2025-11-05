@@ -1,6 +1,6 @@
 # keda
 
-![Version: v2.17.2-0](https://img.shields.io/badge/Version-v2.17.2--0-informational?style=flat-square) ![AppVersion: v2.17.2-0](https://img.shields.io/badge/AppVersion-v2.17.2--0-informational?style=flat-square)
+![Version: v2.18.0-1](https://img.shields.io/badge/Version-v2.18.0--1-informational?style=flat-square) ![AppVersion: v2.18.0-1](https://img.shields.io/badge/AppVersion-v2.18.0--1-informational?style=flat-square)
 
 Event-based autoscaler for workloads on Kubernetes
 
@@ -29,13 +29,13 @@ Kubernetes: `>=v1.23.0-0`
 | global.dnsConfig | object | `{}` | DNS config for KEDA components |
 | image.keda.registry | string | `"ghcr.io"` | Image registry of KEDA operator |
 | image.keda.repository | string | `"kedify/keda-operator"` | Image name of KEDA operator |
-| image.keda.tag | string | `"v2.17.2-0"` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
+| image.keda.tag | string | `"v2.18.0-1"` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
 | image.metricsApiServer.registry | string | `"ghcr.io"` | Image registry of KEDA Metrics API Server |
 | image.metricsApiServer.repository | string | `"kedify/keda-metrics-apiserver"` | Image name of KEDA Metrics API Server |
-| image.metricsApiServer.tag | string | `"v2.17.2-0"` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
+| image.metricsApiServer.tag | string | `"v2.18.0-1"` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
 | image.webhooks.registry | string | `"ghcr.io"` | Image registry of KEDA admission-webhooks |
 | image.webhooks.repository | string | `"kedify/keda-admission-webhooks"` | Image name of KEDA admission-webhooks |
-| image.webhooks.tag | string | `"v2.17.2-0"` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
+| image.webhooks.tag | string | `"v2.18.0-1"` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
 | image.pullPolicy | string | `"Always"` | Image pullPolicy for all KEDA components |
 | clusterName | string | `"kubernetes-default"` | Kubernetes cluster name. Used in features such as emitting CloudEvents |
 | clusterDomain | string | `"cluster.local"` | Kubernetes cluster domain |
@@ -171,7 +171,7 @@ Kubernetes: `>=v1.23.0-0`
 | volumes.metricsApiServer.extraVolumeMounts | list | `[]` | Extra volume mounts for metric server deployment |
 | volumes.webhooks.extraVolumes | list | `[]` | Extra volumes for admission webhooks deployment |
 | volumes.webhooks.extraVolumeMounts | list | `[]` | Extra volume mounts for admission webhooks deployment |
-| prometheus.metricServer.enabled | bool | `false` | Enable metric server Prometheus metrics expose |
+| prometheus.metricServer.enabled | bool | `true` | Enable metric server Prometheus metrics expose |
 | prometheus.metricServer.port | int | `8080` | HTTP port used for exposing metrics server prometheus metrics |
 | prometheus.metricServer.portName | string | `"metrics"` | HTTP port name for exposing metrics server prometheus metrics |
 | prometheus.metricServer.serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","jobLabel":"","metricRelabelings":[],"podTargetLabels":[],"port":"metrics","relabelings":[],"relabellings":[],"scheme":"http","scrapeTimeout":"","targetLabels":[],"targetPort":"","tlsConfig":{}}` | App Protocol for service when scraping metrics endpoint appProtocol: http |
@@ -196,7 +196,7 @@ Kubernetes: `>=v1.23.0-0`
 | prometheus.metricServer.podMonitor.additionalLabels | object | `{}` | Additional labels to add for metric server using podMonitor crd (prometheus operator) |
 | prometheus.metricServer.podMonitor.relabelings | list | `[]` | List of expressions that define custom relabeling rules for metric server podMonitor crd (prometheus operator) |
 | prometheus.metricServer.podMonitor.metricRelabelings | list | `[]` | List of expressions that define custom  metric relabeling rules for metric server PodMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec] |
-| prometheus.operator.enabled | bool | `false` | Enable KEDA Operator prometheus metrics expose |
+| prometheus.operator.enabled | bool | `true` | Enable KEDA Operator prometheus metrics expose |
 | prometheus.operator.port | int | `8080` | Port used for exposing KEDA Operator prometheus metrics |
 | prometheus.operator.serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","jobLabel":"","metricRelabelings":[],"podTargetLabels":[],"port":"metrics","relabelings":[],"relabellings":[],"scheme":"http","scrapeTimeout":"","targetLabels":[],"targetPort":"","tlsConfig":{}}` | App Protocol for service when scraping metrics endpoint appProtocol: http |
 | prometheus.operator.serviceMonitor.enabled | bool | `false` | Enables ServiceMonitor creation for the Prometheus Operator |
@@ -224,7 +224,7 @@ Kubernetes: `>=v1.23.0-0`
 | prometheus.operator.prometheusRules.namespace | string | `""` | Scraping namespace for KEDA Operator using prometheusRules crd (prometheus operator) |
 | prometheus.operator.prometheusRules.additionalLabels | object | `{}` | Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator) |
 | prometheus.operator.prometheusRules.alerts | list | `[]` | Additional alerts to add for KEDA Operator using prometheusRules crd (prometheus operator) |
-| prometheus.webhooks.enabled | bool | `false` | Enable KEDA admission webhooks prometheus metrics expose |
+| prometheus.webhooks.enabled | bool | `true` | Enable KEDA admission webhooks prometheus metrics expose |
 | prometheus.webhooks.port | int | `8080` | Port used for exposing KEDA admission webhooks prometheus metrics |
 | prometheus.webhooks.serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","jobLabel":"","metricRelabelings":[],"podTargetLabels":[],"port":"metrics","relabelings":[],"relabellings":[],"scheme":"http","scrapeTimeout":"","targetLabels":[],"targetPort":"","tlsConfig":{}}` | App Protocol for service when scraping metrics endpoint appProtocol: http |
 | prometheus.webhooks.serviceMonitor.enabled | bool | `false` | Enables ServiceMonitor creation for the Prometheus webhooks |
