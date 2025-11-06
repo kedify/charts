@@ -130,6 +130,9 @@ spec:
           volumeMounts:
             - mountPath: /helm/charts
               name: helm-charts
+            - mountPath: /etc/mc/kubeconfigs
+              name: kubeconfigs
+              readOnly: true
             {{- with .Values.agent.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -147,6 +150,10 @@ spec:
         - name: helm-charts
           emptyDir:
             sizeLimit: 50Mi
+        - name: kubeconfigs
+          secret:
+            defaultMode: 420
+            secretName: kedify-agent-multicluster-kubeconfigs
       {{- with .Values.agent.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
