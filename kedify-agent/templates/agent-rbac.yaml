@@ -64,6 +64,18 @@ rules:
   - patch
 {{- end }}
 
+# Multi-cluster distributed scaling
+- apiGroups:
+  - keda.kedify.io
+  resources:
+  - distributedscaledobjects
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
 #  Cruding own CRD that holds the helm chart values for Keda installation, but also enabling disabling telemetry
 - apiGroups:
   - install.kedify.io
