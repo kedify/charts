@@ -48,7 +48,7 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - inference.networking.x-k8s.io
+  - inference.networking.k8s.io
   resources:
   - inferencepools
   verbs:
