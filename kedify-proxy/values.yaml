@@ -44,7 +44,7 @@ config:
     maxActiveDownstreamConnections: 10000
   # -- gRPC xDS specific configuration
   xds:
-    # -- apiType for xDS communication, use `GRPC` for full State of the World or `DELTA_GRPC` for incremental xDS updates
+    # -- apiType for xDS communication, use 'GRPC' for State of the World (SotW) or 'DELTA_GRPC' for incremental (delta) xDS updates
     apiType: DELTA_GRPC
     # -- keepalive settings for gRPC xDS connection to Kedify control plane
     keepaliveInterval: 30s
