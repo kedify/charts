@@ -25,7 +25,7 @@ admin:
       port_value: {{ .Values.service.adminPort }}
 dynamic_resources:
   ads_config:
-    api_type: DELTA_GRPC
+    api_type: {{ .Values.config.xds.apiType }}
     transport_api_version: V3
     grpc_services:
     - envoy_grpc:
