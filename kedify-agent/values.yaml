@@ -34,7 +34,7 @@ agent:
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: /helm/kedify/kedify-proxy.tgz
-    chartVersion: v0.0.8
+    chartVersion: v0.0.9
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
     # namespace.
@@ -178,10 +178,8 @@ agent:
 
   # Array of extra K8s manifests that will be rendered and installed before the Kedify Agent release
   extraPreInstallObjects: []
-
   # Array of extra K8s manifests that will be rendered and installed after the Kedify Agent release
   extraPostInstallObjects: []
-
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
