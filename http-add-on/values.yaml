@@ -474,7 +474,7 @@ kubectlImage:
 # -- gRPC bridge between external-scaler and interceptor
 # serves as a replacement of the legacy REST /queue endpoint
 grpcBridge:
-  enabled: false
+  enabled: true
   port: 50051
   # setting this too high can prolong scale from zero
   metricPushPeriod: 1s
