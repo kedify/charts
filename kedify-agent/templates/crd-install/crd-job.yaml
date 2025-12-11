@@ -40,7 +40,7 @@ spec:
           set -o errexit ; set -o xtrace ; set -o nounset
           # piping stderr to stdout means kubectl's errors are surfaced
           # in the pod's logs.
-          kubectl apply -f /data/ 2>&1
+          kubectl apply --server-side -f /data/ 2>&1
         {{- with .Values.agent.securityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
