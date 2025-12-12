@@ -69,6 +69,7 @@ rules:
   - keda.kedify.io
   resources:
   - distributedscaledobjects
+  - distributedscaledjobs
   verbs:
   - get
   - list
