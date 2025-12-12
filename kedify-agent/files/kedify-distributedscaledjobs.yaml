@@ -21,6 +21,14 @@ spec:
       jsonPath: .status.print.runningJobs
       name: running_jobs
       type: string
+    - description: Member Clusters Status - Healthy/Total
+      jsonPath: .status.print.membersCount
+      name: Members
+      type: string
+    - description: Age
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -48,7 +56,7 @@ spec:
             description: DistributedScaledJobSpec defines the desired state of DistributedScaledJob
             properties:
               failingClusterQuarantineDuration:
-                default: 5m
+                default: 15s
                 description: FailingClusterQuarantineDuration is the duration to quarantine
                   a failing cluster before attempting to scale jobs on it again
                 type: string
@@ -9186,6 +9194,9 @@ spec:
                 description: Print is used for custom printing of DistributedScaledJob
                   status
                 properties:
+                  membersCount:
+                    description: MembersCountStatus is the status of member clusters
+                    type: string
                   runningJobs:
                     description: RunningJobs represents the status of running jobs
                       across member clusters
