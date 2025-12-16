@@ -435,9 +435,16 @@ spec:
                       description: ID is the identification of the member cluster
                         for multicluster-controller
                       type: string
+                    lastScalingProgressTime:
+                      description: |-
+                        LastScalingProgressTime is the last time the scaling made progress
+                        This is used to determine how long the member cluster has been making slow progress for rebalancing purposes
+                      format: date-time
+                      type: string
                     lastStatusChangeTime:
-                      description: LastStatusChangeTime is the last time the status
-                        changed
+                      description: |-
+                        LastStatusChangeTime is the last time the status changed
+                        This is used to determine how long the member cluster has been unhealthy for rebalancing purposes
                       format: date-time
                       type: string
                     state:
