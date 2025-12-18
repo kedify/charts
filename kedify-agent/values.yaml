@@ -235,9 +235,6 @@ keda:
       enabled: true
     webhooks:
       enabled: true
-  env:
-  - name: "RAW_METRICS_GRPC_PROTOCOL"
-    value: "enabled"
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
