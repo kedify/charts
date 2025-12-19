@@ -1,6 +1,6 @@
 # keda
 
-![Version: v2.18.0-1](https://img.shields.io/badge/Version-v2.18.0--1-informational?style=flat-square) ![AppVersion: v2.18.0-1](https://img.shields.io/badge/AppVersion-v2.18.0--1-informational?style=flat-square)
+![Version: v2.18.0-3](https://img.shields.io/badge/Version-v2.18.0--3-informational?style=flat-square) ![AppVersion: v2.18.0-3](https://img.shields.io/badge/AppVersion-v2.18.0--3-informational?style=flat-square)
 
 Event-based autoscaler for workloads on Kubernetes
 
@@ -29,13 +29,13 @@ Kubernetes: `>=v1.23.0-0`
 | global.dnsConfig | object | `{}` | DNS config for KEDA components |
 | image.keda.registry | string | `"ghcr.io"` | Image registry of KEDA operator |
 | image.keda.repository | string | `"kedify/keda-operator"` | Image name of KEDA operator |
-| image.keda.tag | string | `"v2.18.0-1"` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
+| image.keda.tag | string | `"v2.18.0-3"` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
 | image.metricsApiServer.registry | string | `"ghcr.io"` | Image registry of KEDA Metrics API Server |
 | image.metricsApiServer.repository | string | `"kedify/keda-metrics-apiserver"` | Image name of KEDA Metrics API Server |
-| image.metricsApiServer.tag | string | `"v2.18.0-1"` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
+| image.metricsApiServer.tag | string | `"v2.18.0-3"` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
 | image.webhooks.registry | string | `"ghcr.io"` | Image registry of KEDA admission-webhooks |
 | image.webhooks.repository | string | `"kedify/keda-admission-webhooks"` | Image name of KEDA admission-webhooks |
-| image.webhooks.tag | string | `"v2.18.0-1"` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
+| image.webhooks.tag | string | `"v2.18.0-3"` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
 | image.pullPolicy | string | `"Always"` | Image pullPolicy for all KEDA components |
 | clusterName | string | `"kubernetes-default"` | Kubernetes cluster name. Used in features such as emitting CloudEvents |
 | clusterDomain | string | `"cluster.local"` | Kubernetes cluster domain |
