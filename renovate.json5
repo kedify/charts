@@ -22,8 +22,15 @@
     },
     {
       "packageNames": [
-        "ghcr.io/kedify/charts/otel-add-on", // helm chart
+        "ghcr.io/kedify/charts/otel-add-on", // OCI helm chart
       ],
+      "enabled": true,
+    },
+    {
+      "packageNames": [
+        "ghcr.io/kedify/charts/kedify-predictor", // OCI helm chart
+      ],
+      "enabled": true,
     },
   ],
   "regexManagers": [
@@ -39,10 +46,19 @@
     {
       // kedify OTel Addon
       "fileMatch": ["^kedify-agent/Chart.yaml$"],
-      "datasourceTemplate": "docker", // not a typo, OCI helm charts are use 'docker' template
+      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
       "depNameTemplate": "ghcr.io/kedify/charts/otel-add-on",
       "matchStrings": [
-        "repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+        "name:\\s+otel-add-on\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+    {
+      // kedify Predictor
+      "fileMatch": ["^kedify-agent/Chart.yaml$"],
+      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
+      "depNameTemplate": "ghcr.io/kedify/charts/kedify-predictor",
+      "matchStrings": [
+        "name:\\s+kedify-predictor\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
       ],
     },
   ],
