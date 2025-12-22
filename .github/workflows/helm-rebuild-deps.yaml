@@ -22,7 +22,8 @@ jobs:
       - name: Rebuild the lock file for chart dependencies
         run: |
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-          helm repo update open-telemetry
+          helm repo add kedifykeda https://kedify.github.io/charts
+          helm repo update kedifykeda open-telemetry
           pushd ./kedify-agent/ && helm dependency update . && helm dependency build . && popd
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
