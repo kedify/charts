@@ -7,9 +7,9 @@ dependencies:
   version: v0.11.0-7
 - name: otel-add-on
   repository: oci://ghcr.io/kedify/charts
-  version: v0.1.2
+  version: v0.1.3
 - name: kedify-predictor
   repository: oci://ghcr.io/kedify/charts
   version: v0.0.4
-digest: sha256:b13e659cf8641d056495463424e7af607d93654f727902d99a5799b05cc34e46
-generated: "2025-12-19T17:53:42.680581+01:00"
+digest: sha256:ea3225be0ad679faafddcf6a70e2352adefb7108a460f2b1391c315261558bb2
+generated: "2025-12-22T14:28:02.709584244Z"
