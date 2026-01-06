@@ -221,6 +221,37 @@ spec:
                           description: Values defines the Helm values
                           type: string
                       type: object
+                    predictorAddonHelm:
+                      description: PredictorAddonHelm defines the predictor-addon
+                        Helm values and chart version for Predictor Addon installation
+                      properties:
+                        appVersion:
+                          description: AppVersion defines the actual version of the
+                            application that will be installed (KEDA or HttpAddon,
+                            this should correspond with the container image tags)
+                          type: string
+                        autoUpdate:
+                          description: AutoUpdate controls what strategy should be
+                            used for updating the AppVersion when new releases are
+                            available
+                          enum:
+                          - LatestReleased
+                          - BuildsOnly
+                          - PatchesOnly
+                          - Disabled
+                          type: string
+                        chartVersion:
+                          description: ChartVersion defines the Helm chart version
+                          type: string
+                        enabled:
+                          description: Enabled determines whether the helm chart should
+                            be installed or not (for KEDA helm chart ManagementMode
+                            needs to also allow this)
+                          type: boolean
+                        values:
+                          description: Values defines the Helm values
+                          type: string
+                      type: object
                     telemetry:
                       description: Telemetry defines the telemetry configuration
                       properties:
