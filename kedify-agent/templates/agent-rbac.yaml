@@ -201,6 +201,9 @@ rules:
   verbs:
   - create
   - patch
+  - get
+  - list
+  - watch
 {{- if .Values.agent.rbac.readNodes }}
 # for metrics and metered billing
 - apiGroups:
@@ -213,7 +216,6 @@ rules:
   - watch
 {{- end }}
 {{- if .Values.agent.rbac.readPods }}
-# for metrics
 - apiGroups:
   - ""
   resources:
@@ -251,6 +253,14 @@ rules:
   verbs:
   - get
   - list
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
 {{- end }}
 {{- if .Values.agent.rbac.readDeploymentsClusterwide }}
 - apiGroups:
