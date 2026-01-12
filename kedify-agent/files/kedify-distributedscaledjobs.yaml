@@ -55,11 +55,6 @@ spec:
           spec:
             description: DistributedScaledJobSpec defines the desired state of DistributedScaledJob
             properties:
-              failingClusterQuarantineDuration:
-                default: 15s
-                description: FailingClusterQuarantineDuration is the duration to quarantine
-                  a failing cluster before attempting to scale jobs on it again
-                type: string
               memberClusters:
                 description: |-
                   MemberClusters is the list of member clusters where the ScaledJob should trigger scaling of the target workloads
@@ -87,6 +82,25 @@ spec:
                   - weight
                   type: object
                 type: array
+              rebalancingPolicy:
+                default:
+                  failingClusterQuarantineDuration: 15s
+                  gracePeriod: 3m
+                description: RebalancingPolicy controls how the controller should
+                  behave when clusters fail
+                properties:
+                  failingClusterQuarantineDuration:
+                    default: 15s
+                    description: FailingClusterQuarantineDuration is the duration
+                      to quarantine a failing cluster before attempting to scale Jobs
+                      on it again
+                    type: string
+                  gracePeriod:
+                    default: 3m
+                    description: FailureGracePeriod is the duration to wait before
+                      rebalancing Jobs when a member cluster becomes unhealthy
+                    type: string
+                type: object
               scaledJobSpec:
                 description: ScaledJobSpec is the specification of the KEDA ScaledJob
                 properties:
@@ -9066,6 +9080,12 @@ spec:
                           type: string
                         type: array
                       strategy:
+                        enum:
+                        - basic
+                        - custom
+                        - accurate
+                        - eager
+                        - pendingAware
                         type: string
                     type: object
                   successfulJobsHistoryLimit:
@@ -9202,7 +9222,7 @@ spec:
                   status
                 properties:
                   membersCount:
-                    description: MembersCountStatus is the status of member clusters
+                    description: MembersCount is the status of member clusters
                     type: string
                   runningJobs:
                     description: RunningJobs represents the status of running jobs
