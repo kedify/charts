@@ -248,8 +248,7 @@ otel-add-on:
   otelOperator:
     enabled: true
 kedify-predictor:
-  # for all available values (x.y.z is the version of the sub-chart mentioned in ./Chart.yaml):
-  # 1) helm pull oci://ghcr.io/kedify/charts/kedify-predictor --version=vx.y.x
-  # 2) tar -vxf kedify-predictor-vx.y.z.tgz
+  # for all available values:
+  # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   fullnameOverride: kedify-predictor
