@@ -9,7 +9,7 @@ icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/imag
 dependencies:
   - name: keda
     repository: https://kedify.github.io/charts
-    version: v2.18.3-3
+    version: v2.18.3-4
     condition: keda.enabled
   - name: keda-add-ons-http
     repository: https://kedify.github.io/charts
