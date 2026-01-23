@@ -10,6 +10,6 @@ dependencies:
   version: v0.1.3
 - name: kedify-predictor
   repository: oci://ghcr.io/kedify/charts
-  version: 0.1.0
-digest: sha256:70563e49226d2b13f0063ac64baebbcdbd6e12dfd88fb63f87f90463aead63e8
-generated: "2026-01-23T14:40:01.179908786Z"
+  version: 0.1.1
+digest: sha256:49c26e0f4b1ffc31fac2d2985d76237bf138c2d5e6f9008721b9c82ea1b4da0a
+generated: "2026-01-23T16:16:37.780719798Z"
