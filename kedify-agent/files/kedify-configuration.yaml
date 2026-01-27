@@ -316,6 +316,8 @@ spec:
                     type: string
                   kedaResourcesMetrics:
                     type: string
+                  observedHelmValues:
+                    type: string
                   phase:
                     type: string
                   reason:
@@ -356,6 +358,10 @@ spec:
                       type: object
                     firstHealthyAt:
                       format: date-time
+                      type: string
+                    helmReleaseName:
+                      type: string
+                    observedHelmValues:
                       type: string
                     version:
                       type: string

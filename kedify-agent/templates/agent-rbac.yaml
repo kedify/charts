@@ -152,6 +152,7 @@ rules:
 {{- end }}
 
 # kedify-agent reads API key from here and stores agent_id from fleet install initialization
+# it also needs to be able to read secrets containing the helm release info of its components
 - apiGroups:
   - ""
   resources:
@@ -160,9 +161,7 @@ rules:
   - get
   - delete
   - update
-  resourceNames:
-  - kedify-agent
-  - sh.helm.release.v1.kedify-otel.v1
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
