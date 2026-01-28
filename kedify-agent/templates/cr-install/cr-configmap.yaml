@@ -23,6 +23,7 @@ data:
       kedaInstallations:
       - agentAutoUpdate: false
         name: keda
+        mode: Helm
         httpAddonHelm:
           enabled: true
           values: |-
@@ -32,6 +33,10 @@ data:
           values: |-
             ---
         kedaHelm:
+          enabled: true
+          values: |-
+            ---
+        predictorAddonHelm:
           enabled: true
           values: |-
             ---

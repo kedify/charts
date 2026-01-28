@@ -81,7 +81,7 @@ agent:
   # default kedify config that will be created if createKedifyConfiguration is enabled
   kedifyConfiguration:
     agentAutoUpdate: false
-    mode: Disabled
+    mode: Helm
     telemetry:
       controlPlane:
         interval: 30
