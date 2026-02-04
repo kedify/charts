@@ -382,6 +382,11 @@ spec:
                       description: ClusterStatus defines the observed state of a cluster
                       properties:
                         id:
+                          description: ID is the unique identifier of the cluster
+                          type: string
+                        info:
+                          description: Info contains additional user-readable information
+                            about the cluster status
                           type: string
                       type: object
                     type: object
