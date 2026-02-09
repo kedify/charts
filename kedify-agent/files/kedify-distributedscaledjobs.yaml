@@ -9220,23 +9220,13 @@ spec:
                 type: integer
               memberClusterStatuses:
                 additionalProperties:
-                  description: MemberClusterStatus represents the status of a member
-                    cluster
+                  description: DistributedScaledJobMemberClusterStatus represents
+                    the status of a member cluster
                   properties:
-                    currentReplicas:
-                      description: CurrentReplicas is the current number of replicas
-                        in the member cluster
-                      format: int32
-                      type: integer
                     description:
                       description: Description provides additional information about
                         the member cluster status
                       type: string
-                    desiredReplicas:
-                      description: DesiredReplicas is the desired number of replicas
-                        in the member cluster
-                      format: int32
-                      type: integer
                     excluded:
                       description: |-
                         Excluded indicates whether the member cluster is excluded from scaling
@@ -9258,16 +9248,32 @@ spec:
                         This is used to determine how long the member cluster has been unhealthy for rebalancing purposes
                       format: date-time
                       type: string
+                    pendingJobs:
+                      description: PendingJobs is the number of jobs that are pending
+                        in the member cluster
+                      format: int32
+                      type: integer
+                    runningJobs:
+                      description: RunningJobs is the current number of running jobs
+                        in the member cluster
+                      format: int32
+                      type: integer
                     state:
                       description: State is the state of the member cluster (e.g.,
                         Ready, NotReady)
                       type: string
+                    stuckJobs:
+                      description: StuckJobs is the number of jobs that are stuck
+                        (e.g., pending for too long) in the member cluster
+                      format: int32
+                      type: integer
                   required:
-                  - currentReplicas
                   - description
-                  - desiredReplicas
                   - id
+                  - pendingJobs
+                  - runningJobs
                   - state
+                  - stuckJobs
                   type: object
                 description: MemberClusterStatuses represents the status of each member
                   cluster
