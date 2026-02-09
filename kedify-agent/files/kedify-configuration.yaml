@@ -385,8 +385,11 @@ spec:
                           description: ID is the unique identifier of the cluster
                           type: string
                         info:
-                          description: Info contains additional user-readable information
-                            about the cluster status
+                          description: Info contains additional information about
+                            the cluster status
+                          type: string
+                        state:
+                          description: State is the current state of the cluster
                           type: string
                       type: object
                     type: object
