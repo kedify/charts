@@ -88,21 +88,27 @@ spec:
                 type: array
               rebalancingPolicy:
                 default:
-                  failingClusterQuarantineDuration: 15s
-                  gracePeriod: 3m
+                  failingClusterTaintDuration: 30s
+                  gracePeriod: 1m
+                  softTaintWindow: 5s
                 description: RebalancingPolicy controls how the controller should
                   behave when clusters fail
                 properties:
-                  failingClusterQuarantineDuration:
-                    default: 15s
-                    description: FailingClusterQuarantineDuration is the duration
-                      to quarantine a failing cluster before attempting to scale Jobs
-                      on it again
+                  failingClusterTaintDuration:
+                    default: 30s
+                    description: FailingClusterTaintDuration is the duration to taint
+                      a failing cluster before attempting to scale Jobs on it again
                     type: string
                   gracePeriod:
-                    default: 3m
+                    default: 1m
                     description: FailureGracePeriod is the duration to wait before
-                      rebalancing Jobs when a member cluster becomes unhealthy
+                      re-creating Jobs that fail to progress from Pending to Running
+                      state
+                    type: string
+                  softTaintWindow:
+                    default: 5s
+                    description: SoftTaintWindow is the time window to wait for a
+                      second failure before applying a hard taint
                     type: string
                 type: object
               scaledJobSpec:
@@ -9220,23 +9226,13 @@ spec:
                 type: integer
               memberClusterStatuses:
                 additionalProperties:
-                  description: MemberClusterStatus represents the status of a member
-                    cluster
+                  description: DistributedScaledJobMemberClusterStatus represents
+                    the status of a member cluster
                   properties:
-                    currentReplicas:
-                      description: CurrentReplicas is the current number of replicas
-                        in the member cluster
-                      format: int32
-                      type: integer
                     description:
                       description: Description provides additional information about
                         the member cluster status
                       type: string
-                    desiredReplicas:
-                      description: DesiredReplicas is the desired number of replicas
-                        in the member cluster
-                      format: int32
-                      type: integer
                     excluded:
                       description: |-
                         Excluded indicates whether the member cluster is excluded from scaling
@@ -9258,16 +9254,36 @@ spec:
                         This is used to determine how long the member cluster has been unhealthy for rebalancing purposes
                       format: date-time
                       type: string
+                    pendingJobs:
+                      description: PendingJobs is the number of jobs that are pending
+                        in the member cluster
+                      format: int32
+                      type: integer
+                    runningJobs:
+                      description: RunningJobs is the current number of running jobs
+                        in the member cluster
+                      format: int32
+                      type: integer
+                    softTainted:
+                      description: SoftTainted indicates the cluster has a recent
+                        failure but is not hard tainted
+                      type: boolean
                     state:
                       description: State is the state of the member cluster (e.g.,
                         Ready, NotReady)
                       type: string
+                    stuckJobs:
+                      description: StuckJobs is the number of jobs that are stuck
+                        (e.g., pending for too long) in the member cluster
+                      format: int32
+                      type: integer
                   required:
-                  - currentReplicas
                   - description
-                  - desiredReplicas
                   - id
+                  - pendingJobs
+                  - runningJobs
                   - state
+                  - stuckJobs
                   type: object
                 description: MemberClusterStatuses represents the status of each member
                   cluster
