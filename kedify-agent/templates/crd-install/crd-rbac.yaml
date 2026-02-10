@@ -37,6 +37,7 @@ rules:
   - kedifyconfigurations.install.kedify.io
   - scalingpolicies.keda.kedify.io
   - podresourceprofiles.keda.kedify.io
+  - podresourceautoscalers.keda.kedify.io
   - distributedscaledobjects.keda.kedify.io
   - distributedscaledjobs.keda.kedify.io
 - apiGroups:
