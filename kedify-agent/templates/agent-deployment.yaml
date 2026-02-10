@@ -76,6 +76,12 @@ spec:
             - name: PRP_REQUIRES_ANNOTATED_PODS
               value: {{ .Values.agent.features.prpRequiresAnnotatedPods | quote }}
             {{- end }}
+            - name: PRA_ENABLED
+              value: {{ .Values.agent.features.podResourceAutoscalersEnabled | quote }}
+            {{- if (.Values.agent.features).podResourceAutoscalersEnabled }}
+            - name: PRA_REQUIRES_ANNOTATED_PODS
+              value: {{ .Values.agent.features.praRequiresAnnotatedPods | quote }}
+            {{- end }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
             - name: RBAC_READ_NODES
