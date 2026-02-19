@@ -70,6 +70,12 @@ spec:
             - name: NO_BANNER
               value: {{ .Values.agent.noBanner | quote }}
             {{- end }}
+            - name: SCALING_POLICY_ENABLED
+              value: {{ .Values.agent.features.scalingPoliciesEnabled | quote }}
+            - name: DSJ_ENABLED
+              value: {{ .Values.agent.features.distributedScaledJobsEnabled | quote }}
+            - name: DSO_ENABLED
+              value: {{ .Values.agent.features.distributedScaledObjectsEnabled | quote }}
             {{- if (.Values.agent.features).podResourceProfilesEnabled }}
             - name: PRP_ENABLED
               value: {{ .Values.agent.features.podResourceProfilesEnabled | quote }}
