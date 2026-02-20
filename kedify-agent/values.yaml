@@ -116,6 +116,9 @@ agent:
     podResourceAutoscalersEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
+    distributedScaledObjectsEnabled: false
+    distributedScaledJobsEnabled: false
+    scalingPoliciesEnabled: true
   autowire:
     serviceSyncPeriod: 500ms
   rbac:
