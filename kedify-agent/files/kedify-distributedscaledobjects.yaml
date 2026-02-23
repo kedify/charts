@@ -37,6 +37,10 @@ spec:
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - description: Indicates if the DistributedScaledObject is paused
+      jsonPath: .status.conditions[?(@.type=="Paused")].status
+      name: Paused
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
