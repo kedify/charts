@@ -1,0 +1,29 @@
+apiVersion: v2
+name: kedify-agent
+description: Kedify agent - Helm Chart
+kubeVersion: ">=v1.23.0-0"
+type: application
+version: "v0.4.15"
+appVersion: "v0.4.15"
+icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+dependencies:
+  - name: keda
+    repository: https://kedify.github.io/charts
+    version: v2.18.3-6
+    condition: keda.enabled
+  - name: keda-add-ons-http
+    repository: https://kedify.github.io/charts
+    version: v0.11.0-8
+    condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+  - name: otel-add-on
+    repository: oci://ghcr.io/kedify/charts
+    version: v0.1.3
+    condition: otelAddOn.enabled,otel-add-on.enabled
+  - name: kedify-predictor
+    repository: oci://ghcr.io/kedify/charts
+    version: 0.1.2
+    condition: kedifyPredictor.enabled,kedify-predictor.enabled
+home: https://github.com/kedify/charts
+sources:
+  - https://github.com/kedify/agent
+  - https://github.com/kedify/charts

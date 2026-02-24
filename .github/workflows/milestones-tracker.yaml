@@ -1,0 +1,96 @@
+name: milestones tracking with release
+
+on:
+  workflow_call:
+    inputs:
+      chart:
+        description: 'chart name'
+        type: string
+        required: true
+      prNumber:
+        description: 'pull request number'
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  packages: write
+
+jobs:
+  milestone_tracker:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.milestone_tracking.outputs.should_release }}
+      version: ${{ steps.milestone_tracking.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure correct milestone
+        id: milestone_tracking
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+        run: |
+          set -euo pipefail
+
+          has_milestone=$(gh pr view -R kedify/charts ${PR_NUMBER} --json 'milestone' --jq '.milestone.title | length')
+          if [[ "$has_milestone" == 0 ]]; then
+              echo "setting '${{ inputs.chart }}/next' milestone for PR #${PR_NUMBER}"
+              gh pr edit -R kedify/charts ${PR_NUMBER} --milestone "${{ inputs.chart }}/next"
+              exit 0
+          fi
+          labels=( $(gh pr view -R kedify/charts ${PR_NUMBER} --json 'labels' --jq '.labels[].name') )
+          for label in "${labels[@]}"; do
+              if [[ "$label" == "release/${{ inputs.chart }}" ]]; then
+                  has_release_label="true"
+              fi
+          done
+
+          if [[ "$has_release_label" != "true" ]]; then
+              echo "not a release PR #${PR_NUMBER}, labels: ${labels[*]}"
+              exit 0
+          fi
+          milestone=$(gh pr view -R kedify/charts ${PR_NUMBER} --json 'milestone' --jq '.milestone.title')
+          echo "release PR #${PR_NUMBER} with milestone: $milestone"
+          next_milestone_prs=( $(gh pr list -R kedify/charts --search "milestone:${{ inputs.chart }}/next" --state merged --json number --jq '.[].number') )
+          for pr in "${next_milestone_prs[@]}"; do
+              echo "moving PR $pr milestone '${{ inputs.chart }}/next' => '$milestone'"
+              gh pr edit -R kedify/charts "$pr" --milestone "$milestone"
+          done
+          release_tag=${milestone#*/}
+          pr_body="$(gh pr view $PR_NUMBER --json 'body' --jq '.body')" 
+
+          if gh release view $milestone > /dev/null; then
+              echo "release $milestone already exists"
+          else
+              echo "creating release $milestone"
+              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
+          fi
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "version=$release_tag" >> $GITHUB_OUTPUT
+  release:
+    needs: milestone_tracker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish ${{ inputs.chart }} Helm Chart
+        uses: wozniakjan/helm-gh-pages@single_chart_path
+        if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
+        with:
+          token: ${{ github.token }}
+          linting: "off"
+          dependencies: "kedify,https://kedify.github.io/charts"
+          charts_dir: "."
+          single_chart_path: "./${{ inputs.chart }}/"
+      - name: Publish OCI ${{ inputs.chart }} Helm Chart
+        if: "${{ needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-proxy' }}"
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: ${{ inputs.chart }}
+          repository: kedify/charts
+          tag: ${{ needs.milestone_tracker.outputs.version }}
+          path: ${{ inputs.chart }}
+          registry: ghcr.io
+          registry_username: kedify
+          registry_password: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,69 @@
+
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+  ],
+  "labels": ["renovate"],
+  "prConcurrentLimit": 2,
+  "ignorePaths": ["**/vendor/**"],
+  // ignore everything except those that are white-listed
+  "packageRules": [
+    {
+      "packagePatterns": ["*"],
+      "enabled": false,
+    },
+    {
+      "packageNames": [
+        "ghcr.io/kedify/agent", // docker img
+      ],
+      // paused, because the image tag is being updated by PR from a gh action on agent's repo
+      "enabled": false,
+    },
+    {
+      "packageNames": [
+        "ghcr.io/kedify/charts/otel-add-on", // OCI helm chart
+      ],
+      "enabled": true,
+    },
+    {
+      "packageNames": [
+        "ghcr.io/kedify/charts/kedify-predictor", // OCI helm chart
+      ],
+      "enabled": true,
+    },
+  ],
+  "regexManagers": [
+    {
+      // kedify agent
+      "fileMatch": ["^kedify-agent/values.yaml$"],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/kedify/agent",
+      "matchStrings": [
+        "tag:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+    {
+      // kedify OTel Addon
+      "fileMatch": ["^kedify-agent/Chart.yaml$"],
+      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
+      "depNameTemplate": "ghcr.io/kedify/charts/otel-add-on",
+      "matchStrings": [
+        "name:\\s+otel-add-on\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+    {
+      // kedify Predictor
+      "fileMatch": ["^kedify-agent/Chart.yaml$"],
+      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
+      "depNameTemplate": "ghcr.io/kedify/charts/kedify-predictor",
+      "matchStrings": [
+        "name:\\s+kedify-predictor\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+  ],
+  "reviewers": ["team:all"],
+  "prBodyNotes": [
+    "Bump some versions we have inside our code",
+  ],
+}

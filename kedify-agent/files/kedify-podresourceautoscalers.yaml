@@ -1,0 +1,725 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: podresourceautoscalers.keda.kedify.io
+spec:
+  group: keda.kedify.io
+  names:
+    kind: PodResourceAutoscaler
+    listKind: PodResourceAutoscalerList
+    plural: podresourceautoscalers
+    shortNames:
+    - pra
+    singular: podresourceautoscaler
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The readiness of the PodResourceAutoscaler
+      jsonPath: .status.conditions[?(.type=='Ready')].status
+      name: Ready
+      type: string
+    - description: Is the autoscaler active and tracking pods
+      jsonPath: .status.conditions[?(.type=='Active')].status
+      name: Active
+      type: string
+    - description: Has a scale action been applied recently
+      jsonPath: .status.scaling
+      name: Scaling
+      type: boolean
+    - description: When paused, it is ignored
+      jsonPath: .spec.paused
+      name: Paused
+      type: string
+    - description: When the last scale action was applied
+      jsonPath: .status.lastScaleTime
+      name: Last Scale
+      priority: 10
+      type: date
+    - description: Resources changed in the last scale action
+      jsonPath: .status.lastScaleResourceChange
+      name: Last Change
+      priority: 10
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PodResourceAutoscaler is the Schema for the PodResourceAutoscaler
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PodResourceAutoscalerSpec defines the desired state of PodResourceAutoscaler
+            properties:
+              bounds:
+                description: Bounds defines optional bounds and step constraints for
+                  request/limit scaling
+                properties:
+                  cpu:
+                    description: CPU defines bounds/steps for CPU requests and limits.
+                    properties:
+                      limits:
+                        description: |-
+                          Limits defines optional bounds/steps for limits.
+                          If omitted, scaling for this side has no extra bounds from this section.
+                        properties:
+                          max:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Max defines maximum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          min:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Min defines minimum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          step:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Step defines maximum absolute change per
+                              resize
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          stepPercent:
+                            description: StepPercent defines maximum percent change
+                              per resize (of current value)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        type: object
+                      requests:
+                        description: |-
+                          Requests defines optional bounds/steps for requests.
+                          If omitted, scaling for this side has no extra bounds from this section.
+                        properties:
+                          max:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Max defines maximum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          min:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Min defines minimum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          step:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Step defines maximum absolute change per
+                              resize
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          stepPercent:
+                            description: StepPercent defines maximum percent change
+                              per resize (of current value)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        type: object
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Specify requests and/or limits bounds
+                      rule: has(self.requests) || has(self.limits)
+                  memory:
+                    description: Memory defines bounds/steps for memory requests and
+                      limits.
+                    properties:
+                      limits:
+                        description: |-
+                          Limits defines optional bounds/steps for limits.
+                          If omitted, scaling for this side has no extra bounds from this section.
+                        properties:
+                          max:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Max defines maximum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          min:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Min defines minimum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          step:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Step defines maximum absolute change per
+                              resize
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          stepPercent:
+                            description: StepPercent defines maximum percent change
+                              per resize (of current value)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        type: object
+                      requests:
+                        description: |-
+                          Requests defines optional bounds/steps for requests.
+                          If omitted, scaling for this side has no extra bounds from this section.
+                        properties:
+                          max:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Max defines maximum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          min:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Min defines minimum allowed value for the
+                              resource
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          step:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Step defines maximum absolute change per
+                              resize
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          stepPercent:
+                            description: StepPercent defines maximum percent change
+                              per resize (of current value)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        type: object
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Specify requests and/or limits bounds
+                      rule: has(self.requests) || has(self.limits)
+                type: object
+              containerName:
+                description: ContainerName what container in the pod should be updated
+                minLength: 1
+                type: string
+              paused:
+                default: false
+                description: Paused if set to true, can make the controller ignore
+                  this CR
+                type: boolean
+              policy:
+                description: Policy defines how usage is evaluated and when scaling
+                  occurs
+                properties:
+                  after:
+                    default: containerReady
+                    description: After specifies the pod/container state required
+                      before a resize is applied
+                    enum:
+                    - running
+                    - containerReady
+                    - podReady
+                    type: string
+                  consecutiveSamples:
+                    description: ConsecutiveSamples is the number of consecutive samples
+                      that must breach a threshold
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  cooldown:
+                    description: |-
+                      Cooldown is the minimum time between resize actions for a pod
+                      example values: 1m, 2m30s, 5m
+                    format: duration
+                    minLength: 1
+                    type: string
+                  cpu:
+                    description: CPU defines thresholds and target utilization for
+                      CPU
+                    properties:
+                      limits:
+                        description: |-
+                          Limits defines utilization policy against container resource limits.
+                          If omitted, PRA does not scale this resource's limits side.
+                        properties:
+                          consecutiveSamples:
+                            description: ConsecutiveSamples optionally overrides policy.consecutiveSamples
+                              for this resource
+                            format: int32
+                            type: integer
+                          cooldown:
+                            description: |-
+                              Cooldown optionally overrides policy.cooldown for this resource
+                              example values: 30s, 1m, 2m30s
+                            format: duration
+                            minLength: 1
+                            type: string
+                          scaleDownThreshold:
+                            description: ScaleDownThreshold triggers scale-down if
+                              utilization is <= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 0
+                            type: integer
+                          scaleUpThreshold:
+                            description: ScaleUpThreshold triggers scale-up if utilization
+                              is >= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                          targetUtilization:
+                            description: TargetUtilization is the desired utilization
+                              after resize (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        required:
+                        - scaleDownThreshold
+                        - scaleUpThreshold
+                        - targetUtilization
+                        type: object
+                        x-kubernetes-validations:
+                        - message: scaleUpThreshold must be greater than scaleDownThreshold
+                          rule: self.scaleUpThreshold > self.scaleDownThreshold
+                        - message: consecutiveSamples override must be >= 1
+                          rule: '!has(self.consecutiveSamples) || self.consecutiveSamples
+                            >= 1'
+                      requests:
+                        description: |-
+                          Requests defines utilization policy against container resource requests.
+                          If omitted, PRA does not scale this resource's requests side.
+                        properties:
+                          consecutiveSamples:
+                            description: ConsecutiveSamples optionally overrides policy.consecutiveSamples
+                              for this resource
+                            format: int32
+                            type: integer
+                          cooldown:
+                            description: |-
+                              Cooldown optionally overrides policy.cooldown for this resource
+                              example values: 30s, 1m, 2m30s
+                            format: duration
+                            minLength: 1
+                            type: string
+                          scaleDownThreshold:
+                            description: ScaleDownThreshold triggers scale-down if
+                              utilization is <= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 0
+                            type: integer
+                          scaleUpThreshold:
+                            description: ScaleUpThreshold triggers scale-up if utilization
+                              is >= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                          targetUtilization:
+                            description: TargetUtilization is the desired utilization
+                              after resize (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        required:
+                        - scaleDownThreshold
+                        - scaleUpThreshold
+                        - targetUtilization
+                        type: object
+                        x-kubernetes-validations:
+                        - message: scaleUpThreshold must be greater than scaleDownThreshold
+                          rule: self.scaleUpThreshold > self.scaleDownThreshold
+                        - message: consecutiveSamples override must be >= 1
+                          rule: '!has(self.consecutiveSamples) || self.consecutiveSamples
+                            >= 1'
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Specify requests and/or limits policy
+                      rule: has(self.requests) || has(self.limits)
+                  delay:
+                    default: 15s
+                    description: |-
+                      Delay is the wait duration after `after` becomes true before a resize is applied
+                      example values: 15s, 30s, 1m, 2m30s
+                    format: duration
+                    minLength: 1
+                    type: string
+                  memory:
+                    description: Memory defines thresholds and target utilization
+                      for memory
+                    properties:
+                      limits:
+                        description: |-
+                          Limits defines utilization policy against container resource limits.
+                          If omitted, PRA does not scale this resource's limits side.
+                        properties:
+                          consecutiveSamples:
+                            description: ConsecutiveSamples optionally overrides policy.consecutiveSamples
+                              for this resource
+                            format: int32
+                            type: integer
+                          cooldown:
+                            description: |-
+                              Cooldown optionally overrides policy.cooldown for this resource
+                              example values: 30s, 1m, 2m30s
+                            format: duration
+                            minLength: 1
+                            type: string
+                          scaleDownThreshold:
+                            description: ScaleDownThreshold triggers scale-down if
+                              utilization is <= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 0
+                            type: integer
+                          scaleUpThreshold:
+                            description: ScaleUpThreshold triggers scale-up if utilization
+                              is >= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                          targetUtilization:
+                            description: TargetUtilization is the desired utilization
+                              after resize (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        required:
+                        - scaleDownThreshold
+                        - scaleUpThreshold
+                        - targetUtilization
+                        type: object
+                        x-kubernetes-validations:
+                        - message: scaleUpThreshold must be greater than scaleDownThreshold
+                          rule: self.scaleUpThreshold > self.scaleDownThreshold
+                        - message: consecutiveSamples override must be >= 1
+                          rule: '!has(self.consecutiveSamples) || self.consecutiveSamples
+                            >= 1'
+                      requests:
+                        description: |-
+                          Requests defines utilization policy against container resource requests.
+                          If omitted, PRA does not scale this resource's requests side.
+                        properties:
+                          consecutiveSamples:
+                            description: ConsecutiveSamples optionally overrides policy.consecutiveSamples
+                              for this resource
+                            format: int32
+                            type: integer
+                          cooldown:
+                            description: |-
+                              Cooldown optionally overrides policy.cooldown for this resource
+                              example values: 30s, 1m, 2m30s
+                            format: duration
+                            minLength: 1
+                            type: string
+                          scaleDownThreshold:
+                            description: ScaleDownThreshold triggers scale-down if
+                              utilization is <= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 0
+                            type: integer
+                          scaleUpThreshold:
+                            description: ScaleUpThreshold triggers scale-up if utilization
+                              is >= this value (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                          targetUtilization:
+                            description: TargetUtilization is the desired utilization
+                              after resize (percent)
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        required:
+                        - scaleDownThreshold
+                        - scaleUpThreshold
+                        - targetUtilization
+                        type: object
+                        x-kubernetes-validations:
+                        - message: scaleUpThreshold must be greater than scaleDownThreshold
+                          rule: self.scaleUpThreshold > self.scaleDownThreshold
+                        - message: consecutiveSamples override must be >= 1
+                          rule: '!has(self.consecutiveSamples) || self.consecutiveSamples
+                            >= 1'
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Specify requests and/or limits policy
+                      rule: has(self.requests) || has(self.limits)
+                  pollInterval:
+                    description: |-
+                      PollInterval is how often kubelet stats are polled per node
+                      example values: 5s, 10s, 30s, 1m
+                    format: duration
+                    minLength: 1
+                    type: string
+                required:
+                - consecutiveSamples
+                - cooldown
+                - pollInterval
+                type: object
+              priority:
+                default: 0
+                description: |-
+                  Priority in case multiple (unpaused) PodResourceAutoscaler CRs matches, only the one with
+                  the highest priority will be applied. If not specified, it is 0 and if multiple
+                  PodResourceAutoscaler with the same priority matches the pod's label selector, then
+                  the next one that's closest to now() is chosen. Again if multiple match, then
+                  lexicographically smaller is picked (CR name).
+                type: integer
+              selector:
+                description: |-
+                  Selector is the general label selector spec that identifies one or multiple Pods
+                  if selector is specified, don't use the target
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              target:
+                description: |-
+                  Target is the reference to a workload whose pods should be modified
+                  if target is specified, don't use the selector
+                properties:
+                  kind:
+                    description: Kind specifies the target workload whose containers
+                      will be obtaining the resource updates
+                    enum:
+                    - deployment
+                    - daemonset
+                    - statefulset
+                    type: string
+                  name:
+                    minLength: 1
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - containerName
+            - policy
+            type: object
+            x-kubernetes-validations:
+            - message: PodResourceAutoscaler must have either a pod selector or target
+                specified
+              rule: has(self.target) != has(self.selector)
+            - message: Specify at least one of policy.cpu.requests, policy.cpu.limits,
+                policy.memory.requests, policy.memory.limits
+              rule: (has(self.policy.cpu) && (has(self.policy.cpu.requests) || has(self.policy.cpu.limits)))
+                || (has(self.policy.memory) && (has(self.policy.memory.requests) ||
+                has(self.policy.memory.limits)))
+          status:
+            description: PodResourceAutoscalerStatus defines the observed state of
+              PodResourceAutoscaler
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              effectiveSelector:
+                description: |-
+                  A label selector is a label query over a set of resources. The result of matchLabels and
+                  matchExpressions are ANDed. An empty label selector matches all objects. A null
+                  label selector matches no objects.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              lastScaleAction:
+                type: string
+              lastScaleResourceChange:
+                description: LastScaleResourceChange summarizes request/limit changes
+                  from the last scale action.
+                type: string
+              lastScaleTime:
+                format: date-time
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              scaling:
+                type: boolean
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
