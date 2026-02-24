@@ -24,23 +24,23 @@ image:
     # -- Image registry of KEDA operator
     registry: ghcr.io
     # -- Image name of KEDA operator
-    repository: kedacore/keda
+    repository: kedify/keda-operator
     # -- Image tag of KEDA operator. Optional, given app version of Helm chart is used by default
-    tag: ""
+    tag: v2.18.3-6
   metricsApiServer:
     # -- Image registry of KEDA Metrics API Server
     registry: ghcr.io
     # -- Image name of KEDA Metrics API Server
-    repository: kedacore/keda-metrics-apiserver
+    repository: kedify/keda-metrics-apiserver
     # -- Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default
-    tag: ""
+    tag: v2.18.3-6
   webhooks:
     # -- Image registry of KEDA admission-webhooks
     registry: ghcr.io
     # -- Image name of KEDA admission-webhooks
-    repository: kedacore/keda-admission-webhooks
+    repository: kedify/keda-admission-webhooks
     # -- Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default
-    tag: ""
+    tag: v2.18.3-6
   # -- Image pullPolicy for all KEDA components
   pullPolicy: Always
 
@@ -644,7 +644,7 @@ volumes:
 prometheus:
   metricServer:
     # -- Enable metric server Prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- HTTP port used for exposing metrics server prometheus metrics
     port: 8080
     # -- HTTP port name for exposing metrics server prometheus metrics
@@ -701,7 +701,7 @@ prometheus:
       metricRelabelings: []
   operator:
     # -- Enable KEDA Operator prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- Port used for exposing KEDA Operator prometheus metrics
     port: 8080
     # -- App Protocol for service when scraping metrics endpoint
@@ -774,7 +774,7 @@ prometheus:
         #   labels:
   webhooks:
     # -- Enable KEDA admission webhooks prometheus metrics expose
-    enabled: false
+    enabled: true
     # -- Port used for exposing KEDA admission webhooks prometheus metrics
     port: 8080
     # -- App Protocol for service when scraping metrics endpoint
