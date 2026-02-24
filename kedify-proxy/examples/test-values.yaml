@@ -1,0 +1,87 @@
+# this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
+logging:
+  format: json
+pod:
+  annotations:
+    an1: vala1
+    an2: vala2
+  labels:
+    l1: vall1
+    l2: vall2
+  securityContext:
+    supplementalGroups: [4000]
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      add: ["NET_ADMIN"]
+
+  # assuming following pod priority:
+  #cat <<EOF | kubectl apply -f -
+  #apiVersion: scheduling.k8s.io/v1
+  #kind: PriorityClass
+  #metadata:
+  #  name: foo-priority
+  #value: 42
+  #description: "test"
+  #EOF
+  priorityClassName: foo-priority
+
+deployment:
+  rollingUpdate:
+    maxSurge: 25%
+
+autoscaling:
+  enabled: true
+  maxReplicaCount: 1
+  horizontalPodAutoscalerConfig:
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 10
+
+nodeSelector:
+  node.kubernetes.io/instance-type: k3s
+
+tolerations:
+  - key: "node.kubernetes.io/unschedulable"
+    operator: "Exists"
+    effect: "NoSchedule"
+  
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: zone
+  whenUnsatisfiable: DoNotSchedule
+  labelSelector:
+    matchLabels:
+      app: kedify-proxy
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      preference:
+        matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - k3d-k3s-default-server-0
+
+podDisruptionBudget:
+  enabled: true
+  spec:
+    maxUnavailable: 1
+    unhealthyPodEvictionPolicy: IfHealthyBudget
+
+# existing rbac needs to allow the creation of these extra k8s resources
+extraObjects:
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: tls-exposed
+  spec:
+    type: LoadBalancer
+    ports:
+    - name: tls
+      port: 8443
+      targetPort: tls
+    selector:
+      app: kedify-proxy
