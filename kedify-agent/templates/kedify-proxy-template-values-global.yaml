@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kedify-proxy-template-values-global
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    http.kedify.io/proxy: values
+  labels:
+    {{- include "kedify-agent.labels" . | nindent 4 }}
+data:
+  content: |
+    # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
+{{- toYaml .Values.agent.kedifyProxy.globalValues | nindent 4 }}
+  envoy-config-route: |
+    route:
+{{- toYaml .Values.agent.kedifyProxy.globalEnvoyConfigs.route | nindent 6 }}
+  envoy-config-cluster: |
+{{- toYaml .Values.agent.kedifyProxy.globalEnvoyConfigs.cluster | nindent 4 }}

@@ -1,0 +1,22 @@
+name: keda milestones tracking with release
+
+on:
+  pull_request_target:
+    types: [closed]
+    paths:
+      - keda/**
+
+jobs:
+  milestone_tracker:
+    if: github.event.pull_request.merged == true
+
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      packages: write
+
+    uses: ./.github/workflows/milestones-tracker.yaml
+    with:
+      chart: keda
+      prNumber: ${{ github.event.pull_request.number }}

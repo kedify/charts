@@ -1,3 +1,5 @@
+{{- if or .Values.interceptor.scaledObject.pendingRequestsTrigger.enabled .Values.interceptor.scaledObject.cpuTrigger.enabled .Values.interceptor.scaledObject.memoryTrigger.enabled }}
+{{- if not .Values.interceptor.scaledObject.waitForCrd }}
 # this is the ScaledObject that tells KEDA to scale the interceptor fleet
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -11,12 +13,30 @@ metadata:
 spec:
   minReplicaCount: {{ .Values.interceptor.replicas.min }}
   maxReplicaCount: {{ .Values.interceptor.replicas.max }}
+  {{- if .Values.interceptor.scaledObject.pollingInterval }}
   pollingInterval: {{ .Values.interceptor.scaledObject.pollingInterval }}
+  {{- end }}
   scaleTargetRef:
     name: "{{ .Chart.Name }}-interceptor"
     kind: Deployment
   triggers:
+    {{- if .Values.interceptor.scaledObject.pendingRequestsTrigger.enabled }}
     - type: external
       metadata:
         scalerAddress: "{{ .Chart.Name }}-{{ .Values.scaler.service }}.{{ .Release.Namespace }}:{{ default 9091 .Values.scaler.grpcPort }}"
         interceptorTargetPendingRequests: "{{ default 200 .Values.scaler.pendingRequestsInterceptor }}"
+    {{- end }}
+    {{- if .Values.interceptor.scaledObject.cpuTrigger.enabled }}
+    - type: cpu
+      metadata:
+        value: "{{ .Values.interceptor.scaledObject.cpuTrigger.target }}"
+      metricType: Utilization
+    {{- end }}
+    {{- if .Values.interceptor.scaledObject.memoryTrigger.enabled }}
+    - type: memory
+      metadata:
+        value: "{{ .Values.interceptor.scaledObject.memoryTrigger.target }}"
+      metricType: Utilization
+    {{- end }}
+{{- end }}
+{{- end }}
