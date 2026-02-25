@@ -73,21 +73,21 @@ spec:
                   MemberClusters is the list of member clusters where the ScaledObject should trigger scaling of the target workloads
                   if empty, use all available member clusters
                 items:
-                  description: MemberCluster represents a member cluster where the
-                    ScaledObject should be applied
+                  description: DistributedScaledObjectMemberCluster represents a member
+                    cluster where the DistributedScaledObject should be applied.
                   properties:
                     name:
-                      description: Name is the name of the member cluster
+                      description: Name is the name of the member cluster.
                       type: string
                     targetNamespace:
                       description: |-
-                        TargetNamespace is the namespace in the member cluster where the scaling should be applied
-                        defaults to the namespace of the DistributedScaledObject if not specified
+                        TargetNamespace is the namespace in the member cluster where the scaling should be applied.
+                        Defaults to the namespace of the owning distributed resource if not specified.
                       type: string
                     weight:
                       default: 1
                       description: Weight is the weight of the member cluster for
-                        scaling distribution
+                        scaling distribution.
                       format: int32
                       type: integer
                   required:
@@ -477,8 +477,8 @@ spec:
                 type: array
               memberClusterStatuses:
                 additionalProperties:
-                  description: MemberClusterStatus represents the status of a member
-                    cluster
+                  description: DistributedScaledObjectMemberClusterStatus represents
+                    a member cluster status for DistributedScaledObject.
                   properties:
                     currentReplicas:
                       description: CurrentReplicas is the current number of replicas
