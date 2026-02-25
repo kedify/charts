@@ -1288,8 +1288,8 @@ spec:
                       type: object
                     targetNamespace:
                       description: |-
-                        TargetNamespace is the namespace in the member cluster where scaling should be applied.
-                        defaults to the namespace of the DistributedScaledJob if not specified.
+                        TargetNamespace is the namespace in the member cluster where the scaling should be applied.
+                        Defaults to the namespace of the owning distributed resource if not specified.
                       type: string
                     weight:
                       default: 1
