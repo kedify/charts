@@ -5,8 +5,11 @@ on:
     branches:
       - 'main'
     paths:
+      - 'kedify-agent/values.yaml'
+      - 'kedify-agent/Chart.yaml'
       - 'kedify-proxy/values.yaml'
       - 'kedify-proxy/Chart.yaml'
+      - 'kedify-proxy/_helm-docs-template.gotmpl'
 permissions:
   contents: read
 
@@ -20,23 +23,30 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Generate docs for helm chart - helmchart/otel-add-on/README.md
+      - name: Generate docs for kedify-agent chart
         uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
         with:
-          args: --template-files=_helm-docs-template.gotmpl --sort-values-order=file --ignore-non-descriptions
+          args: --chart-search-root=kedify-agent --sort-values-order=file --ignore-non-descriptions
+      - name: Generate docs for kedify-proxy chart
+        uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
+        with:
+          args: --chart-search-root=kedify-proxy --template-files=_helm-docs-template.gotmpl --sort-values-order=file --ignore-non-descriptions
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
         id: cpr
         with:
           title: "Update Helm Docs"
           branch: ci-helm-doc
+          add-paths: |
+            kedify-agent/README.md
+            kedify-proxy/README.md
           labels: skip-ci
           delete-branch: true
           base: main
           signoff: true
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            :package: kedify-proxy/README.md update :package:
+            :package: kedify-agent/README.md and kedify-proxy/README.md update :package:
             ### automated change
             Running helm-docs tool on latest values.yaml.
             This automated PR was created by [this action](https://github.com/kedify/charts/actions/runs/${{ github.run_id }}).
