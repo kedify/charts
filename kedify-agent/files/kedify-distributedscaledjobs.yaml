@@ -10544,6 +10544,31 @@ spec:
               selector:
                 description: Selector is the selector for the distributed jobs
                 type: string
+              triggerMetricsStatus:
+                additionalProperties:
+                  description: TriggerMetricStatus represents the status of a single
+                    metric used for scaling by trigger name
+                  properties:
+                    info:
+                      description: Info provides additional information about the
+                        metric status, such as error messages or reasons for inactivity
+                      type: string
+                    lastChangeTime:
+                      description: LastChangeTime is the last time the metric status
+                        changed, used for tracking how long a metric has been in a
+                        particular state
+                      format: date-time
+                      type: string
+                    state:
+                      description: State represents the state of the metric ("Active",
+                        "Inactive", "Error") used to determine if scaling should occur
+                      type: string
+                  required:
+                  - state
+                  type: object
+                description: TriggerMetricStatus represents the status of each metric
+                  used for scaling by trigger name
+                type: object
             required:
             - desiredJobs
             - pendingJobs
