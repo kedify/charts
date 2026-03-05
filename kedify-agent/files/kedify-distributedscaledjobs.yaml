@@ -67,6 +67,44 @@ spec:
           spec:
             description: DistributedScaledJobSpec defines the desired state of DistributedScaledJob
             properties:
+              clusterScheduling:
+                default:
+                  strategy: weightedRoundRobin
+                description: ClusterScheduling controls member-cluster selection strategy
+                  for DSJ.
+                properties:
+                  strategy:
+                    default: weightedRoundRobin
+                    description: Strategy defines how member clusters are selected
+                      when creating Jobs.
+                    enum:
+                    - weightedRoundRobin
+                    - priorityFailover
+                    type: string
+                  workloadAffinity:
+                    description: |-
+                      WorkloadAffinity classifies workloads for failover taint matching.
+                      Required when strategy=priorityFailover.
+                    properties:
+                      class:
+                        description: Class groups workloads for failover taint matching
+                          (e.g., for org/team).
+                        type: string
+                      size:
+                        description: Size is the monotonic affinity class value.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    required:
+                    - size
+                    type: object
+                type: object
+                x-kubernetes-validations:
+                - message: clusterScheduling.workloadAffinity is required when clusterScheduling.strategy=priorityFailover
+                  rule: self.strategy != 'priorityFailover' || has(self.workloadAffinity)
+                - message: clusterScheduling.workloadAffinity must be omitted when
+                    clusterScheduling.strategy=weightedRoundRobin
+                  rule: self.strategy == 'priorityFailover' || !has(self.workloadAffinity)
               memberClusters:
                 description: |-
                   MemberClusters is the list of member clusters where the ScaledJob should trigger scaling of the target workloads
@@ -1286,6 +1324,19 @@ spec:
                             type: object
                           type: array
                       type: object
+                    scheduling:
+                      description: Scheduling contains cluster-selection attributes
+                        for this member cluster.
+                      properties:
+                        priority:
+                          description: |-
+                            Priority is used by clusterScheduling.strategy=priorityFailover.
+                            Higher value means stronger preference.
+                          format: int32
+                          maximum: 1000
+                          minimum: 0
+                          type: integer
+                      type: object
                     targetNamespace:
                       description: |-
                         TargetNamespace is the namespace in the member cluster where the scaling should be applied.
@@ -1321,6 +1372,20 @@ spec:
                     default: 1m
                     description: FailingClusterTaintDuration is the duration to taint
                       a failing cluster before attempting to scale Jobs on it again
+                    type: string
+                  failoverDuplicatePolicy:
+                    default: immediateSourceCleanup
+                    description: |-
+                      FailoverDuplicatePolicy controls how duplicate jobs are resolved after pending-aware failover.
+                      - immediateSourceCleanup: clean up source cluster job right after failover (default)
+                      - keepAll: keep all source and failover cluster jobs, results in temporarily exceeded maxReplicaCount during failover but provides better availability
+                      - preferFailover: prefer failover cluster job over source cluster job, delete source cluster job only when failover cluster job is running, best effort avoids maxReplicaCount exceed
+                      - preferSource: prefer source cluster job over failover cluster job, delete failover cluster job immediately, can cause running job preemption when source cluster recovers during failover, best effort avoids maxReplicaCount exceed
+                    enum:
+                    - immediateSourceCleanup
+                    - keepAll
+                    - preferFailover
+                    - preferSource
                     type: string
                   gracePeriod:
                     default: 1m
@@ -10382,6 +10447,17 @@ spec:
             required:
             - scaledJobSpec
             type: object
+            x-kubernetes-validations:
+            - message: memberClusters must be non-empty when clusterScheduling.strategy=priorityFailover
+              rule: self.clusterScheduling.strategy != 'priorityFailover' || (has(self.memberClusters)
+                && self.memberClusters.size() > 0)
+            - message: memberClusters[].scheduling.priority is required when clusterScheduling.strategy=priorityFailover
+              rule: self.clusterScheduling.strategy != 'priorityFailover' || (has(self.memberClusters)
+                && self.memberClusters.all(c, has(c.scheduling) && has(c.scheduling.priority)))
+            - message: scaledJobSpec.scalingStrategy.strategy must be pendingAware
+                (or omitted) when clusterScheduling.strategy=priorityFailover
+              rule: self.clusterScheduling.strategy != 'priorityFailover' || self.scaledJobSpec.scalingStrategy.strategy
+                == '' || self.scaledJobSpec.scalingStrategy.strategy == 'pendingAware'
           status:
             description: DistributedScaledJobStatus defines the observed state of
               DistributedScaledJob
@@ -10460,6 +10536,32 @@ spec:
                       description: |-
                         Excluded indicates whether the member cluster is excluded from scaling
                         for example, due to being unhealthy for longer than the grace period
+                      type: boolean
+                    hardTaintScopes:
+                      description: |-
+                        HardTaintScopes lists hard-taint scopes for priorityFailover scheduling.
+                        Multiple entries may exist for a single cluster (for different classes/priorities).
+                      items:
+                        description: DistributedScaledJobHardTaintScope identifies
+                          one priorityFailover hard-taint scope.
+                        properties:
+                          class:
+                            description: |-
+                              Class is the workload affinity class for which the cluster is tainted.
+                              This can be empty to represent the default affinity class.
+                            type: string
+                          priority:
+                            description: Priority is the member-cluster scheduling
+                              priority for which the cluster is tainted.
+                            format: int32
+                            type: integer
+                        required:
+                        - class
+                        type: object
+                      type: array
+                    hardTainted:
+                      description: HardTainted indicates the cluster is hard tainted
+                        for at least one DSJ scheduling path.
                       type: boolean
                     id:
                       description: ID is the identification of the member cluster
