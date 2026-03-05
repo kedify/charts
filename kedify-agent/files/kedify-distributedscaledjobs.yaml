@@ -1374,13 +1374,13 @@ spec:
                       a failing cluster before attempting to scale Jobs on it again
                     type: string
                   failoverDuplicatePolicy:
-                    default: immediateSourceCleanup
+                    default: keepAll
                     description: |-
                       FailoverDuplicatePolicy controls how duplicate jobs are resolved after pending-aware failover.
-                      - immediateSourceCleanup: clean up source cluster job right after failover (default)
-                      - keepAll: keep all source and failover cluster jobs, results in temporarily exceeded maxReplicaCount during failover but provides better availability
+                      - keepAll: keep all source and failover cluster jobs, results in temporarily exceeded maxReplicaCount during failover but provides better availability (default)
                       - preferFailover: prefer failover cluster job over source cluster job, delete source cluster job only when failover cluster job is running, best effort avoids maxReplicaCount exceed
                       - preferSource: prefer source cluster job over failover cluster job, delete failover cluster job immediately, can cause running job preemption when source cluster recovers during failover, best effort avoids maxReplicaCount exceed
+                      - immediateSourceCleanup: clean up source cluster job right after failover
                     enum:
                     - immediateSourceCleanup
                     - keepAll
