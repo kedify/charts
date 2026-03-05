@@ -381,6 +381,32 @@ spec:
                     additionalProperties:
                       description: ClusterStatus defines the observed state of a cluster
                       properties:
+                        hardTaintScopes:
+                          description: |-
+                            HardTaintScopes lists hard-taint scopes for DSJs using priorityFailover.
+                            Multiple entries may exist for a single cluster (for different classes/priorities).
+                          items:
+                            description: ClusterHardTaintScope identifies one priorityFailover
+                              hard-taint scope.
+                            properties:
+                              class:
+                                description: |-
+                                  Class is the workload affinity class for which the cluster is tainted.
+                                  This can be empty to represent the default affinity class.
+                                type: string
+                              priority:
+                                description: Priority is the member-cluster scheduling
+                                  priority for which the cluster is tainted.
+                                format: int32
+                                type: integer
+                            required:
+                            - class
+                            type: object
+                          type: array
+                        hardTainted:
+                          description: HardTainted indicates the cluster is hard tainted
+                            for at least one DSJ scheduling path.
+                          type: boolean
                         id:
                           description: ID is the unique identifier of the cluster
                           type: string
