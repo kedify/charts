@@ -73,6 +73,44 @@ spec:
                 description: ClusterScheduling controls member-cluster selection strategy
                   for DSJ.
                 properties:
+                  failoverPolicy:
+                    default:
+                      gracePeriod: 1m
+                      hardTaintDuration: 5m
+                      softTaintDuration: 3m
+                    description: FailoverPolicy controls how the controller should
+                      behave when clusters fail
+                    properties:
+                      duplicationPolicy:
+                        default: keepAll
+                        description: |-
+                          DuplicationPolicy controls how duplicate jobs are resolved after pending-aware failover.
+                          - keepAll: keep all source and failover cluster jobs, results in temporarily exceeded maxReplicaCount during failover but provides better availability (default)
+                          - preferFailover: prefer failover cluster job over source cluster job, delete source cluster job only when failover cluster job is running, best effort avoids maxReplicaCount exceed
+                          - preferSource: prefer source cluster job over failover cluster job, delete failover cluster job immediately, can cause running job preemption when source cluster recovers during failover, best effort avoids maxReplicaCount exceed
+                          - immediateSourceCleanup: clean up source cluster job right after failover
+                        enum:
+                        - immediateSourceCleanup
+                        - keepAll
+                        - preferFailover
+                        - preferSource
+                        type: string
+                      gracePeriod:
+                        default: 1m
+                        description: GracePeriod is the duration to wait before re-creating
+                          Jobs that fail to progress from Pending to Running state
+                        type: string
+                      hardTaintDuration:
+                        default: 5m
+                        description: HardTaintDuration is the duration to taint a
+                          failing cluster before attempting to scale Jobs on it again
+                        type: string
+                      softTaintDuration:
+                        default: 3m
+                        description: SoftTaintDuration is the time window to wait
+                          for a second failure before applying a hard taint
+                        type: string
+                    type: object
                   strategy:
                     default: weightedRoundRobin
                     description: Strategy defines how member clusters are selected
@@ -1360,45 +1398,6 @@ spec:
                 - message: memberClusters.name values must be unique
                   rule: self.map(c, c.name).all(n, self.map(c, c.name).filter(x, x
                     == n).size() == 1)
-              rebalancingPolicy:
-                default:
-                  failingClusterTaintDuration: 1m
-                  gracePeriod: 1m
-                  softTaintWindow: 5m
-                description: RebalancingPolicy controls how the controller should
-                  behave when clusters fail
-                properties:
-                  failingClusterTaintDuration:
-                    default: 1m
-                    description: FailingClusterTaintDuration is the duration to taint
-                      a failing cluster before attempting to scale Jobs on it again
-                    type: string
-                  failoverDuplicatePolicy:
-                    default: immediateSourceCleanup
-                    description: |-
-                      FailoverDuplicatePolicy controls how duplicate jobs are resolved after pending-aware failover.
-                      - immediateSourceCleanup: clean up source cluster job right after failover (default)
-                      - keepAll: keep all source and failover cluster jobs, results in temporarily exceeded maxReplicaCount during failover but provides better availability
-                      - preferFailover: prefer failover cluster job over source cluster job, delete source cluster job only when failover cluster job is running, best effort avoids maxReplicaCount exceed
-                      - preferSource: prefer source cluster job over failover cluster job, delete failover cluster job immediately, can cause running job preemption when source cluster recovers during failover, best effort avoids maxReplicaCount exceed
-                    enum:
-                    - immediateSourceCleanup
-                    - keepAll
-                    - preferFailover
-                    - preferSource
-                    type: string
-                  gracePeriod:
-                    default: 1m
-                    description: FailureGracePeriod is the duration to wait before
-                      re-creating Jobs that fail to progress from Pending to Running
-                      state
-                    type: string
-                  softTaintWindow:
-                    default: 5m
-                    description: SoftTaintWindow is the time window to wait for a
-                      second failure before applying a hard taint
-                    type: string
-                type: object
               scaledJobSpec:
                 description: ScaledJobSpec is the specification of the KEDA ScaledJob
                 properties:
