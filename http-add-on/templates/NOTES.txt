@@ -1,0 +1,7 @@
+{{- if gt (int .Values.operator.replicas) 0 }}
+WARNING: operator.replicas is set to {{ .Values.operator.replicas }}.
+In the Kedify fork, the kedify-http KEDA scaler replaces the http-add-on
+operator. The operator is not necessary and does not perform any useful
+actions. Consider setting keda-add-ons-http.operator.replicas back to
+default 0 to avoid unnecessary resource usage.
+{{- end }}
