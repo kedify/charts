@@ -5,12 +5,14 @@ on:
   push:
     branches:
       - main
+      - http-add-on/v*
     paths:
       - ".github/workflows/ci-http-add-on.yml"
       - "http-add-on/**"
   pull_request:
     branches:
       - main
+      - http-add-on/v*
     paths:
       - ".github/workflows/ci-http-add-on.yml"
       - "http-add-on/**"
