@@ -65,7 +65,7 @@ jobs:
               echo "release $milestone already exists"
           else
               echo "creating release $milestone"
-              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
+              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}" --target "${{ github.event.pull_request.merge_commit_sha }}"
           fi
           echo "should_release=true" >> $GITHUB_OUTPUT
           echo "version=$release_tag" >> $GITHUB_OUTPUT
@@ -74,6 +74,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
       - name: Publish ${{ inputs.chart }} Helm Chart
         uses: wozniakjan/helm-gh-pages@single_chart_path
         if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
