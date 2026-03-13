@@ -1,4 +1,5 @@
-{{- if .Values.rbac.create }}
+{{- if and .Values.rbac.create }}
+{{- if ne .Values.kedify.multitenant.mode "tenant" }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -117,5 +118,6 @@ subjects:
   namespace: {{ $.Release.Namespace }}
 ---
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
