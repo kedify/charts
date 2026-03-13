@@ -147,7 +147,13 @@ operator:
     failureThreshold: 3
     successThreshold: 1
 
+  # install this as a tenant KEDA in multitenant environment
+  tenant:
+    enabled: false
+
 metricsServer:
+  # -- Enable KEDA metrics server and external metrics API resources.
+  enabled: true
   # -- ReplicaSets for this Deployment you want to retain (Default: 10)
   revisionHistoryLimit: 10
   # -- Capability to configure the number of replicas for KEDA metric server.

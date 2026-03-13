@@ -68,6 +68,7 @@ subjects:
   name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 ---
+{{ if not (default false .Values.operator.tenant.enabled) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -146,4 +147,5 @@ subjects:
 - kind: ServiceAccount
   name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
