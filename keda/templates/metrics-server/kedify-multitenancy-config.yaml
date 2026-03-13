@@ -1,0 +1,9 @@
+{{- if eq .Values.kedify.multitenant.mode "default" }}
+# secret for kedify multitenancy configuration, dynamically populated by kedify-agent at runtime
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.kedify.multitenant.configSecretName }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+{{- end }}

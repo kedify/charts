@@ -62,6 +62,22 @@ crds:
 # -- Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces
 watchNamespace: ""
 
+kedify:
+  # -- For keda installed in multitenant environment
+  # Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior
+  multitenant:
+    # -- Multitenant mode: "" (disabled), "default" or "tenant"
+    # "": multitenancy disabled, standard KEDA deployment
+    # "default": deploys keda-operator + keda-metrics-server (and optionally keda-admission-webhooks), the keda-operator-metrics-server is configured to routes HPA metric requests to tenant keda-operators
+    # "tenant": deploys only keda-operator, should be used with metricsServer.enabled=false, crds.install=false, webhooks.enabled=false
+    mode: ""
+
+    # -- Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace
+    configSecretName: kedify-multitenancy-config
+
+    # -- Where the default tenant KEDA installation (with keda-metrics-server) is deployed
+    defaultTenantNamespace: keda
+
 # -- Name of secret to use to pull images to use to pull Docker images
 imagePullSecrets: []
 
