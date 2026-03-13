@@ -147,6 +147,10 @@ operator:
     failureThreshold: 3
     successThreshold: 1
 
+  # install this as a tenant KEDA in multitenant environment
+  tenant:
+    enabled: false
+
 metricsServer:
   # -- Enable KEDA metrics server and external metrics API resources.
   enabled: true
