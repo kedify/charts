@@ -119,6 +119,7 @@ agent:
     distributedScaledObjectsEnabled: false
     distributedScaledJobsEnabled: false
     scalingPoliciesEnabled: true
+    multitenantKEDAEnabled: false
   autowire:
     serviceSyncPeriod: 500ms
   rbac:
@@ -229,6 +230,17 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
+  # configuration for KEDA multitenancy, must have feature.multitenantKEDAEnabled set to true to take effect
+  multitenant: {}
+  # example of multitenant configuration, one tenant per namespace, with "keda" as the default tenant
+  # expects the KEDA installations to be deployed in the same namespaces as specified in the tenants list, with the right tenant configuration
+    #kedaInstallations:
+    #  defaultTenant: "keda"
+    #  tenants:
+    #  - namespace: "keda"
+    #  - namespace: "foo"
+    #  - namespace: "bar"
+
 # dependent helm charts
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml

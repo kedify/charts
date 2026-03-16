@@ -212,6 +212,18 @@ rules:
   - get
   - list
   - watch
+{{- if .Values.agent.features.multitenantKEDAEnabled }}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - patch
+  - get
+  resourceNames:
+  - kedaorg-certs
+  - kedify-multitenancy-config
+{{- end }}
 {{- if .Values.agent.rbac.readNodes }}
 # for metrics and metered billing
 - apiGroups:
