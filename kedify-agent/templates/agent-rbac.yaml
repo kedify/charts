@@ -241,12 +241,23 @@ rules:
   - get
   - list
   - watch
+{{- if .Values.agent.features.podResourceProfilesEnabled }}
+# for pod resource profiles pod updates
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - patch
+  - update
+{{- end }}
 {{- if or .Values.agent.features.podResourceProfilesEnabled .Values.agent.features.podResourceAutoscalersEnabled }}
 # for pod resource profiles and pod resource autoscalers
 - apiGroups:
   - ""
   resources:
   - pods/resize
+  - pods/status
   verbs:
   - patch
 {{- end }}
