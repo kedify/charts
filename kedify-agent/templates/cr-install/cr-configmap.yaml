@@ -21,42 +21,12 @@ data:
       cloudAccountID: "{{ .Values.agent.cloudAccountID }}"
       {{- end }}
       kedaInstallations:
-      {{- if .Values.agent.features.multitenantKEDAEnabled }}
-      - agentAutoUpdate: false
-        name: {{ .Values.agent.multitenant.kedaInstallations.defaultTenant }}
-        mode: Helm
-        httpAddonHelm:
-          enabled: true
-          values: |-
-            ---
-        otelAddonHelm:
-          enabled: true
-          values: |-
-            ---
-        kedaHelm:
-          enabled: true
-          values: |-
-            ---
-        predictorAddonHelm:
-          enabled: true
-          values: |-
-            ---
-        namespace: {{ .Values.agent.multitenant.kedaInstallations.defaultTenant }}
-{{ toYaml .Values.agent.kedifyConfiguration | indent 8 }}
-        multitenancy:
-          isDefaultTenant: true
-      {{- range .Values.agent.multitenant.kedaInstallations.tenants }}
-      {{- if ne .namespace $.Values.agent.multitenant.kedaInstallations.defaultTenant }}
-      - name: {{ .name }}
-        mode: Helm
-        namespace: {{ .namespace }}
-        agentAutoUpdate: false
-      {{- end }} # if branch
-      {{- end }} # range
-      {{- else }}
       - agentAutoUpdate: false
         name: keda
         mode: Helm
+        {{- if .Values.agent.features.multitenantKEDAEnabled }}
+        multitenancy: {}
+        {{- end }}
         httpAddonHelm:
           enabled: true
           values: |-
@@ -75,6 +45,5 @@ data:
             ---
         namespace: {{ .Release.Namespace }}
 {{ toYaml .Values.agent.kedifyConfiguration | indent 8 }}
-      {{- end }}
 ---
 {{- end }}

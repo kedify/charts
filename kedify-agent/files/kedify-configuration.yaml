@@ -101,8 +101,9 @@ spec:
               kedaInstallations:
                 description: |-
                   KEDAInstallations defines the KEDA installations options.
-                  Namespaces must be unique across installations.
+                  Names must be unique across installations.
                   When multitenancy is enabled, exactly one installation must be the default tenant.
+                  WatchNamespace uniqueness is enforced by the controller at reconcile time.
                 items:
                   description: KEDAInstallation defines the desired state of a KEDA
                     installation
@@ -197,12 +198,17 @@ spec:
                             API server, if not provided defaults to "keda-operator.[ns].svc.cluster.local:9666"
                             where [ns] is the namespace of the KEDA installation
                           type: string
+                        authority:
+                          description: Authority is the SNI/authority override for
+                            the gRPC connection, if not provided it is derived from
+                            the address
+                          type: string
                         isDefaultTenant:
                           description: |-
                             IsDefaultTenant defines if this KEDA installation is the default tenant, default is false. This means that if a request cannot be routed to any tenant based on the routing configuration, it will be routed to this tenant. Only one KEDA installation can be the default tenant.
                             if multitenancy is enabled, exactly one KEDA installation must be the default tenant
                           type: boolean
-                        multitenanancyConfigRef:
+                        multitenancyConfigRef:
                           description: |-
                             ConfigRef is the reference to the secret for the multitenancy connections, if not provided defaults to "kedify-multitenancy-config" secret in the namespace of the default KEDA installation
                             this is where keda adapter gets all TLS certs to each tenant keda-operator and the routing configuration for the HPA requests.
@@ -215,6 +221,7 @@ spec:
                       type: object
                     name:
                       description: Name of the KEDA installation
+                      minLength: 1
                       type: string
                     namespace:
                       description: Namespace where KEDA should be installed
@@ -328,9 +335,16 @@ spec:
                               type: integer
                           type: object
                       type: object
+                    watchNamespace:
+                      description: |-
+                        WatchNamespace is the namespace that this KEDA operator watches for ScaledObjects/ScaledJobs.
+                        In per-namespace mode this equals Namespace and can be omitted.
+                        In single-namespace mode (multiple operators in the same namespace), set this to the target namespace each operator watches.
+                      type: string
                   required:
                   - agentAutoUpdate
                   - mode
+                  - name
                   - namespace
                   type: object
                   x-kubernetes-validations:
@@ -338,9 +352,10 @@ spec:
                       mode
                     rule: '!has(self.multitenancy) || !has(self.multitenancy.isDefaultTenant)
                       || !self.multitenancy.isDefaultTenant || self.mode == ''Helm'''
+                maxItems: 32
                 type: array
                 x-kubernetes-list-map-keys:
-                - namespace
+                - name
                 x-kubernetes-list-type: map
                 x-kubernetes-validations:
                 - message: at most one KEDA installation can be the default tenant

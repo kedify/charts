@@ -213,6 +213,15 @@ rules:
   - list
   - watch
 {{- if .Values.agent.features.multitenantKEDAEnabled }}
+# for tenant configuration and cert management in fleet installation
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -220,6 +229,7 @@ rules:
   verbs:
   - patch
   - get
+  - update
   resourceNames:
   - kedaorg-certs
   - kedify-multitenancy-config
