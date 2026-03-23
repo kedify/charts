@@ -96,6 +96,38 @@ spec:
                 x-kubernetes-validations:
                 - message: Specify limits or requests or both
                   rule: has(self.limits) || has(self.requests)
+              newResourcesPercent:
+                description: NewResourcesPercent contains signed percent deltas to
+                  apply to current resources
+                properties:
+                  limits:
+                    additionalProperties:
+                      format: int32
+                      type: integer
+                    description: ResourcePercentList maps resource name to signed
+                      percent delta.
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Only cpu and memory resources are supported
+                      rule: self.all(k, k == 'cpu' || k == 'memory')
+                    - message: Percent value must be between -99 and 1000
+                      rule: self.all(k, self[k] >= -99 && self[k] <= 1000)
+                  requests:
+                    additionalProperties:
+                      format: int32
+                      type: integer
+                    description: ResourcePercentList maps resource name to signed
+                      percent delta.
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Only cpu and memory resources are supported
+                      rule: self.all(k, k == 'cpu' || k == 'memory')
+                    - message: Percent value must be between -99 and 1000
+                      rule: self.all(k, self[k] >= -99 && self[k] <= 1000)
+                type: object
+                x-kubernetes-validations:
+                - message: Specify limits or requests or both
+                  rule: has(self.limits) || has(self.requests)
               paused:
                 default: false
                 description: Paused if set to true, can make the controller ignore
@@ -252,7 +284,6 @@ spec:
                 type: object
             required:
             - containerName
-            - newResources
             - trigger
             type: object
             x-kubernetes-validations:
@@ -263,6 +294,8 @@ spec:
                 as targets. See .spec.target.kind'
               rule: '!has(self.trigger.after) || !self.trigger.after.endsWith(''activated'')
                 || (has(self.target) && self.target.kind == ''scaledobject'' && self.trigger.after.endsWith(''activated''))'
+            - message: Specify exactly one of newResources or newResourcesPercent
+              rule: has(self.newResources) != has(self.newResourcesPercent)
           status:
             description: PodResourceProfileStatus defines the observed state of PodResourceProfile
             properties:
