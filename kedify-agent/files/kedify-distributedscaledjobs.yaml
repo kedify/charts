@@ -107,8 +107,9 @@ spec:
                         type: string
                       softTaintDuration:
                         default: 3m
-                        description: SoftTaintDuration is the time window to wait
-                          for a second failure before applying a hard taint
+                        description: |-
+                          SoftTaintDuration is the time window to wait for a second failure before applying a hard taint.
+                          Set to 0s to disable soft taint and hard-taint on the first failure.
                         type: string
                     type: object
                   strategy:
