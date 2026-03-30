@@ -80,6 +80,11 @@ kedify:
     # -- SNI authority override for gRPC connection to the tenant's keda-operator
     authority: ""
 
+    # -- Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret)
+    agentNamespace: "keda"
+    # -- ServiceAccount name of the kedify-agent
+    agentServiceAccount: "kedify-agent"
+
 # -- Name of secret to use to pull images to use to pull Docker images
 imagePullSecrets: []
 
