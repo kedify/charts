@@ -47,26 +47,4 @@ subjects:
 ---
   {{- end }}
 {{- end }}
-{{- if eq .Values.kedify.multitenant.mode "tenant" }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  {{- with .Values.additionalAnnotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-{{ .Release.Namespace }}
-    {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-{{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ .Values.operator.name }}
-subjects:
-- kind: ServiceAccount
-  name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
-  namespace: {{ .Release.Namespace }}
-{{- end }}
 {{- end }}
