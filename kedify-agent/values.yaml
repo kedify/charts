@@ -78,6 +78,8 @@ agent:
   # should the KedifyConfiguration and ScalingPolicy CRDs be also part of the release
   createCrds: true
   createKedifyConfiguration: true
+  # should the agent wait for the KedifyConfiguration CR to be created before starting, this is relevant only if createKedifyConfiguration is true
+  waitForCr: true
   # default kedify config that will be created if createKedifyConfiguration is enabled
   kedifyConfiguration:
     agentAutoUpdate: false

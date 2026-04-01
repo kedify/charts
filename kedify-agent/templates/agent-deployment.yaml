@@ -24,6 +24,12 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+    {{- if and .Values.agent.waitForCr .Values.agent.createKedifyConfiguration }}
+      initContainers:
+        - name: wait-for-cr
+          image: {{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}
+          command: ["sh", "-c", "until kubectl get -nkeda kedify kedify; do echo waiting for KedifyConfiguration CR; sleep 2; done"]
+    {{- end }}
       containers:
         - args:
           - --leader-elect
