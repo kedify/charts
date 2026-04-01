@@ -1,0 +1,83 @@
+{{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kedify-cleanup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kedify-cleanup
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
+    helm.sh/hook-weight: "-1"
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 2
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: kedify-cleanup
+    spec:
+      restartPolicy: Never
+      serviceAccountName: kedify-cleanup
+      {{- with .Values.agent.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: cleanup
+        image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
+        {{- with .Values.agent.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        command:
+        - sh
+        args:
+        - -c
+        - |
+          set -o nounset
+          {{- if .Values.agent.createKedifyConfiguration }}
+          # delete KedifyConfiguration CRs if the CRD exists
+          if kubectl get crd kedifyconfigurations.install.kedify.io >/dev/null 2>&1; then
+            kubectl delete kedifyconfigurations --all -n {{ .Release.Namespace }} --ignore-not-found 2>&1
+          fi
+          {{- end }}
+          {{- if .Values.agent.createCrds }}
+          # delete kedify CRDs (ignore if not found)
+          kubectl delete crd \
+            kedifyconfigurations.install.kedify.io \
+            scalingpolicies.keda.kedify.io \
+            podresourceprofiles.keda.kedify.io \
+            podresourceautoscalers.keda.kedify.io \
+            distributedscaledobjects.keda.kedify.io \
+            distributedscaledjobs.keda.kedify.io \
+            --ignore-not-found 2>&1
+          {{- end }}
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+      {{- with .Values.agent.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
