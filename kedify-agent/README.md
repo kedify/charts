@@ -18,7 +18,7 @@ Kubernetes: `>=v1.23.0-0`
 | Repository | Name | Version |
 |------------|------|---------|
 | https://kedify.github.io/charts | keda | v2.19.0-1 |
-| https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-0 |
+| https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-1 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.4 |
 | oci://ghcr.io/kedify/charts | otel-add-on | v0.1.3 |
 
