@@ -120,7 +120,11 @@ agent:
     distributedScaledJobsEnabled: false
     scalingPoliciesEnabled: true
   autowire:
+    # period for EndpointSlices and Services in autowiring mode for redundant synchronization
+    # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period
     serviceSyncPeriod: 500ms
+    # cooldown period for autowired Ingresses to prevent too frequent updates in case of flapping or frequent changes (and battling GitOps controllers if the ignore diff config is missing)
+    ingressCooldownPeriod: 3600s # 1 hour
   rbac:
     # create the necessary RBAC for kedify agent
     create: true
