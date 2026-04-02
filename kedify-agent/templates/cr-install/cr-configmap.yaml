@@ -5,9 +5,9 @@ metadata:
   name: default-kedifyconfig
   namespace: {{ .Release.Namespace }}
   annotations:
-    helm.sh/hook: "post-install,post-upgrade"
-    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded"
-    helm.sh/hook-weight: "-2"
+    helm.sh/hook: "pre-install,pre-upgrade"
+    helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
+    helm.sh/hook-weight: "0"
 data:
   content: |
     apiVersion: install.kedify.io/v1alpha1
