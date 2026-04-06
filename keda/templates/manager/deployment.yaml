@@ -162,6 +162,10 @@ spec:
             - name: KEDA_HTTP_DISABLE_KEEP_ALIVE
               value: "true"
             {{- end }}
+            {{- if eq .Values.kedify.multitenant.mode "tenant" }}
+            - name: KEDIFY_MULTITENANT_MODE_DISABLE_CERT_INJECTION
+              value: "true"
+            {{- end }}
             {{- if .Values.permissions.operator.restrict.secret }}
             - name: KEDA_RESTRICT_SECRET_ACCESS
               value: {{ .Values.permissions.operator.restrict.secret | quote }}

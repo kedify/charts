@@ -1,3 +1,4 @@
+{{- if .Values.metricsServer.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -98,6 +99,10 @@ spec:
           env:
             - name: WATCH_NAMESPACE
               value: {{ .Values.watchNamespace | quote }}
+            {{- if eq .Values.kedify.multitenant.mode "default" }}
+            - name: KEDIFY_MULTITENANT_MODE
+              value: "true"
+            {{- end }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -155,6 +160,13 @@ spec:
           - name: grpc-certs
             mountPath: /grpccerts
           {{- end }}
+          {{- if eq .Values.kedify.multitenant.mode "default" }}
+          - name: kedify-multitenancy-config
+            mountPath: /kedify-multitenancy-config
+            readOnly: true
+          - name: kedify-tenant-certs
+            mountPath: /kedify-tenant-certs
+          {{- end }}
           {{- if .Values.hashiCorpVaultTLS }}
           - name: hashicorp-vault-certs
             mountPath: /hashicorp-vaultcerts
@@ -177,6 +189,14 @@ spec:
       - name: grpc-certs
         secret:
           secretName: {{ .Values.grpcTLSCertsSecret }}
+      {{- end }}
+      {{- if eq .Values.kedify.multitenant.mode "default" }}
+      - name: kedify-multitenancy-config
+        secret:
+          defaultMode: 420
+          secretName: {{ .Values.kedify.multitenant.configSecretName }}
+      - name: kedify-tenant-certs
+        emptyDir: {}
       {{- end }}
       {{- if .Values.hashiCorpVaultTLS }}
       - name: hashicorp-vault-certs
@@ -213,3 +233,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

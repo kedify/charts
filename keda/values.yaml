@@ -62,6 +62,29 @@ crds:
 # -- Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces
 watchNamespace: ""
 
+kedify:
+  # -- For keda installed in multitenant environment
+  # Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior
+  multitenant:
+    # -- Multitenant mode: "" (disabled), "default" or "tenant"
+    # "": multitenancy disabled, standard KEDA deployment
+    # "default": deploys keda-operator + keda-metrics-server (and optionally keda-admission-webhooks), the keda-operator-metrics-server is configured to routes HPA metric requests to tenant keda-operators
+    # "tenant": deploys only keda-operator, should be used with metricsServer.enabled=false, crds.install=false, webhooks.enabled=false
+    mode: ""
+
+    # -- Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace
+    configSecretName: kedify-multitenancy-config
+
+    # -- Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.cluster.local:9666)
+    address: ""
+    # -- SNI authority override for gRPC connection to the tenant's keda-operator
+    authority: ""
+
+    # -- Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret)
+    agentNamespace: "keda"
+    # -- ServiceAccount name of the kedify-agent
+    agentServiceAccount: "kedify-agent"
+
 # -- Name of secret to use to pull images to use to pull Docker images
 imagePullSecrets: []
 
@@ -148,6 +171,8 @@ operator:
     successThreshold: 1
 
 metricsServer:
+  # -- Enable KEDA metrics server and external metrics API resources.
+  enabled: true
   # -- ReplicaSets for this Deployment you want to retain (Default: 10)
   revisionHistoryLimit: 10
   # -- Capability to configure the number of replicas for KEDA metric server.
