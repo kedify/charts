@@ -119,6 +119,7 @@ agent:
     distributedScaledObjectsEnabled: false
     distributedScaledJobsEnabled: false
     scalingPoliciesEnabled: true
+    multitenantKEDAEnabled: false
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
     # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period
@@ -233,6 +234,10 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
+  # configuration for KEDA multitenancy, must have features.multitenantKEDAEnabled set to true to take effect
+  # tenants are discovered dynamically via ConfigMaps with label kedify.io/tenant-registration=true
+  multitenant: {}
+
 # dependent helm charts
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml

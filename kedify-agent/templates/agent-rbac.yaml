@@ -212,6 +212,28 @@ rules:
   - get
   - list
   - watch
+{{- if .Values.agent.features.multitenantKEDAEnabled }}
+# for tenant configuration and cert management in fleet installation
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - patch
+  - get
+  - update
+  resourceNames:
+  - kedaorg-certs
+  - kedify-multitenancy-config
+{{- end }}
 {{- if .Values.agent.rbac.readNodes }}
 # for metrics and metered billing
 - apiGroups:

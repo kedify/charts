@@ -24,6 +24,9 @@ data:
       - agentAutoUpdate: false
         name: keda
         mode: Helm
+        {{- if .Values.agent.features.multitenantKEDAEnabled }}
+        multitenancy: {}
+        {{- end }}
         httpAddonHelm:
           enabled: true
           values: |-
