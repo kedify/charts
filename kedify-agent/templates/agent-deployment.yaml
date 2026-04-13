@@ -81,6 +81,8 @@ spec:
               value: {{ .Values.agent.features.podResourceProfilesEnabled | quote }}
             - name: PRP_REQUIRES_ANNOTATED_PODS
               value: {{ .Values.agent.features.prpRequiresAnnotatedPods | quote }}
+            - name: PRP_MEMORY_DOWNSCALE_GUARD_ENABLED
+              value: {{ .Values.agent.features.podResourceProfilesDownscaleGuardEnabled | quote }}
             {{- end }}
             - name: PRA_ENABLED
               value: {{ .Values.agent.features.podResourceAutoscalersEnabled | quote }}
