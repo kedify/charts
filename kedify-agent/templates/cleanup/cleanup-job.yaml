@@ -47,7 +47,19 @@ spec:
           {{- if .Values.agent.createKedifyConfiguration }}
           # delete KedifyConfiguration CRs if the CRD exists
           if kubectl get crd kedifyconfigurations.install.kedify.io >/dev/null 2>&1; then
-            kubectl delete kedifyconfigurations --all -n {{ .Release.Namespace }} --ignore-not-found 2>&1
+            kubectl delete kedifyconfigurations --all -n {{ .Release.Namespace }} --ignore-not-found --timeout=30s 2>&1 || true
+            # strip finalizers from KC if still stuck so the API server can GC it
+            stuck=$(kubectl get kedifyconfigurations -n {{ .Release.Namespace }} -o name 2>/dev/null || true)
+            if [ -n "$stuck" ]; then
+              echo "removing finalizers from stuck KedifyConfigurations: $stuck"
+              for kc in $stuck; do
+                kubectl patch "$kc" -n {{ .Release.Namespace }} --type=merge -p '{"metadata":{"finalizers":null}}' 2>&1 || \
+                  echo "warn: patch failed for $kc (likely already gone)"
+              done
+              # success criterion is "are they actually gone?", not the patch exit codes
+              kubectl wait --for=delete kedifyconfigurations --all -n {{ .Release.Namespace }} --timeout=30s 2>&1 || \
+                echo "warn: some KedifyConfigurations remain after finalizer purge"
+            fi
           fi
           {{- end }}
           {{- if .Values.agent.createCrds }}
@@ -61,6 +73,8 @@ spec:
             distributedscaledjobs.keda.kedify.io \
             --ignore-not-found 2>&1
           {{- end }}
+          # never block helm uninstall on best-effort cleanup
+          exit 0
         resources:
           limits:
             cpu: 500m
