@@ -112,6 +112,7 @@ agent:
   nameOverride: ""
   fullnameOverride: ""
   features:
+    podResourceProfilesDownscaleGuardEnabled: true
     podResourceProfilesEnabled: true
     podResourceAutoscalersEnabled: false
     prpRequiresAnnotatedPods: true
