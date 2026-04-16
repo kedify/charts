@@ -1,0 +1,1047 @@
+name: Helm Publish (EKS Add-on OCI)
+
+on:
+  push:
+    branches:
+      - '*'
+
+  workflow_dispatch:
+    inputs:
+      aws-region:
+        description: "AWS region where ECR registry lives"
+        required: true
+        default: "us-east-1"
+        type: string
+      ecr-registry:
+        description: "ECR registry host"
+        required: true
+        default: "709825985650.dkr.ecr.us-east-1.amazonaws.com"
+        type: string
+      ecr-repository-prefix:
+        description: "ECR repository path for OCI Helm chart artifact"
+        required: true
+        default: "kedify/kedify-eks-addon-chart"
+        type: string
+      ecr-image-repository-prefix:
+        description: "ECR repository prefix for container images (final repo is <prefix>/<image-name>)"
+        required: true
+        default: "kedify"
+        type: string
+      marketplace-product-id:
+        description: "AWS Marketplace container product identifier (prod-...)"
+        required: false
+        default: "prod-m2zll7yol7iog"
+        type: string
+      marketplace-version-title:
+        description: "Marketplace version title override (defaults to chart version)"
+        required: false
+        default: ""
+        type: string
+      marketplace-release-notes:
+        description: "Marketplace release notes override"
+        required: false
+        default: ""
+        type: string
+  workflow_call:
+    inputs:
+      aws-region:
+        description: "AWS region where ECR registry lives"
+        required: false
+        default: "us-east-1"
+        type: string
+      ecr-registry:
+        description: "ECR registry host"
+        required: false
+        default: "709825985650.dkr.ecr.us-east-1.amazonaws.com"
+        type: string
+      ecr-repository-prefix:
+        description: "ECR repository path for OCI Helm chart artifact"
+        required: false
+        default: "kedify/kedify-eks-addon-chart"
+        type: string
+      ecr-image-repository-prefix:
+        description: "ECR repository prefix for container images (final repo is <prefix>/<image-name>)"
+        required: false
+        default: "kedify"
+        type: string
+      marketplace-product-id:
+        description: "AWS Marketplace container product identifier (prod-...)"
+        required: false
+        default: "prod-m2zll7yol7iog"
+        type: string
+      marketplace-version-title:
+        description: "Marketplace version title override (defaults to chart version)"
+        required: false
+        default: ""
+        type: string
+      marketplace-release-notes:
+        description: "Marketplace release notes override"
+        required: false
+        default: ""
+        type: string
+    secrets:
+      AWS_GITHUB_ROLE_ARN:
+        required: true
+      PAT_TOKEN:
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  AWS_REGION: ${{ inputs['aws-region'] || 'us-east-1' }}
+  ECR_REGISTRY: ${{ inputs['ecr-registry'] || '709825985650.dkr.ecr.us-east-1.amazonaws.com' }}
+  ECR_REPOSITORY_PREFIX: ${{ inputs['ecr-repository-prefix'] || 'kedify/kedify-eks-addon-chart' }}
+  ECR_IMAGE_REPOSITORY_PREFIX: ${{ inputs['ecr-image-repository-prefix'] || 'kedify' }}
+  MARKETPLACE_PRODUCT_ID: ${{ inputs['marketplace-product-id'] || 'prod-m2zll7yol7iog' }}
+  MARKETPLACE_VERSION_TITLE: ${{ inputs['marketplace-version-title'] || '' }}
+  MARKETPLACE_RELEASE_NOTES: ${{ inputs['marketplace-release-notes'] || '' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Helm
+        uses: Azure/setup-helm@v4
+
+      - name: Configure Helm repositories
+        run: |
+          set -euo pipefail
+          helm repo add kedify https://kedify.github.io/charts
+          helm repo update
+
+      - name: Build dependencies
+        run: |
+          set -euo pipefail
+          helm dependency build kedify-agent
+
+      - name: Smoke test rendering
+        run: |
+          set -euo pipefail
+          helm template ./kedify-agent -n keda \
+            -f ./kedify-agent/test/test-values.yaml \
+            --set otel-add-on.enabled=false \
+            --set kedify-predictor.enabled=false > /tmp/kedify-agent-rendered.yaml
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Setup Helm
+        uses: Azure/setup-helm@v4
+
+      - name: Configure Helm repositories
+        run: |
+          set -euo pipefail
+          helm repo add kedify https://kedify.github.io/charts
+          helm repo update
+
+      - name: Build dependencies
+        run: |
+          set -euo pipefail
+          helm dependency build kedify-agent
+
+      - name: Rewrite image references to ECR and prepare mirror list
+        env:
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY_PREFIX: ${{ env.ECR_REPOSITORY_PREFIX }}
+          ECR_IMAGE_REPOSITORY_PREFIX: ${{ env.ECR_IMAGE_REPOSITORY_PREFIX }}
+        run: |
+          set -euo pipefail
+          CHART_DIR="kedify-agent"
+          ECR_IMAGE_FULL_PREFIX="${ECR_REGISTRY}/${ECR_IMAGE_REPOSITORY_PREFIX}"
+          export ECR_REGISTRY ECR_REPOSITORY_PREFIX ECR_IMAGE_REPOSITORY_PREFIX ECR_IMAGE_FULL_PREFIX
+
+          # Unpack all chart archives recursively so nested dependency values.yaml files are discoverable.
+          while true; do
+            mapfile -t chart_pkgs < <(find "${CHART_DIR}" -type f -name '*.tgz' | sort)
+            [[ "${#chart_pkgs[@]}" -eq 0 ]] && break
+            for pkg in "${chart_pkgs[@]}"; do
+              tar -xzf "${pkg}" -C "$(dirname "${pkg}")"
+              rm -f "${pkg}"
+            done
+          done
+
+          : > /tmp/src-images.txt
+          : > /tmp/source-image-candidates.tsv
+          : > /tmp/image-map.tsv
+          : > /tmp/extra-marketplace-images.txt
+
+          # Ensure Marketplace-required explicit tags for images that upstream charts leave empty.
+          yq -i '
+            .["otel-add-on"].image.tag = "v0.1.3" |
+            .["otel-add-on"].otelOperator.manager.image.tag = "0.131.0" |
+            .["kedify-predictor"].image.tag = "v0.1.4" |
+            .["kedify-predictor"].kedaPredictionController.image.tag = "v0.1.4"
+          ' "${CHART_DIR}/values.yaml"
+
+          is_nonempty() {
+            local v="${1:-}"
+            [[ -n "${v}" && "${v}" != "null" ]]
+          }
+
+          collect_repo_tag_images() {
+            local values_file="$1"
+            local chart_dir chart_app_version
+            chart_dir="$(dirname "${values_file}")"
+            chart_app_version="$(yq -r '.appVersion // ""' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
+            yq -r '
+              ..
+              | select(type == "!!map" and has("repository") and has("tag"))
+              | [(.registry // "__NOREGISTRY__"), (.repository | tostring), (.tag | tostring)]
+            | @tsv
+            ' "${values_file}" | while IFS=$'\t' read -r registry repository tag; do
+              if [[ "${registry}" == "__NOREGISTRY__" ]]; then
+                registry=""
+              fi
+              if ! is_nonempty "${repository}"; then
+                continue
+              fi
+              # Some charts accidentally encode tag as trailing repository path segment.
+              # If tag is empty and repository ends with a version-like segment, recover it.
+              if ! is_nonempty "${tag}"; then
+                repo_tail="${repository##*/}"
+                if [[ "${repo_tail}" =~ ^v?[0-9]+([.][0-9]+){1,3}([-.][A-Za-z0-9._-]+)?$ && "${repository}" == */* ]]; then
+                  repository="${repository%/*}"
+                  tag="${repo_tail}"
+                fi
+              fi
+              if ! is_nonempty "${tag}"; then
+                tag="${chart_app_version}"
+              fi
+              if ! is_nonempty "${tag}"; then
+                continue
+              fi
+              # Normalize repository when tag is accidentally duplicated in repository path/value.
+              if [[ "${repository}" == */"${tag}" ]]; then
+                repository="${repository%/${tag}}"
+              fi
+              if [[ "${repository}" == *:"${tag}" ]]; then
+                repository="${repository%:${tag}}"
+              fi
+              # Guard against synthetic refs produced by some chart schemas (e.g. busybox/latest:<appVersion>).
+              if [[ "${repository}" == "latest" && "${tag}" != "latest" ]]; then
+                continue
+              fi
+
+              local src
+              if [[ "${repository}" =~ ^[A-Za-z0-9.-]+(:[0-9]+)?/ ]]; then
+                src="${repository}:${tag}"
+              elif is_nonempty "${registry}"; then
+                src="${registry}/${repository}:${tag}"
+              else
+                src="${repository}:${tag}"
+              fi
+              if [[ "${src}" =~ /latest:[^[:space:]]+$ && "${tag}" != "latest" ]]; then
+                continue
+              fi
+
+              echo "${src}"
+            done
+          }
+
+          collect_http_images() {
+            local values_file="$1"
+            yq -r '
+              ..
+              | select(type == "!!map" and has("tag") and has("operator") and has("interceptor") and has("scaler"))
+              | [(.operator | tostring), (.interceptor | tostring), (.scaler | tostring), (.tag | tostring)]
+              | @tsv
+            ' "${values_file}" | while IFS=$'\t' read -r operator interceptor scaler tag; do
+              if ! is_nonempty "${tag}"; then
+                continue
+              fi
+              if is_nonempty "${operator}"; then echo "${operator}:${tag}"; fi
+              if is_nonempty "${interceptor}"; then echo "${interceptor}:${tag}"; fi
+              if is_nonempty "${scaler}"; then echo "${scaler}:${tag}"; fi
+            done
+          }
+
+          collect_name_tag_images() {
+            local values_file="$1"
+            yq -r '
+              ..
+              | select(type == "!!map" and has("name") and has("tag"))
+              | [(.name | tostring), (.tag | tostring)]
+              | @tsv
+            ' "${values_file}" | while IFS=$'\t' read -r name tag; do
+              if ! is_nonempty "${name}" || ! is_nonempty "${tag}"; then
+                continue
+              fi
+              if [[ "${name}" == */* ]]; then
+                echo "${name}:${tag}"
+              fi
+            done
+          }
+
+          rewrite_values_to_ecr() {
+            local values_file="$1"
+
+            # Normalize any explicit image registry field to Marketplace ECR registry.
+            # Some charts render image as "{{ registry }}/{{ repository }}", which would produce
+            # "/<repository>" if registry is empty. Forcing registry avoids malformed image URIs.
+            yq -i '
+              (
+                ..
+                | select(type == "!!map" and has("registry"))
+                | .registry
+              ) = strenv(ECR_REGISTRY)
+            ' "${values_file}"
+
+            # For repository+tag pairs that also define registry, keep split fields to avoid rendering "/<repo>".
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and has("registry")
+                    and .repository != null and .repository != ""
+                  )
+              ) |= (
+                .tag = ((.tag // "") | tostring) |
+                .registry = strenv(ECR_REGISTRY) |
+                .repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/" + (.repository | split("/")[-1]))
+              )
+            ' "${values_file}"
+
+            # For repository+tag pairs without a separate registry field, use full repo path.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and (has("registry") | not)
+                    and .repository != null and .repository != ""
+                  )
+              ) |= (
+                .tag = ((.tag // "") | tostring) |
+                .repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.repository | split("/")[-1]))
+              )
+            ' "${values_file}"
+
+            # For name+tag pairs, rewrite to per-image Marketplace repositories and preserve tag.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("name")
+                    and has("tag")
+                    and .name != null and .name != ""
+                    and .tag != null and (.tag | tostring) != ""
+                    and (.name | test("/"))
+                  )
+              ) |= (
+                .tag = (.tag | tostring) |
+                .name = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.name | split("/")[-1]))
+              )
+            ' "${values_file}"
+
+            # For http-add-on style image fields (operator/interceptor/scaler), use one repo everywhere.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("tag")
+                    and has("operator")
+                    and has("interceptor")
+                    and has("scaler")
+                    and .operator != null and .operator != ""
+                    and .interceptor != null and .interceptor != ""
+                    and .scaler != null and .scaler != ""
+                    and .tag != null and (.tag | tostring) != ""
+                  )
+              ) |= (
+                .operator = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.operator | split("/")[-1])) |
+                .interceptor = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.interceptor | split("/")[-1])) |
+                .scaler = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.scaler | split("/")[-1]))
+              )
+            ' "${values_file}"
+
+            # If pinnedImages exists, pin unique per-component tags while keeping a single repo.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("images")
+                    and has("pinnedImages")
+                    and (.images | type == "!!map")
+                    and (.pinnedImages | type == "!!map")
+                    and (.images | has("operator") and has("interceptor") and has("scaler") and has("tag"))
+                  )
+              ) |= (
+                .pinnedImages.operator.tag = (.images.tag | tostring) |
+                .pinnedImages.interceptor.tag = (.images.tag | tostring) |
+                .pinnedImages.scaler.tag = (.images.tag | tostring) |
+                .images.operator = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.images.operator | split("/")[-1])) |
+                .images.interceptor = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.images.interceptor | split("/")[-1])) |
+                .images.scaler = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.images.scaler | split("/")[-1]))
+              )
+            ' "${values_file}"
+
+            # Marketplace disallows 'latest' tags. Pin busybox to a concrete version.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and .repository != null and .repository != ""
+                    and (.repository | split("/")[-1]) == "busybox"
+                    and .tag != null and (.tag | tostring) == "latest"
+                  )
+              ) |= (
+                .tag = "1.36.1"
+              )
+            ' "${values_file}"
+          }
+
+          # Collect images from parent + nested subchart values for complete ECR mirroring.
+          # Rewrite only parent chart values.yaml to avoid mutating packaged subchart defaults,
+          # which AWS Marketplace validator inspects for tag compliance.
+          while IFS= read -r values_file; do
+            collect_repo_tag_images "${values_file}" >> /tmp/src-images.txt
+            collect_http_images "${values_file}" >> /tmp/src-images.txt
+            collect_name_tag_images "${values_file}" >> /tmp/src-images.txt
+            if [[ "${values_file}" == "${CHART_DIR}/values.yaml" ]]; then
+              rewrite_values_to_ecr "${values_file}"
+            fi
+          done < <(find "${CHART_DIR}" -type f -name values.yaml | sort)
+
+          # Parse kedify-proxy image from the referenced OCI chart and force the override in kedify-agent values.
+          proxy_chart_version="$(yq -r '.agent.kedifyProxy.chartVersion // ""' "${CHART_DIR}/values.yaml")"
+          if [[ -z "${proxy_chart_version}" || "${proxy_chart_version}" == "null" ]]; then
+            echo "Missing .agent.kedifyProxy.chartVersion in ${CHART_DIR}/values.yaml" >&2
+            exit 1
+          fi
+          proxy_chart_ref="oci://ghcr.io/kedify/charts/kedify-proxy"
+          helm show values "${proxy_chart_ref}" --version "${proxy_chart_version}" > /tmp/kedify-proxy-values.yaml
+          proxy_src_repo="$(yq -r '.image.repository // ""' /tmp/kedify-proxy-values.yaml)"
+          proxy_src_tag="$(yq -r '.image.tag // ""' /tmp/kedify-proxy-values.yaml)"
+          if [[ -z "${proxy_src_tag}" || "${proxy_src_tag}" == "null" ]]; then
+            proxy_src_tag="$(helm show chart "${proxy_chart_ref}" --version "${proxy_chart_version}" | yq -r '.appVersion // ""')"
+          fi
+          if [[ -z "${proxy_src_repo}" || "${proxy_src_repo}" == "null" || -z "${proxy_src_tag}" || "${proxy_src_tag}" == "null" ]]; then
+            echo "Failed to resolve kedify-proxy image repository/tag from ${proxy_chart_ref}:${proxy_chart_version}" >&2
+            exit 1
+          fi
+          proxy_src_image="${proxy_src_repo}:${proxy_src_tag}"
+          proxy_image_name="${proxy_src_repo##*/}"
+          proxy_dst_image="${ECR_IMAGE_FULL_PREFIX}/${proxy_image_name}:${proxy_src_tag}"
+          proxy_dst_repo="${ECR_IMAGE_FULL_PREFIX}/${proxy_image_name}"
+
+          printf '%s\n' "${proxy_src_image}" >> /tmp/src-images.txt
+          printf '%s\t%s\n' "${proxy_src_image}" "${proxy_dst_image}" >> /tmp/image-map.tsv
+          printf '%s\n' "${proxy_dst_image}" > /tmp/extra-marketplace-images.txt
+
+          export PROXY_DST_REPO="${proxy_dst_repo}"
+          export PROXY_DST_TAG="${proxy_src_tag}"
+          yq -i '
+            .agent.kedifyProxy.globalValues.image.repository = strenv(PROXY_DST_REPO)
+            | .agent.kedifyProxy.globalValues.image.tag = strenv(PROXY_DST_TAG)
+          ' "${CHART_DIR}/values.yaml"
+
+          # Pin dependency image overrides in parent values so packaged chart values
+          # reference Marketplace ECR images without mutating subchart values files.
+          yq -i '
+            # keda
+            .keda.image.keda.registry = strenv(ECR_REGISTRY) |
+            .keda.image.keda.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-operator") |
+            .keda.image.keda.tag = "v2.19.0-1" |
+            .keda.image.metricsApiServer.registry = strenv(ECR_REGISTRY) |
+            .keda.image.metricsApiServer.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-metrics-apiserver") |
+            .keda.image.metricsApiServer.tag = "v2.19.0-1" |
+            .keda.image.webhooks.registry = strenv(ECR_REGISTRY) |
+            .keda.image.webhooks.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-admission-webhooks") |
+            .keda.image.webhooks.tag = "v2.19.0-1" |
+            # keda-add-ons-http
+            .["keda-add-ons-http"].images.operator = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-operator") |
+            .["keda-add-ons-http"].images.interceptor = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-interceptor") |
+            .["keda-add-ons-http"].images.scaler = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-scaler") |
+            .["keda-add-ons-http"].images.tag = "v0.11.1-1" |
+            .["keda-add-ons-http"].images.kubeRbacProxy.name = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kube-rbac-proxy") |
+            .["keda-add-ons-http"].images.kubeRbacProxy.tag = "v0.18.2" |
+            .["keda-add-ons-http"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
+            .["keda-add-ons-http"].kubectlImage.tag = "v1.33.1" |
+            # kedify-predictor
+            .["kedify-predictor"].image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/keda-prophet") |
+            .["kedify-predictor"].image.tag = "v0.1.4" |
+            .["kedify-predictor"].kedaPredictionController.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/keda-prediction-controller") |
+            .["kedify-predictor"].kedaPredictionController.image.tag = "v0.1.4" |
+            .["kedify-predictor"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
+            .["kedify-predictor"].kubectlImage.tag = "v1.33.1" |
+            # otel-add-on and nested opentelemetry-operator
+            .["otel-add-on"].image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/otel-add-on") |
+            .["otel-add-on"].image.tag = "v0.1.3" |
+            .["otel-add-on"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
+            .["otel-add-on"].kubectlImage.tag = "v1.33.1" |
+            .["otel-add-on"].otelOperator.manager.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/opentelemetry-operator") |
+            .["otel-add-on"].otelOperator.manager.image.tag = "0.131.0" |
+            .["otel-add-on"].otelOperator.manager.collectorImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/opentelemetry-collector-k8s") |
+            .["otel-add-on"].otelOperator.manager.collectorImage.tag = "0.131.1" |
+            .["otel-add-on"].otelOperator.kubeRBACProxy.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kube-rbac-proxy") |
+            .["otel-add-on"].otelOperator.kubeRBACProxy.image.tag = "v0.19.1" |
+            .["otel-add-on"].otelOperator.testFramework.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/busybox") |
+            .["otel-add-on"].otelOperator.testFramework.image.tag = "1.36.1"
+          ' "${CHART_DIR}/values.yaml"
+
+          # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
+          otel_operator_values="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator/values.yaml"
+          if [[ -f "${otel_operator_values}" ]]; then
+            otel_collector_src_repo="$(yq -r '.manager.collectorImage.repository // ""' "${otel_operator_values}")"
+            otel_collector_src_tag="$(yq -r '.manager.collectorImage.tag // ""' "${otel_operator_values}")"
+            if is_nonempty "${otel_collector_src_repo}" && is_nonempty "${otel_collector_src_tag}"; then
+              otel_collector_src="${otel_collector_src_repo}:${otel_collector_src_tag}"
+              otel_collector_name="${otel_collector_src_repo##*/}"
+              otel_collector_dst="${ECR_IMAGE_FULL_PREFIX}/${otel_collector_name}:${otel_collector_src_tag}"
+              printf '%s\n' "${otel_collector_src}" >> /tmp/src-images.txt
+              printf '%s\t%s\n' "${otel_collector_src}" "${otel_collector_dst}" >> /tmp/image-map.tsv
+            fi
+          fi
+
+          sort -u /tmp/src-images.txt -o /tmp/src-images.txt
+          while IFS= read -r src; do
+            [[ -z "${src}" ]] && continue
+            src_clean="${src%@*}"
+            src_tag="${src_clean##*:}"
+            src_repo="${src_clean%:*}"
+            [[ "${src_repo}" == "${src_tag}" ]] && continue
+            image_name="${src_repo##*/}"
+            printf '%s\t%s\t%s\n' "${image_name}" "${src_tag}" "${src_clean}" >> /tmp/source-image-candidates.tsv
+          done < /tmp/src-images.txt
+          sort -u /tmp/source-image-candidates.tsv -o /tmp/source-image-candidates.tsv
+          : > /tmp/image-map.tsv
+
+          while IFS= read -r src; do
+            [[ -z "${src}" ]] && continue
+            src="${src%@*}"
+            src_tag="${src##*:}"
+            src_repo="${src%:*}"
+            if [[ "${src_repo}" == "${src_tag}" ]]; then
+              continue
+            fi
+            # Recover malformed refs where trailing repository segment is actually a version tag.
+            repo_tail="${src_repo##*/}"
+            if [[ "${repo_tail}" =~ ^v?[0-9]+([.][0-9]+){1,3}([-.][A-Za-z0-9._-]+)?$ && "${src_repo}" == */* ]]; then
+              src_repo="${src_repo%/*}"
+              src_tag="${repo_tail}"
+            fi
+            image_name="${src_repo##*/}"
+            if [[ "${image_name}" == "${src_tag}" ]]; then
+              echo "Skipping malformed image reference (name equals tag): ${src}" >&2
+              continue
+            fi
+            if [[ "${image_name}" == "busybox" && "${src_tag}" == "latest" ]]; then
+              src_repo="docker.io/library/busybox"
+              src_tag="1.36.1"
+            fi
+            dst="${ECR_IMAGE_FULL_PREFIX}/${image_name}:${src_tag}"
+            printf '%s\t%s\n' "${src}" "${dst}" >> /tmp/image-map.tsv
+          done < /tmp/src-images.txt
+
+          sort -u /tmp/image-map.tsv -o /tmp/image-map.tsv
+          cut -f2 /tmp/image-map.tsv | sort -u > /tmp/dst-images.txt
+
+      - name: Merge rendered chart images into mirror list
+        run: |
+          set -euo pipefail
+
+          # Render rewritten local chart and extract image references exactly as Kubernetes sees them.
+          helm template test ./kedify-agent -n keda \
+            --set agent.createApiKeySecret=false \
+            --set agent.orgId="" \
+            --set keda.enabled=true \
+            --set keda-add-ons-http.enabled=true \
+            --set otel-add-on.enabled=true \
+            --set kedify-predictor.enabled=true > /tmp/kedify-agent-local-rendered.yaml
+
+          yq -r '
+            ..
+            | select(type == "!!map" and has("image"))
+            | .image
+            | select(. != null and . != "")
+          ' /tmp/kedify-agent-local-rendered.yaml \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | grep -vE '^(---)?$' \
+            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
+            | sort -u > /tmp/rendered-images-local.txt
+
+          # For already-rewritten ECR images, use src=dst so mirror loop still verifies/pushes missing tags.
+          while IFS= read -r img; do
+            [[ -z "${img}" ]] && continue
+            printf '%s\t%s\n' "${img}" "${img}" >> /tmp/image-map.tsv
+          done < /tmp/rendered-images-local.txt
+
+          sort -u /tmp/image-map.tsv -o /tmp/image-map.tsv
+          cut -f2 /tmp/image-map.tsv | sort -u > /tmp/dst-images.txt
+
+      - name: Commit rewritten chart files to eks-addon branch
+        run: |
+          set -euo pipefail
+          version="$(yq -r '.version' kedify-agent/Chart.yaml)"
+          if [[ -z "${version}" ]]; then
+            echo "Failed to resolve kedify-agent chart version" >&2
+            exit 1
+          fi
+
+          branch="eks-addon-${version}"
+          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git switch -C "${branch}"
+
+          chart_name="$(basename "${{ env.ECR_REPOSITORY_PREFIX }}")"
+          yq -i ".name = \"${chart_name}\"" kedify-agent/Chart.yaml
+
+          git add kedify-agent/Chart.yaml
+          while IFS= read -r values_file; do
+            git add "${values_file}"
+          done < <(find kedify-agent -type f -name values.yaml | sort)
+
+          if git diff --cached --quiet; then
+            echo "No chart rewrite changes detected, branch push skipped."
+          else
+            git commit -m "Rewrite kedify-agent images to ECR (${version})"
+            git push origin "${branch}" --force
+          fi
+
+      - name: Package chart
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
+          marketplace_chart_version="0.0.13"
+
+          tmp_chart_dir="/tmp/kedify-agent-marketplace"
+          rm -rf "${tmp_chart_dir}"
+          cp -a kedify-agent "${tmp_chart_dir}"
+          chart_name="$(basename "${{ env.ECR_REPOSITORY_PREFIX }}")"
+          yq -i ".name = \"${chart_name}\"" "${tmp_chart_dir}/Chart.yaml"
+          # Marketplace package defaults must pass lint/template without embedded credentials.
+          # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
+          yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
+          yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
+          # Ensure all nested dependency charts are physically present (unpacked) in package tree.
+          while true; do
+            mapfile -t chart_pkgs < <(find "${tmp_chart_dir}" -type f -name '*.tgz' | sort)
+            [[ "${#chart_pkgs[@]}" -eq 0 ]] && break
+            for pkg in "${chart_pkgs[@]}"; do
+              tar -xzf "${pkg}" -C "$(dirname "${pkg}")"
+              rm -f "${pkg}"
+            done
+          done
+          # EKS add-on validation requires dependent charts to be local and disallows Release.Service.
+          while IFS= read -r chart_yaml; do
+            yq -i '(.dependencies[]?) |= (.repository = ("file://charts/" + .name))' "${chart_yaml}"
+          done < <(find "${tmp_chart_dir}" -type f -name Chart.yaml | sort)
+          # Chart.lock may still carry external repositories; remove lock files from packaged tree.
+          find "${tmp_chart_dir}" -type f -name Chart.lock -delete
+          while IFS= read -r tmpl_file; do
+            sed -E -i 's/\.Release\.Service/"Helm"/g' "${tmpl_file}"
+          done < <(find "${tmp_chart_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.tpl' -o -name '*.txt' \) | sort)
+          if rg -n '\.Release\.Service' "${tmp_chart_dir}" >/dev/null; then
+            echo "Found unsupported .Release.Service references in packaged chart tree" >&2
+            rg -n '\.Release\.Service' "${tmp_chart_dir}" >&2 || true
+            exit 1
+          fi
+          sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
+          helm package "${tmp_chart_dir}" --destination dist
+          echo "MARKETPLACE_CHART_VERSION=${marketplace_chart_version}" >> "${GITHUB_ENV}"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+
+      - name: Debug AWS identity in CI
+        run: |
+          set -euo pipefail
+          aws sts get-caller-identity
+
+      - name: Login to AWS ECR for Helm and Docker
+        run: |
+          set -euo pipefail
+          aws ecr get-login-password --region "${{ env.AWS_REGION }}" \
+            | helm registry login -u AWS --password-stdin "${{ env.ECR_REGISTRY }}"
+          aws ecr get-login-password --region "${{ env.AWS_REGION }}" \
+            | docker login --username AWS --password-stdin "${{ env.ECR_REGISTRY }}"
+
+      - name: Preflight check Marketplace repository access
+        run: |
+          set -euo pipefail
+          registry_id="$(echo "${{ env.ECR_REGISTRY }}" | cut -d'.' -f1)"
+          aws ecr describe-images \
+            --registry-id "${registry_id}" \
+            --repository-name "${{ env.ECR_REPOSITORY_PREFIX }}" \
+            --region "${{ env.AWS_REGION }}" \
+            --max-items 1 >/dev/null
+
+      - name: Mirror container images to ECR
+        run: |
+          set -euo pipefail
+          registry_id="$(echo "${{ env.ECR_REGISTRY }}" | cut -d'.' -f1)"
+          while IFS=$'\t' read -r src dst; do
+            [[ -z "${src}" || -z "${dst}" ]] && continue
+
+            dst_tag="${dst##*:}"
+            dst_repo_full="${dst%:*}"
+            dst_repo_name="${dst_repo_full#${{ env.ECR_REGISTRY }}/}"
+            if aws ecr describe-images \
+              --registry-id "${registry_id}" \
+              --repository-name "${dst_repo_name}" \
+              --region "${{ env.AWS_REGION }}" \
+              --image-ids imageTag="${dst_tag}" >/dev/null 2>&1; then
+              echo "Image already exists in ECR, skipping mirror: ${dst}"
+              continue
+            fi
+
+            echo "Mirroring ${src} -> ${dst}"
+            src_to_pull="${src}"
+            if ! docker pull "${src_to_pull}"; then
+              # Some chart values use short repository form (e.g. kedify/foo) without explicit registry.
+              # For Kedify images, resolve that to GHCR so mirroring is deterministic.
+              if [[ "${src_to_pull}" == kedify/* ]]; then
+                src_to_pull="ghcr.io/${src_to_pull}"
+                echo "Retrying pull as ${src_to_pull}"
+                docker pull "${src_to_pull}"
+              # When source already points to Marketplace ECR (src=dst) but tag is missing there,
+              # recover source from known upstream registries based on the component name.
+              elif [[ "${src_to_pull}" == "${dst}" ]]; then
+                component="${dst_repo_name##*/}"
+                pulled="false"
+                # Prefer known source image discovered from chart values. First exact tag match,
+                # then fallback to any known tag for the same component (retag to Marketplace tag).
+                source_candidates="/tmp/source-image-candidates.tsv"
+                if [[ -f "${source_candidates}" ]]; then
+                  preferred_src="$(awk -F'\t' -v c="${component}" -v t="${dst_tag}" '$1==c && $2==t {print $3; exit}' "${source_candidates}" || true)"
+                  if [[ -z "${preferred_src}" ]]; then
+                    preferred_src="$(awk -F'\t' -v c="${component}" '$1==c {print $3; exit}' "${source_candidates}" || true)"
+                  fi
+                  if [[ -n "${preferred_src}" ]]; then
+                    echo "Retrying pull from discovered source ${preferred_src}"
+                    if docker pull "${preferred_src}"; then
+                      src_to_pull="${preferred_src}"
+                      pulled="true"
+                    fi
+                  fi
+                fi
+                if [[ "${pulled}" != "true" ]]; then
+                  for candidate in \
+                    "ghcr.io/kedify/${component}:${dst_tag}" \
+                    "docker.io/library/${component}:${dst_tag}" \
+                    "${component}:${dst_tag}" \
+                    "docker.io/envoyproxy/${component}:${dst_tag}" \
+                    "quay.io/brancz/${component}:${dst_tag}" \
+                    "ghcr.io/open-telemetry/opentelemetry-operator/${component}:${dst_tag}" \
+                    "ghcr.io/open-telemetry/opentelemetry-collector-releases/${component}:${dst_tag}"; do
+                    echo "Retrying pull from inferred source ${candidate}"
+                    if docker pull "${candidate}"; then
+                      src_to_pull="${candidate}"
+                      pulled="true"
+                      break
+                    fi
+                  done
+                fi
+                if [[ "${pulled}" != "true" ]]; then
+                  echo "Failed to infer pull source for image: ${dst}" >&2
+                  exit 1
+                fi
+              else
+                echo "Failed to pull source image: ${src}" >&2
+                exit 1
+              fi
+            fi
+            docker tag "${src_to_pull}" "${dst}"
+            docker push "${dst}"
+          done < /tmp/image-map.tsv
+
+      - name: Push Marketplace chart as OCI
+        run: |
+          set -euo pipefail
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          registry_id="$(echo "${{ env.ECR_REGISTRY }}" | cut -d'.' -f1)"
+          repository_name="${{ env.ECR_REPOSITORY_PREFIX }}"
+          push_repo_parent="${repository_name%/*}"
+          if [[ "${push_repo_parent}" == "${repository_name}" || -z "${push_repo_parent}" ]]; then
+            echo "Invalid ECR_REPOSITORY_PREFIX '${repository_name}'. Expected at least one path segment separator '/'" >&2
+            exit 1
+          fi
+
+          if aws ecr describe-images \
+            --registry-id "${registry_id}" \
+            --repository-name "${repository_name}" \
+            --region "${{ env.AWS_REGION }}" \
+            --image-ids imageTag="${chart_version}" >/dev/null 2>&1; then
+            echo "Chart tag already exists, skipping helm push: ${chart_version}"
+            exit 0
+          fi
+
+          chart_name="$(basename "${repository_name}")"
+          helm push "dist/${chart_name}-${chart_version}.tgz" "oci://${{ env.ECR_REGISTRY }}/${push_repo_parent}"
+
+      - name: Prepare Marketplace delivery metadata
+        run: |
+          set -euo pipefail
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
+          printf '%s\n' "${helm_chart_uri}" > /tmp/marketplace-helm-chart-uri.txt
+
+      - name: Smoke test chart pull from OCI
+        run: |
+          set -euo pipefail
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          helm template test \
+            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
+            --version "${chart_version}" \
+            --set agent.createApiKeySecret=false \
+            --set agent.orgId="" \
+            --set keda.enabled=false \
+            --set keda-add-ons-http.enabled=false \
+            --set otel-add-on.enabled=false \
+            --set kedify-predictor.enabled=false >/tmp/kedify-agent-from-oci.yaml
+
+      - name: Build Marketplace declared ContainerImages from rendered OCI chart
+        run: |
+          set -euo pipefail
+          yq -r '
+            ..
+            | select(type == "!!map" and has("image"))
+            | .image
+            | select(. != null and . != "")
+          ' /tmp/kedify-agent-from-oci.yaml \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | grep -vE '^(---)?$' \
+            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
+            | sort -u > /tmp/marketplace-container-images.txt
+
+          # Include:
+          # - rendered images from the default Marketplace install path,
+          # - full mirrored image list (all addon images),
+          # - required non-rendered runtime image(s) (kedify-proxy envoy).
+          # Keep only fully-qualified tagged image URIs.
+          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/extra-marketplace-images.txt \
+            | grep -vE '^(---)?$' \
+            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+:[^[:space:]]+$' \
+            | grep -vE ':latest$' \
+            | sort -u > /tmp/marketplace-container-images.tmp
+          mv /tmp/marketplace-container-images.tmp /tmp/marketplace-container-images.txt
+
+      - name: Debug final Marketplace ContainerImages list
+        run: |
+          set -euo pipefail
+          mirror_count="$(wc -l < /tmp/dst-images.txt | tr -d '[:space:]')"
+          marketplace_count="$(wc -l < /tmp/marketplace-container-images.txt | tr -d '[:space:]')"
+          echo "Mirror image list count (all addon images): ${mirror_count}"
+          echo "Marketplace ContainerImages count (rendered default install): ${marketplace_count}"
+          echo "Marketplace ContainerImages:"
+          cat /tmp/marketplace-container-images.txt
+
+      - name: Upload Marketplace delivery metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-delivery-metadata
+          path: |
+            /tmp/marketplace-container-images.txt
+            /tmp/marketplace-helm-chart-uri.txt
+
+      - name: Publish version in AWS Marketplace Catalog
+        run: |
+          set -euo pipefail
+
+          source_chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
+          helm_chart_repo_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}"
+          version_title="${{ env.MARKETPLACE_VERSION_TITLE }}"
+          release_notes="${{ env.MARKETPLACE_RELEASE_NOTES }}"
+          if [[ -z "${version_title}" ]]; then
+            version_title="${source_chart_version}"
+          fi
+          if [[ -z "${release_notes}" ]]; then
+            release_notes="Automated release from GitHub Actions for chart ${source_chart_version}."
+          fi
+
+          container_images_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/marketplace-container-images.txt)"
+
+          jq -n \
+            --arg product_id "${{ env.MARKETPLACE_PRODUCT_ID }}" \
+            --arg version_title "${version_title}" \
+            --arg release_notes "${release_notes}" \
+            --arg helm_chart_uri "${helm_chart_uri}" \
+            --arg helm_chart_repo_uri "${helm_chart_repo_uri}" \
+            --arg chart_version "${chart_version}" \
+            --argjson container_images "${container_images_json}" \
+            '[
+              {
+                ChangeType: "AddDeliveryOptions",
+                Entity: {
+                  Type: "ContainerProduct@1.0",
+                  Identifier: $product_id
+                },
+                DetailsDocument: {
+                  Version: {
+                    VersionTitle: $version_title,
+                    ReleaseNotes: $release_notes
+                  },
+                  DeliveryOptions: [
+                    {
+                      DeliveryOptionTitle: ("Helm chart " + $version_title),
+                      Details: {
+                        HelmDeliveryOptionDetails: {
+                          CompatibleServices: ["EKS"],
+                          HelmChartUri: $helm_chart_uri,
+                          ContainerImages: $container_images,
+                          MarketplaceServiceAccountName: "${AWSMP_SERVICE_ACCOUNT}",
+                          Namespace: "keda",
+                          Description: ("Helm delivery option for " + $version_title),
+                          UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
+                            "Create secret in namespace 'keda':\n" +
+                            "kubectl -n keda create secret generic kedify-agent --from-literal=apikey=<YOUR_KEDIFY_API_KEY> --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>\n\n" +
+                            "Install command:\n" +
+                            "helm upgrade -i kedify-agent oci://" + $helm_chart_repo_uri + " --version " + $chart_version + " --namespace keda --create-namespace --set agent.createApiKeySecret=false --set agent.orgId=''")
+                        }
+                      }
+                    },
+                    {
+                      DeliveryOptionTitle: ("Amazon EKS add-on " + $version_title),
+                      Visibility: "Limited",
+                      Details: {
+                        EksAddOnDeliveryOptionDetails: {
+                          HelmChartUri: $helm_chart_uri,
+                          ContainerImages: $container_images,
+                          AddOnName: "kedify-agent",
+                          AddOnVersion: $chart_version,
+                          AddOnType: "autoscaling",
+                          CompatibleKubernetesVersions: ["1.30", "1.31", "1.32", "1.33", "1.34", "1.35"],
+                          SupportedArchitectures: ["amd64"],
+                          Namespace: "keda",
+                          EnvironmentOverrideParameters: [
+                            {
+                              Key: "clusterName",
+                              Value: "${AWS_EKS_CLUSTER_NAME}"
+                            }
+                          ],
+                          Description: ("Amazon EKS add-on delivery option for " + $version_title),
+                          UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
+                            "Create secret in namespace 'keda':\n" +
+                            "kubectl -n keda create secret generic kedify-agent --from-literal=apikey=<YOUR_KEDIFY_API_KEY> --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>\n\n" +
+                            "Install command:\n" +
+                            "helm upgrade -i kedify-agent oci://" + $helm_chart_repo_uri + " --version " + $chart_version + " --namespace keda --create-namespace --set agent.createApiKeySecret=false --set agent.orgId=''")
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]' > /tmp/marketplace-changeset.json
+
+          # Client request token must be stable for identical requests and different for changed payloads.
+          changeset_hash="$(sha256sum /tmp/marketplace-changeset.json | cut -d' ' -f1 | cut -c1-40)"
+          client_request_token="mp-${chart_version}-${changeset_hash}"
+          client_request_token="${client_request_token:0:64}"
+          echo "Using Marketplace client request token: ${client_request_token}"
+
+          change_set_id="$(aws marketplace-catalog start-change-set \
+            --catalog AWSMarketplace \
+            --change-set file:///tmp/marketplace-changeset.json \
+            --client-request-token "${client_request_token}" \
+            --query ChangeSetId \
+            --output text)"
+          echo "Marketplace ChangeSetId: ${change_set_id}"
+          echo "MARKETPLACE_CHANGE_SET_ID=${change_set_id}" >> "${GITHUB_ENV}"
+
+          # Keep CI responsive: wait briefly for immediate validation failures/success,
+          # but do not block on longer Marketplace review.
+          for i in $(seq 1 8); do
+            status="$(aws marketplace-catalog describe-change-set \
+              --catalog AWSMarketplace \
+              --change-set-id "${change_set_id}" \
+              --query Status \
+              --output text)"
+            echo "Change set status: ${status}"
+            case "${status}" in
+              SUCCEEDED)
+                exit 0
+                ;;
+              FAILED|CANCELLED)
+                aws marketplace-catalog describe-change-set \
+                  --catalog AWSMarketplace \
+                  --change-set-id "${change_set_id}"
+                exit 1
+                ;;
+              PREPARING|APPLYING)
+                sleep 15
+                ;;
+              *)
+                echo "Unexpected status: ${status}" >&2
+                sleep 15
+                ;;
+            esac
+          done
+
+          echo "Marketplace change set is still in progress after ~2 minutes (likely in review)." >&2
+          echo "Stop polling in CI. Track asynchronously with:" >&2
+          echo "  aws marketplace-catalog describe-change-set --catalog AWSMarketplace --change-set-id ${change_set_id}" >&2
+          exit 0
+
+      - name: Print Summary
+        run: |
+          set -euo pipefail
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
+          mirror_image_count="$(wc -l < /tmp/dst-images.txt | tr -d '[:space:]')"
+          marketplace_image_count="$(wc -l < /tmp/marketplace-container-images.txt | tr -d '[:space:]')"
+
+          {
+            echo "# Success"
+            echo
+            echo "Published charts to AWS ECR OCI:"
+            echo
+            echo "- Helm chart URI: \`${helm_chart_uri}\`"
+            echo "- Mirrored container images (all addon images): \`${mirror_image_count}\`"
+            echo "- Marketplace ContainerImages (rendered default install): \`${marketplace_image_count}\`"
+            echo
+            echo "Mirrored container image URIs:"
+            echo
+            while IFS= read -r img; do
+              [[ -z "${img}" ]] && continue
+              echo "- \`${img}\`"
+            done < /tmp/dst-images.txt
+            echo
+            echo "Marketplace ContainerImages URIs:"
+            echo
+            while IFS= read -r img; do
+              [[ -z "${img}" ]] && continue
+              echo "- \`${img}\`"
+            done < /tmp/marketplace-container-images.txt
+            echo
+            echo "Usage:"
+            echo
+            echo "\`\`\`bash"
+            echo "kubectl -n keda create secret generic kedify-agent \\"
+            echo "  --from-literal=apikey=<YOUR_KEDIFY_API_KEY> \\"
+            echo "  --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>"
+            echo
+            echo "helm template oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }} \\"
+            echo "  --version <chart-version> \\"
+            echo "  --set agent.createApiKeySecret=false \\"
+            echo "  --set agent.orgId=''"
+            echo "\`\`\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
