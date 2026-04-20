@@ -7,8 +7,8 @@ agent:
   orgId: ""
   # you should already have this
   apiKey: ""
-  # if disabled, the Secret called 'kedify-agent' with api key has to be created by some other entity,
-  # otherwise agent won't start
+  # if disabled, the Secret called 'kedify-agent' has to be created by some other entity.
+  # expected key: 'apikey'. optional keys: 'org_id' (used when agent.orgId is empty), 'agent_id'.
   createApiKeySecret: true
   # if migrating to helm, set this to the value of the agentId from the previous installation
   agentId: ""
