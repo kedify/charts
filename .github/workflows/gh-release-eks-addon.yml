@@ -223,6 +223,17 @@ jobs:
           rewrite_values_to_ecr() {
             local values_file="$1"
 
+            # Normalize any explicit image registry field to Marketplace ECR registry.
+            # Some charts render image as "{{ registry }}/{{ repository }}", which would produce
+            # "/<repository>" if registry is empty. Forcing registry avoids malformed image URIs.
+            yq -i '
+              (
+                ..
+                | select(type == "!!map" and has("registry"))
+                | .registry
+              ) = strenv(ECR_REGISTRY)
+            ' "${values_file}"
+
             # For repository+tag pairs that also define registry, keep split fields to avoid rendering "/<repo>".
             yq -i '
               (
@@ -353,14 +364,7 @@ jobs:
       - name: Commit rewritten chart files to eks-addon branch
         run: |
           set -euo pipefail
-          version=$(awk '
-            /^version:[[:space:]]*/ {
-              v=$2
-              gsub(/"/, "", v)
-              print v
-              exit
-            }
-          ' kedify-agent/Chart.yaml)
+          version="$(yq -r '.version' kedify-agent/Chart.yaml)"
           if [[ -z "${version}" ]]; then
             echo "Failed to resolve kedify-agent chart version" >&2
             exit 1
@@ -390,14 +394,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          chart_version="$(awk '
-            /^version:[[:space:]]*/ {
-              v=$2
-              gsub(/"/, "", v)
-              print v
-              exit
-            }
-          ' kedify-agent/Chart.yaml)"
+          chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
           marketplace_chart_version="${chart_version#v}"
           if [[ -z "${marketplace_chart_version}" ]]; then
             echo "Failed to derive Marketplace chart version from ${chart_version}" >&2
@@ -543,12 +540,12 @@ jobs:
             | select(. != null and . != "")
           ' /tmp/kedify-agent-from-oci.yaml \
             | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
-            | awk 'NF > 0 && $0 != "---"' \
+            | grep -vE '^(---)?$' \
             | sort -u > /tmp/rendered-images.txt
 
           cat /tmp/dst-images.txt /tmp/rendered-images.txt \
             | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
-            | awk 'NF > 0 && $0 != "---"' \
+            | grep -vE '^(---)?$' \
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
             | sort -u > /tmp/dst-images-merged.txt
           mv /tmp/dst-images-merged.txt /tmp/dst-images.txt
@@ -563,14 +560,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          source_chart_version="$(awk '
-            /^version:[[:space:]]*/ {
-              v=$2
-              gsub(/"/, "", v)
-              print v
-              exit
-            }
-          ' kedify-agent/Chart.yaml)"
+          source_chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
           chart_version="${MARKETPLACE_CHART_VERSION}"
           helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
           helm_chart_repo_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}"
@@ -584,9 +574,9 @@ jobs:
           fi
 
           container_images_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/dst-images.txt)"
-          images_hash="$(sha256sum /tmp/dst-images.txt | awk '{print $1}' | cut -c1-16)"
+          images_hash="$(sha256sum /tmp/dst-images.txt | cut -d' ' -f1 | cut -c1-16)"
           token_seed="${{ env.MARKETPLACE_PRODUCT_ID }}|${version_title}|${helm_chart_uri}|${images_hash}"
-          client_request_token="mp-${chart_version}-$(printf '%s' "${token_seed}" | sha256sum | awk '{print $1}' | cut -c1-32)"
+          client_request_token="mp-${chart_version}-$(printf '%s' "${token_seed}" | sha256sum | cut -d' ' -f1 | cut -c1-32)"
           client_request_token="${client_request_token:0:64}"
           echo "Using Marketplace client request token: ${client_request_token}"
 
