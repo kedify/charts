@@ -223,22 +223,6 @@ jobs:
           rewrite_values_to_ecr() {
             local values_file="$1"
 
-            # If chart supports separate registry, clear it to avoid duplicated registry/repository joins.
-            yq -i '
-              (
-                ..
-                | select(
-                    type == "!!map"
-                    and has("repository")
-                    and has("tag")
-                    and has("registry")
-                    and .repository != null and .repository != ""
-                    and .tag != null and (.tag | tostring) != ""
-                  )
-                | .registry
-              ) = ""
-            ' "${values_file}"
-
             # For repository+tag pairs, use one Marketplace repo and encode component identity into the tag.
             yq -i '
               (
@@ -252,7 +236,10 @@ jobs:
                   )
               ) |= (
                 .tag = ((.repository | split("/")[-1]) + "-" + (.tag | tostring)) |
-                .repository = strenv(ECR_FULL_REPO_PREFIX)
+                (if has("registry")
+                  then .registry = strenv(ECR_REGISTRY) | .repository = strenv(ECR_REPOSITORY_PREFIX)
+                  else .repository = strenv(ECR_FULL_REPO_PREFIX)
+                end)
               )
             ' "${values_file}"
 
@@ -528,6 +515,26 @@ jobs:
             --version "${chart_version}" \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" >/tmp/kedify-agent-from-oci.yaml
+
+      - name: Merge image list from rendered manifests for Marketplace validation
+        run: |
+          set -euo pipefail
+          awk '
+            /^[[:space:]]*image:[[:space:]]*/ {
+              img=$2
+              gsub(/^["'\'']|["'\'']$/, "", img)
+              if (img != "") print img
+            }
+          ' /tmp/kedify-agent-from-oci.yaml > /tmp/rendered-images.txt
+
+          cat /tmp/dst-images.txt /tmp/rendered-images.txt | sort -u > /tmp/dst-images-merged.txt
+          mv /tmp/dst-images-merged.txt /tmp/dst-images.txt
+
+      - name: Debug final Marketplace ContainerImages list
+        run: |
+          set -euo pipefail
+          echo "Final ContainerImages list:"
+          cat /tmp/dst-images.txt
 
       - name: Publish version in AWS Marketplace Catalog
         run: |
