@@ -35,7 +35,14 @@
         },
         "orgId": {
           "type": "string",
-          "format": "uuid"
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "format": "uuid"
+            }
+          ]
         },
         "agentId": {
           "type": "string",
@@ -67,13 +74,16 @@
       },
       "then": {
         "properties": {
+          "orgId": { "type": "string", "format": "uuid" },
           "apiKey": { "pattern": "^kfy_[a-z0-9]*$", "minLength": 10 }
-        }
+        },
+        "required": [
+          "apiKey",
+          "orgId"
+        ]
       },
       "required": [
-        "apiKey",
-        "createApiKeySecret",
-        "orgId"
+        "createApiKeySecret"
       ]
     }
   },
