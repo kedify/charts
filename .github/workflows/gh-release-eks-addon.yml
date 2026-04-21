@@ -561,12 +561,27 @@ jobs:
                 echo "Retrying pull as ${src_to_pull}"
                 docker pull "${src_to_pull}"
               # When source already points to Marketplace ECR (src=dst) but tag is missing there,
-              # recover source using per-image repo naming: "<prefix>/<component>:vX.Y.Z..." -> "ghcr.io/kedify/<component>:vX.Y.Z..."
-              elif [[ "${src_to_pull}" == "${dst}" && "${dst_tag}" =~ ^v[0-9].* ]]; then
+              # recover source from known upstream registries based on the component name.
+              elif [[ "${src_to_pull}" == "${dst}" ]]; then
                 component="${dst_repo_name##*/}"
-                src_to_pull="ghcr.io/kedify/${component}:${dst_tag}"
-                echo "Retrying pull from inferred Kedify source ${src_to_pull}"
-                docker pull "${src_to_pull}"
+                pulled="false"
+                for candidate in \
+                  "ghcr.io/kedify/${component}:${dst_tag}" \
+                  "docker.io/envoyproxy/${component}:${dst_tag}" \
+                  "quay.io/brancz/${component}:${dst_tag}" \
+                  "ghcr.io/open-telemetry/opentelemetry-operator/${component}:${dst_tag}" \
+                  "ghcr.io/open-telemetry/opentelemetry-collector-releases/${component}:${dst_tag}"; do
+                  echo "Retrying pull from inferred source ${candidate}"
+                  if docker pull "${candidate}"; then
+                    src_to_pull="${candidate}"
+                    pulled="true"
+                    break
+                  fi
+                done
+                if [[ "${pulled}" != "true" ]]; then
+                  echo "Failed to infer pull source for image: ${dst}" >&2
+                  exit 1
+                fi
               else
                 echo "Failed to pull source image: ${src}" >&2
                 exit 1
