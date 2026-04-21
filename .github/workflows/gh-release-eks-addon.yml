@@ -20,7 +20,7 @@ on:
       ecr-repository-prefix:
         description: "ECR repository prefix for OCI charts and container images"
         required: true
-        default: "kedify/kedify-eks-addon"
+        default: "kedify/kedify-eks-addon2"
         type: string
       marketplace-product-id:
         description: "AWS Marketplace container product identifier (prod-...)"
@@ -52,7 +52,7 @@ on:
       ecr-repository-prefix:
         description: "ECR repository prefix for OCI charts and container images"
         required: false
-        default: "kedify/kedify-eks-addon"
+        default: "kedify/kedify-eks-addon2"
         type: string
       marketplace-product-id:
         description: "AWS Marketplace container product identifier (prod-...)"
@@ -82,7 +82,7 @@ permissions:
 env:
   AWS_REGION: ${{ inputs['aws-region'] || 'us-east-1' }}
   ECR_REGISTRY: ${{ inputs['ecr-registry'] || '709825985650.dkr.ecr.us-east-1.amazonaws.com' }}
-  ECR_REPOSITORY_PREFIX: ${{ inputs['ecr-repository-prefix'] || 'kedify/kedify-eks-addon' }}
+  ECR_REPOSITORY_PREFIX: ${{ inputs['ecr-repository-prefix'] || 'kedify/kedify-eks-addon2' }}
   MARKETPLACE_PRODUCT_ID: ${{ inputs['marketplace-product-id'] || 'prod-m2zll7yol7iog' }}
   MARKETPLACE_VERSION_TITLE: ${{ inputs['marketplace-version-title'] || '' }}
   MARKETPLACE_RELEASE_NOTES: ${{ inputs['marketplace-release-notes'] || '' }}
@@ -515,7 +515,7 @@ jobs:
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon" \
+            "oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon2" \
             --version "${chart_version}" \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" >/tmp/kedify-agent-from-oci.yaml
@@ -668,7 +668,7 @@ jobs:
             echo "  --from-literal=apikey=<YOUR_KEDIFY_API_KEY> \\"
             echo "  --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>"
             echo
-            echo "helm template oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon \\"
+            echo "helm template oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon2 \\"
             echo "  --version <chart-version> \\"
             echo "  --set agent.createApiKeySecret=false \\"
             echo "  --set agent.orgId=''"
