@@ -553,14 +553,11 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          # Temporary test tag while validating Marketplace flow with immutable ECR tags.
-          marketplace_chart_version="0.0.2"
-          # Original behavior (kept for easy revert after validation):
-          # marketplace_chart_version="${chart_version#v}"
-          # if [[ -z "${marketplace_chart_version}" ]]; then
-          #   echo "Failed to derive Marketplace chart version from ${chart_version}" >&2
-          #   exit 1
-          # fi
+          marketplace_chart_version="${chart_version#v}"
+          if [[ -z "${marketplace_chart_version}" ]]; then
+            echo "Failed to derive Marketplace chart version from ${chart_version}" >&2
+            exit 1
+          fi
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
