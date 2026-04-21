@@ -361,6 +361,35 @@ jobs:
           sort -u /tmp/image-map.tsv -o /tmp/image-map.tsv
           cut -f2 /tmp/image-map.tsv | sort -u > /tmp/dst-images.txt
 
+      - name: Merge rendered chart images into mirror list
+        run: |
+          set -euo pipefail
+
+          # Render rewritten local chart and extract image references exactly as Kubernetes sees them.
+          helm template test ./kedify-agent -n keda \
+            --set agent.createApiKeySecret=false \
+            --set agent.orgId="" > /tmp/kedify-agent-local-rendered.yaml
+
+          yq -r '
+            ..
+            | select(type == "!!map" and has("image"))
+            | .image
+            | select(. != null and . != "")
+          ' /tmp/kedify-agent-local-rendered.yaml \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | grep -vE '^(---)?$' \
+            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
+            | sort -u > /tmp/rendered-images-local.txt
+
+          # For already-rewritten ECR images, use src=dst so mirror loop still verifies/pushes missing tags.
+          while IFS= read -r img; do
+            [[ -z "${img}" ]] && continue
+            printf '%s\t%s\n' "${img}" "${img}" >> /tmp/image-map.tsv
+          done < /tmp/rendered-images-local.txt
+
+          sort -u /tmp/image-map.tsv -o /tmp/image-map.tsv
+          cut -f2 /tmp/image-map.tsv | sort -u > /tmp/dst-images.txt
+
       - name: Commit rewritten chart files to eks-addon branch
         run: |
           set -euo pipefail
@@ -529,26 +558,6 @@ jobs:
             --version "${chart_version}" \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" >/tmp/kedify-agent-from-oci.yaml
-
-      - name: Merge image list from rendered manifests for Marketplace validation
-        run: |
-          set -euo pipefail
-          yq -r '
-            ..
-            | select(type == "!!map" and has("image"))
-            | .image
-            | select(. != null and . != "")
-          ' /tmp/kedify-agent-from-oci.yaml \
-            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
-            | grep -vE '^(---)?$' \
-            | sort -u > /tmp/rendered-images.txt
-
-          cat /tmp/dst-images.txt /tmp/rendered-images.txt \
-            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
-            | grep -vE '^(---)?$' \
-            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
-            | sort -u > /tmp/dst-images-merged.txt
-          mv /tmp/dst-images-merged.txt /tmp/dst-images.txt
 
       - name: Debug final Marketplace ContainerImages list
         run: |
