@@ -223,7 +223,7 @@ jobs:
           rewrite_values_to_ecr() {
             local values_file="$1"
 
-            # For repository+tag pairs, use one Marketplace repo and encode component identity into the tag.
+            # For repository+tag pairs that also define registry, keep split fields to avoid rendering "/<repo>".
             yq -i '
               (
                 ..
@@ -231,13 +231,32 @@ jobs:
                     type == "!!map"
                     and has("repository")
                     and has("tag")
+                    and has("registry")
                     and .repository != null and .repository != ""
                     and .tag != null and (.tag | tostring) != ""
                   )
               ) |= (
                 .tag = ((.repository | split("/")[-1]) + "-" + (.tag | tostring)) |
-                .repository = (if has("registry") then strenv(ECR_REPOSITORY_PREFIX) else strenv(ECR_FULL_REPO_PREFIX) end) |
-                (if has("registry") then .registry = strenv(ECR_REGISTRY) else . end)
+                .registry = strenv(ECR_REGISTRY) |
+                .repository = strenv(ECR_REPOSITORY_PREFIX)
+              )
+            ' "${values_file}"
+
+            # For repository+tag pairs without a separate registry field, use full repo path.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and (has("registry") | not)
+                    and .repository != null and .repository != ""
+                    and .tag != null and (.tag | tostring) != ""
+                  )
+              ) |= (
+                .tag = ((.repository | split("/")[-1]) + "-" + (.tag | tostring)) |
+                .repository = strenv(ECR_FULL_REPO_PREFIX)
               )
             ' "${values_file}"
 
