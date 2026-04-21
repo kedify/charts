@@ -391,9 +391,6 @@ jobs:
           ' "${CHART_DIR}/values.yaml"
 
           sort -u /tmp/src-images.txt -o /tmp/src-images.txt
-          # Skip test-only utility images that are not part of the Marketplace deliverable.
-          grep -vE '(^|/)busybox:[^[:space:]]+$' /tmp/src-images.txt > /tmp/src-images.filtered.txt || true
-          mv /tmp/src-images.filtered.txt /tmp/src-images.txt
           : > /tmp/image-map.tsv
 
           while IFS= read -r src; do
@@ -437,10 +434,6 @@ jobs:
           # For already-rewritten ECR images, use src=dst so mirror loop still verifies/pushes missing tags.
           while IFS= read -r img; do
             [[ -z "${img}" ]] && continue
-            if [[ "${img}" =~ (^|/)busybox:[^[:space:]]+$ ]]; then
-              echo "Skipping test-only image from mirror list: ${img}"
-              continue
-            fi
             printf '%s\t%s\n' "${img}" "${img}" >> /tmp/image-map.tsv
           done < /tmp/rendered-images-local.txt
 
@@ -645,12 +638,21 @@ jobs:
           ' /tmp/kedify-agent-from-oci.yaml \
             | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
             | grep -vE '^(---)?$' \
-            | grep -vE '(^|/)busybox:[^[:space:]]+$' \
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
             | sort -u > /tmp/marketplace-container-images.txt
 
-          # Include required non-rendered images that are consumed by the agent at runtime (kedify-proxy envoy image).
-          cat /tmp/marketplace-container-images.txt /tmp/extra-marketplace-images.txt \
+          # Include:
+          # - rendered images,
+          # - full mirrored image list (all addon images),
+          # - repository-only image URIs expected by Marketplace validator,
+          # - required non-rendered runtime image(s) (kedify-proxy envoy).
+          : > /tmp/marketplace-container-repos.txt
+          while IFS= read -r img; do
+            [[ -z "${img}" ]] && continue
+            printf '%s\n' "${img%:*}" >> /tmp/marketplace-container-repos.txt
+          done < /tmp/dst-images.txt
+
+          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/marketplace-container-repos.txt /tmp/extra-marketplace-images.txt \
             | grep -vE '^(---)?$' \
             | sort -u > /tmp/marketplace-container-images.tmp
           mv /tmp/marketplace-container-images.tmp /tmp/marketplace-container-images.txt
