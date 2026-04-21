@@ -201,6 +201,10 @@ jobs:
               if ! is_nonempty "${tag}"; then
                 continue
               fi
+              # Guard against synthetic refs produced by some chart schemas (e.g. busybox/latest:<appVersion>).
+              if [[ "${repository}" == "latest" && "${tag}" != "latest" ]]; then
+                continue
+              fi
 
               local src
               if [[ "${repository}" =~ ^[A-Za-z0-9.-]+(:[0-9]+)?/ ]]; then
@@ -209,6 +213,9 @@ jobs:
                 src="${registry}/${repository}:${tag}"
               else
                 src="${repository}:${tag}"
+              fi
+              if [[ "${src}" =~ /latest:[^[:space:]]+$ && "${tag}" != "latest" ]]; then
+                continue
               fi
 
               echo "${src}"
