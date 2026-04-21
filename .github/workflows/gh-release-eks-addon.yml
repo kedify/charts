@@ -402,6 +402,10 @@ jobs:
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
           cp -a kedify-agent "${tmp_chart_dir}"
+          # Marketplace package defaults must pass lint/template without embedded credentials.
+          # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
+          yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
+          yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
           sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
           helm package "${tmp_chart_dir}" --destination dist
           echo "MARKETPLACE_CHART_VERSION=${marketplace_chart_version}" >> "${GITHUB_ENV}"
@@ -513,7 +517,8 @@ jobs:
           helm template test \
             "oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon" \
             --version "${chart_version}" \
-            -f ./kedify-agent/test/test-values.yaml >/tmp/kedify-agent-from-oci.yaml
+            --set agent.createApiKeySecret=false \
+            --set agent.orgId="" >/tmp/kedify-agent-from-oci.yaml
 
       - name: Publish version in AWS Marketplace Catalog
         run: |
@@ -529,6 +534,7 @@ jobs:
           ' kedify-agent/Chart.yaml)"
           chart_version="${MARKETPLACE_CHART_VERSION}"
           helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
+          helm_chart_repo_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}"
           version_title="${{ env.MARKETPLACE_VERSION_TITLE }}"
           release_notes="${{ env.MARKETPLACE_RELEASE_NOTES }}"
           if [[ -z "${version_title}" ]]; then
@@ -550,6 +556,8 @@ jobs:
             --arg version_title "${version_title}" \
             --arg release_notes "${release_notes}" \
             --arg helm_chart_uri "${helm_chart_uri}" \
+            --arg helm_chart_repo_uri "${helm_chart_repo_uri}" \
+            --arg chart_version "${chart_version}" \
             --argjson container_images "${container_images_json}" \
             '[
               {
@@ -574,12 +582,16 @@ jobs:
                           Namespace: "keda",
                           OverrideParameters: [
                             {
-                              Key: "serviceAccount.name",
+                              Key: "agent.serviceAccount.name",
                               DefaultValue: "${AWSMP_SERVICE_ACCOUNT}"
                             }
                           ],
                           Description: ("Helm delivery option for " + $version_title),
-                          UsageInstructions: "Install using the Helm chart URI and configure values as needed."
+                          UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
+                            "Create secret in namespace 'keda':\n" +
+                            "kubectl -n keda create secret generic kedify-agent --from-literal=apikey=<YOUR_KEDIFY_API_KEY> --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>\n\n" +
+                            "Install command:\n" +
+                            "helm upgrade -i kedify-agent oci://" + $helm_chart_repo_uri + " --version " + $chart_version + " --namespace keda --create-namespace --set agent.createApiKeySecret=false --set agent.orgId=''")
                         }
                       }
                     }
@@ -652,8 +664,13 @@ jobs:
             echo "Usage:"
             echo
             echo "\`\`\`bash"
+            echo "kubectl -n keda create secret generic kedify-agent \\"
+            echo "  --from-literal=apikey=<YOUR_KEDIFY_API_KEY> \\"
+            echo "  --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>"
+            echo
             echo "helm template oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon \\"
             echo "  --version <chart-version> \\"
-            echo "  -f ./kedify-agent/test/test-values.yaml"
+            echo "  --set agent.createApiKeySecret=false \\"
+            echo "  --set agent.orgId=''"
             echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
