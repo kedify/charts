@@ -8,7 +8,11 @@
 {{- end }}
 
 You have successfully installed the:
+{{- if .Values.agent.orgId }}
  - agent (orgId: {{ .Values.agent.orgId }})
+{{- else }}
+ - agent (orgId: from Secret 'kedify-agent' key 'org_id')
+{{- end }}
 {{- if .Values.keda.enabled }}
  - keda
 {{- end}}
