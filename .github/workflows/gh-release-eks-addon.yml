@@ -201,6 +201,13 @@ jobs:
               if ! is_nonempty "${tag}"; then
                 continue
               fi
+              # Normalize repository when tag is accidentally duplicated in repository path/value.
+              if [[ "${repository}" == */"${tag}" ]]; then
+                repository="${repository%/${tag}}"
+              fi
+              if [[ "${repository}" == *:"${tag}" ]]; then
+                repository="${repository%:${tag}}"
+              fi
               # Guard against synthetic refs produced by some chart schemas (e.g. busybox/latest:<appVersion>).
               if [[ "${repository}" == "latest" && "${tag}" != "latest" ]]; then
                 continue
@@ -451,6 +458,10 @@ jobs:
               continue
             fi
             image_name="${src_repo##*/}"
+            if [[ "${image_name}" == "${src_tag}" ]]; then
+              echo "Skipping malformed image reference (name equals tag): ${src}" >&2
+              continue
+            fi
             if [[ "${image_name}" == "busybox" && "${src_tag}" == "latest" ]]; then
               src_repo="docker.io/library/busybox"
               src_tag="1.36.1"
