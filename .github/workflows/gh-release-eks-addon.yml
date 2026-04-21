@@ -367,7 +367,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git switch -C "${branch}"
 
-          yq -i '.name = "kedify-eks-addon"' kedify-agent/Chart.yaml
+          chart_name="$(basename "${{ env.ECR_REPOSITORY_PREFIX }}")"
+          yq -i ".name = \"${chart_name}\"" kedify-agent/Chart.yaml
 
           git add kedify-agent/Chart.yaml
           while IFS= read -r values_file; do
@@ -402,6 +403,8 @@ jobs:
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
           cp -a kedify-agent "${tmp_chart_dir}"
+          chart_name="$(basename "${{ env.ECR_REPOSITORY_PREFIX }}")"
+          yq -i ".name = \"${chart_name}\"" "${tmp_chart_dir}/Chart.yaml"
           # Marketplace package defaults must pass lint/template without embedded credentials.
           # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
           yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
@@ -481,6 +484,11 @@ jobs:
           chart_version="${MARKETPLACE_CHART_VERSION}"
           registry_id="$(echo "${{ env.ECR_REGISTRY }}" | cut -d'.' -f1)"
           repository_name="${{ env.ECR_REPOSITORY_PREFIX }}"
+          push_repo_parent="${repository_name%/*}"
+          if [[ "${push_repo_parent}" == "${repository_name}" || -z "${push_repo_parent}" ]]; then
+            echo "Invalid ECR_REPOSITORY_PREFIX '${repository_name}'. Expected at least one path segment separator '/'" >&2
+            exit 1
+          fi
 
           if aws ecr describe-images \
             --registry-id "${registry_id}" \
@@ -491,7 +499,8 @@ jobs:
             exit 0
           fi
 
-          helm push "dist/kedify-eks-addon-${chart_version}.tgz" "oci://${{ env.ECR_REGISTRY }}/kedify"
+          chart_name="$(basename "${repository_name}")"
+          helm push "dist/${chart_name}-${chart_version}.tgz" "oci://${{ env.ECR_REGISTRY }}/${push_repo_parent}"
 
       - name: Prepare Marketplace delivery metadata
         run: |
@@ -515,7 +524,7 @@ jobs:
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon2" \
+            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
             --version "${chart_version}" \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" >/tmp/kedify-agent-from-oci.yaml
@@ -668,7 +677,7 @@ jobs:
             echo "  --from-literal=apikey=<YOUR_KEDIFY_API_KEY> \\"
             echo "  --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>"
             echo
-            echo "helm template oci://${{ env.ECR_REGISTRY }}/kedify/kedify-eks-addon2 \\"
+            echo "helm template oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }} \\"
             echo "  --version <chart-version> \\"
             echo "  --set agent.createApiKeySecret=false \\"
             echo "  --set agent.orgId=''"
