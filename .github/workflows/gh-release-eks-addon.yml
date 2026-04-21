@@ -183,13 +183,22 @@ jobs:
 
           collect_repo_tag_images() {
             local values_file="$1"
+            local chart_dir chart_app_version
+            chart_dir="$(dirname "${values_file}")"
+            chart_app_version="$(yq -r '.appVersion // ""' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
             yq -r '
               ..
               | select(type == "!!map" and has("repository") and has("tag"))
               | [(.registry // ""), (.repository | tostring), (.tag | tostring)]
               | @tsv
             ' "${values_file}" | while IFS=$'\t' read -r registry repository tag; do
-              if ! is_nonempty "${repository}" || ! is_nonempty "${tag}"; then
+              if ! is_nonempty "${repository}"; then
+                continue
+              fi
+              if ! is_nonempty "${tag}"; then
+                tag="${chart_app_version}"
+              fi
+              if ! is_nonempty "${tag}"; then
                 continue
               fi
 
@@ -264,10 +273,9 @@ jobs:
                     and has("tag")
                     and has("registry")
                     and .repository != null and .repository != ""
-                    and .tag != null and (.tag | tostring) != ""
                   )
               ) |= (
-                .tag = (.tag | tostring) |
+                .tag = ((.tag // "") | tostring) |
                 .registry = strenv(ECR_REGISTRY) |
                 .repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/" + (.repository | split("/")[-1]))
               )
@@ -283,10 +291,9 @@ jobs:
                     and has("tag")
                     and (has("registry") | not)
                     and .repository != null and .repository != ""
-                    and .tag != null and (.tag | tostring) != ""
                   )
               ) |= (
-                .tag = (.tag | tostring) |
+                .tag = ((.tag // "") | tostring) |
                 .repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.repository | split("/")[-1]))
               )
             ' "${values_file}"
@@ -410,6 +417,20 @@ jobs:
             .agent.kedifyProxy.globalValues.image.repository = strenv(PROXY_DST_REPO)
             | .agent.kedifyProxy.globalValues.image.tag = strenv(PROXY_DST_TAG)
           ' "${CHART_DIR}/values.yaml"
+
+          # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
+          otel_operator_values="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator/values.yaml"
+          if [[ -f "${otel_operator_values}" ]]; then
+            otel_collector_src_repo="$(yq -r '.manager.collectorImage.repository // ""' "${otel_operator_values}")"
+            otel_collector_src_tag="$(yq -r '.manager.collectorImage.tag // ""' "${otel_operator_values}")"
+            if is_nonempty "${otel_collector_src_repo}" && is_nonempty "${otel_collector_src_tag}"; then
+              otel_collector_src="${otel_collector_src_repo}:${otel_collector_src_tag}"
+              otel_collector_name="${otel_collector_src_repo##*/}"
+              otel_collector_dst="${ECR_IMAGE_FULL_PREFIX}/${otel_collector_name}:${otel_collector_src_tag}"
+              printf '%s\n' "${otel_collector_src}" >> /tmp/src-images.txt
+              printf '%s\t%s\n' "${otel_collector_src}" "${otel_collector_dst}" >> /tmp/image-map.tsv
+            fi
+          fi
 
           sort -u /tmp/src-images.txt -o /tmp/src-images.txt
           : > /tmp/image-map.tsv
