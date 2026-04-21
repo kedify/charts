@@ -162,10 +162,14 @@ jobs:
           ECR_IMAGE_FULL_PREFIX="${ECR_REGISTRY}/${ECR_IMAGE_REPOSITORY_PREFIX}"
           export ECR_REGISTRY ECR_REPOSITORY_PREFIX ECR_IMAGE_REPOSITORY_PREFIX ECR_IMAGE_FULL_PREFIX
 
-          shopt -s nullglob
-          for pkg in "${CHART_DIR}"/charts/*.tgz; do
-            tar -xzf "${pkg}" -C "${CHART_DIR}"/charts
-            rm -f "${pkg}"
+          # Unpack all chart archives recursively so nested dependency values.yaml files are discoverable.
+          while true; do
+            mapfile -t chart_pkgs < <(find "${CHART_DIR}" -type f -name '*.tgz' | sort)
+            [[ "${#chart_pkgs[@]}" -eq 0 ]] && break
+            for pkg in "${chart_pkgs[@]}"; do
+              tar -xzf "${pkg}" -C "$(dirname "${pkg}")"
+              rm -f "${pkg}"
+            done
           done
 
           : > /tmp/src-images.txt
@@ -348,6 +352,23 @@ jobs:
                 .images.scaler = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.images.scaler | split("/")[-1]))
               )
             ' "${values_file}"
+
+            # Marketplace disallows 'latest' tags. Pin busybox to a concrete version.
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and .repository != null and .repository != ""
+                    and (.repository | split("/")[-1]) == "busybox"
+                    and .tag != null and (.tag | tostring) == "latest"
+                  )
+              ) |= (
+                .tag = "1.36.1"
+              )
+            ' "${values_file}"
           }
 
           while IFS= read -r values_file; do
@@ -402,6 +423,10 @@ jobs:
               continue
             fi
             image_name="${src_repo##*/}"
+            if [[ "${image_name}" == "busybox" && "${src_tag}" == "latest" ]]; then
+              src_repo="docker.io/library/busybox"
+              src_tag="1.36.1"
+            fi
             dst="${ECR_IMAGE_FULL_PREFIX}/${image_name}:${src_tag}"
             printf '%s\t%s\n' "${src}" "${dst}" >> /tmp/image-map.tsv
           done < /tmp/src-images.txt
@@ -646,16 +671,12 @@ jobs:
           # Include:
           # - rendered images,
           # - full mirrored image list (all addon images),
-          # - repository-only image URIs expected by Marketplace validator,
           # - required non-rendered runtime image(s) (kedify-proxy envoy).
-          : > /tmp/marketplace-container-repos.txt
-          while IFS= read -r img; do
-            [[ -z "${img}" ]] && continue
-            printf '%s\n' "${img%:*}" >> /tmp/marketplace-container-repos.txt
-          done < /tmp/dst-images.txt
-
-          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/marketplace-container-repos.txt /tmp/extra-marketplace-images.txt \
+          # Keep only fully-qualified tagged image URIs.
+          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/extra-marketplace-images.txt \
             | grep -vE '^(---)?$' \
+            | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+:[^[:space:]]+$' \
+            | grep -vE ':latest$' \
             | sort -u > /tmp/marketplace-container-images.tmp
           mv /tmp/marketplace-container-images.tmp /tmp/marketplace-container-images.txt
 
