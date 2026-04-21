@@ -236,10 +236,8 @@ jobs:
                   )
               ) |= (
                 .tag = ((.repository | split("/")[-1]) + "-" + (.tag | tostring)) |
-                (if has("registry")
-                  then .registry = strenv(ECR_REGISTRY) | .repository = strenv(ECR_REPOSITORY_PREFIX)
-                  else .repository = strenv(ECR_FULL_REPO_PREFIX)
-                end)
+                .repository = (if has("registry") then strenv(ECR_REPOSITORY_PREFIX) else strenv(ECR_FULL_REPO_PREFIX) end) |
+                (if has("registry") then .registry = strenv(ECR_REGISTRY) else . end)
               )
             ' "${values_file}"
 
