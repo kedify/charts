@@ -560,6 +560,8 @@ jobs:
                 pulled="false"
                 for candidate in \
                   "ghcr.io/kedify/${component}:${dst_tag}" \
+                  "docker.io/library/${component}:${dst_tag}" \
+                  "${component}:${dst_tag}" \
                   "docker.io/envoyproxy/${component}:${dst_tag}" \
                   "quay.io/brancz/${component}:${dst_tag}" \
                   "ghcr.io/open-telemetry/opentelemetry-operator/${component}:${dst_tag}" \
