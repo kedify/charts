@@ -536,15 +536,20 @@ jobs:
       - name: Merge image list from rendered manifests for Marketplace validation
         run: |
           set -euo pipefail
-          awk '
-            /^[[:space:]]*image:[[:space:]]*/ {
-              img=$2
-              gsub(/^["'\'']|["'\'']$/, "", img)
-              if (img != "") print img
-            }
-          ' /tmp/kedify-agent-from-oci.yaml > /tmp/rendered-images.txt
+          yq -r '
+            ..
+            | select(type == "!!map" and has("image"))
+            | .image
+            | select(. != null and . != "")
+          ' /tmp/kedify-agent-from-oci.yaml \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | awk 'NF > 0' \
+            | sort -u > /tmp/rendered-images.txt
 
-          cat /tmp/dst-images.txt /tmp/rendered-images.txt | sort -u > /tmp/dst-images-merged.txt
+          cat /tmp/dst-images.txt /tmp/rendered-images.txt \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | awk 'NF > 0' \
+            | sort -u > /tmp/dst-images-merged.txt
           mv /tmp/dst-images-merged.txt /tmp/dst-images.txt
 
       - name: Debug final Marketplace ContainerImages list
