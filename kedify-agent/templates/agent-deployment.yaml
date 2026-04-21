@@ -45,8 +45,16 @@ spec:
             - name: KEDIFY_AGENT_ID
               value: {{ . }}
             {{- end }}
+            {{- if .Values.agent.orgId }}
             - name: KEDIFY_ORGANIZATION_ID
               value: {{ .Values.agent.orgId }}
+            {{- else }}
+            - name: KEDIFY_ORGANIZATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: kedify-agent
+                  key: org_id
+            {{- end }}
             - name: KEDIFY_API_KEY
               valueFrom:
                 secretKeyRef:
