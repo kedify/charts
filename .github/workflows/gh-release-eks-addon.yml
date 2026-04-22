@@ -410,15 +410,17 @@ jobs:
             ' "${values_file}"
           }
 
-          # Rewrite only parent chart values.yaml.
-          # Do not mutate nested subchart values files, because Marketplace validator
-          # scans packaged dependencies and enforces strict tag rules there as well.
+          # Collect images from parent + nested subchart values for complete ECR mirroring.
+          # Rewrite only parent chart values.yaml to avoid mutating packaged subchart defaults,
+          # which AWS Marketplace validator inspects for tag compliance.
           while IFS= read -r values_file; do
             collect_repo_tag_images "${values_file}" >> /tmp/src-images.txt
             collect_http_images "${values_file}" >> /tmp/src-images.txt
             collect_name_tag_images "${values_file}" >> /tmp/src-images.txt
-            rewrite_values_to_ecr "${values_file}"
-          done < <(printf '%s\n' "${CHART_DIR}/values.yaml")
+            if [[ "${values_file}" == "${CHART_DIR}/values.yaml" ]]; then
+              rewrite_values_to_ecr "${values_file}"
+            fi
+          done < <(find "${CHART_DIR}" -type f -name values.yaml | sort)
 
           # Parse kedify-proxy image from the referenced OCI chart and force the override in kedify-agent values.
           proxy_chart_version="$(yq -r '.agent.kedifyProxy.chartVersion // ""' "${CHART_DIR}/values.yaml")"
@@ -575,7 +577,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.5"
+          marketplace_chart_version="0.0.6"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
