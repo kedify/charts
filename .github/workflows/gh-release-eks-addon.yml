@@ -895,6 +895,28 @@ jobs:
                             {
                               Key: "agent.serviceAccount.name",
                               DefaultValue: "${AWSMP_SERVICE_ACCOUNT}"
+                            },
+                            {
+                              Key: "keda.enabled",
+                              DefaultValue: "true"
+                            },
+                            {
+                              Key: "keda-add-ons-http.enabled",
+                              DefaultValue: "true"
+                            },
+                            {
+                              Key: "otel-add-on.enabled",
+                              DefaultValue: "false"
+                            },
+                            {
+                              Key: "kedify-predictor.enabled",
+                              DefaultValue: "false"
+                            }
+                          ],
+                          EnvironmentOverrideParameters: [
+                            {
+                              Key: "clusterName",
+                              Value: "${AWS_EKS_CLUSTER_NAME}"
                             }
                           ],
                           Description: ("Helm delivery option for " + $version_title),
