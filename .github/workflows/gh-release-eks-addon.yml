@@ -177,6 +177,14 @@ jobs:
           : > /tmp/image-map.tsv
           : > /tmp/extra-marketplace-images.txt
 
+          # Ensure Marketplace-required explicit tags for images that upstream charts leave empty.
+          yq -i '
+            .["otel-add-on"].image.tag = "v0.1.3" |
+            .["otel-add-on"].otelOperator.manager.image.tag = "0.131.0" |
+            .["kedify-predictor"].image.tag = "v0.1.4" |
+            .["kedify-predictor"].kedaPredictionController.image.tag = "v0.1.4"
+          ' "${CHART_DIR}/values.yaml"
+
           is_nonempty() {
             local v="${1:-}"
             [[ -n "${v}" && "${v}" != "null" ]]
