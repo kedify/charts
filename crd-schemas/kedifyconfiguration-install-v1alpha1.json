@@ -411,5 +411,6 @@
       "additionalProperties": false
     }
   },
-  "type": "object"
+  "type": "object",
+  "additionalProperties": false
 }
