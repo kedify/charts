@@ -626,7 +626,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.12"
+          marketplace_chart_version="0.0.13"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -653,7 +653,7 @@ jobs:
           # Chart.lock may still carry external repositories; remove lock files from packaged tree.
           find "${tmp_chart_dir}" -type f -name Chart.lock -delete
           while IFS= read -r tmpl_file; do
-            sed -E -i 's/\{\{[-[:space:]]*\.Release\.Service[-[:space:]]*\}\}/{{ "Helm" }}/g' "${tmpl_file}"
+            sed -E -i 's/\.Release\.Service/"Helm"/g' "${tmpl_file}"
           done < <(find "${tmp_chart_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.tpl' -o -name '*.txt' \) | sort)
           if rg -n '\.Release\.Service' "${tmp_chart_dir}" >/dev/null; then
             echo "Found unsupported .Release.Service references in packaged chart tree" >&2
@@ -908,13 +908,8 @@ jobs:
                           CompatibleServices: ["EKS"],
                           HelmChartUri: $helm_chart_uri,
                           ContainerImages: $container_images,
+                          MarketplaceServiceAccountName: "${AWSMP_SERVICE_ACCOUNT}",
                           Namespace: "keda",
-                          OverrideParameters: [
-                            {
-                              Key: "serviceAccountName",
-                              DefaultValue: "${AWSMP_SERVICE_ACCOUNT}"
-                            }
-                          ],
                           Description: ("Helm delivery option for " + $version_title),
                           UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
                             "Create secret in namespace 'keda':\n" +
