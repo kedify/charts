@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  build-helm-doc:
+  build-crd-schemas:
     permissions:
       contents: write  # for peter-evans/create-pull-request to create branch
       pull-requests: write  # for peter-evans/create-pull-request to create a PR
-    name: Update Helm Doc
+    name: Update CRD Schemas
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -24,6 +24,7 @@ jobs:
           python3 -m pip install -r .github/scripts/requirements.txt
           CONVERSION_SCRIPT="${PWD}/.github/scripts/openapi2jsonschema.py"
           export FILENAME_FORMAT='{kind}-{group}-{version}'
+          export DENY_ROOT_ADDITIONAL_PROPERTIES=1
           pushd ./crd-schemas
           for file in ../kedify-agent/files/* ; do
             if [[ -f "$file" ]]; then
