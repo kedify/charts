@@ -637,6 +637,13 @@ jobs:
           # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
           yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
           yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
+          # EKS add-on validation requires dependent charts to be local and disallows Release.Service.
+          while IFS= read -r chart_yaml; do
+            yq -i '(.dependencies[]?) |= (.repository = ("file://charts/" + .name))' "${chart_yaml}"
+          done < <(find "${tmp_chart_dir}" -type f -name Chart.yaml | sort)
+          while IFS= read -r tmpl_file; do
+            sed -E -i 's/\{\{[[:space:]]*\.Release\.Service[[:space:]]*\}\}/{{ "Helm" }}/g' "${tmpl_file}"
+          done < <(find "${tmp_chart_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.tpl' \) | sort)
           sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
           helm package "${tmp_chart_dir}" --destination dist
           echo "MARKETPLACE_CHART_VERSION=${marketplace_chart_version}" >> "${GITHUB_ENV}"
@@ -888,28 +895,8 @@ jobs:
                           Namespace: "keda",
                           OverrideParameters: [
                             {
-                              Key: "agent.serviceAccount.name",
-                              DefaultValue: "${AWSMP_SERVICE_ACCOUNT}"
-                            },
-                            {
                               Key: "clusterName",
                               DefaultValue: "cluster-1"
-                            },
-                            {
-                              Key: "keda.enabled",
-                              DefaultValue: "true"
-                            },
-                            {
-                              Key: "keda-add-ons-http.enabled",
-                              DefaultValue: "true"
-                            },
-                            {
-                              Key: "otel-add-on.enabled",
-                              DefaultValue: "false"
-                            },
-                            {
-                              Key: "kedify-predictor.enabled",
-                              DefaultValue: "false"
                             }
                           ],
                           Description: ("Helm delivery option for " + $version_title),
@@ -923,6 +910,7 @@ jobs:
                     },
                     {
                       DeliveryOptionTitle: ("Amazon EKS add-on " + $version_title),
+                      Visibility: "Limited",
                       Details: {
                         EksAddOnDeliveryOptionDetails: {
                           HelmChartUri: $helm_chart_uri,
