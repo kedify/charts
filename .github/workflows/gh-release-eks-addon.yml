@@ -160,6 +160,13 @@ jobs:
           set -euo pipefail
           CHART_DIR="kedify-agent"
           ECR_IMAGE_FULL_PREFIX="${ECR_REGISTRY}/${ECR_IMAGE_REPOSITORY_PREFIX}"
+          ROOT_CHART_VERSION="$(yq -r '.version // ""' "${CHART_DIR}/Chart.yaml")"
+          DEFAULT_IMAGE_TAG="${ROOT_CHART_VERSION#v}"
+          if [[ -z "${DEFAULT_IMAGE_TAG}" || "${DEFAULT_IMAGE_TAG}" == "null" ]]; then
+            echo "Failed to derive default image tag from ${CHART_DIR}/Chart.yaml version (${ROOT_CHART_VERSION})" >&2
+            exit 1
+          fi
+          export DEFAULT_IMAGE_TAG
           export ECR_REGISTRY ECR_REPOSITORY_PREFIX ECR_IMAGE_REPOSITORY_PREFIX ECR_IMAGE_FULL_PREFIX
 
           # Unpack all chart archives recursively so nested dependency values.yaml files are discoverable.
@@ -183,9 +190,6 @@ jobs:
 
           collect_repo_tag_images() {
             local values_file="$1"
-            local chart_dir chart_app_version
-            chart_dir="$(dirname "${values_file}")"
-            chart_app_version="$(yq -r '.appVersion // ""' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
             yq -r '
               ..
               | select(type == "!!map" and has("repository") and has("tag"))
@@ -205,7 +209,7 @@ jobs:
                 fi
               fi
               if ! is_nonempty "${tag}"; then
-                tag="${chart_app_version}"
+                tag="${DEFAULT_IMAGE_TAG}"
               fi
               if ! is_nonempty "${tag}"; then
                 continue
@@ -319,6 +323,21 @@ jobs:
                 .tag = ((.tag // "") | tostring) |
                 .repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.repository | split("/")[-1]))
               )
+            ' "${values_file}"
+
+            # Marketplace requires explicit image tags in values.yaml.
+            # Default any empty tag to the main chart version (without leading 'v').
+            yq -i '
+              (
+                ..
+                | select(
+                    type == "!!map"
+                    and has("repository")
+                    and has("tag")
+                    and (.tag == null or (.tag | tostring) == "")
+                  )
+                | .tag
+              ) = strenv(DEFAULT_IMAGE_TAG)
             ' "${values_file}"
 
             # For name+tag pairs, rewrite to per-image Marketplace repositories and preserve tag.
