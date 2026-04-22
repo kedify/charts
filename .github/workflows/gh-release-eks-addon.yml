@@ -856,11 +856,6 @@ jobs:
           fi
 
           container_images_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/marketplace-container-images.txt)"
-          images_hash="$(sha256sum /tmp/marketplace-container-images.txt | cut -d' ' -f1 | cut -c1-16)"
-          token_seed="${{ env.MARKETPLACE_PRODUCT_ID }}|${version_title}|${helm_chart_uri}|${images_hash}"
-          client_request_token="mp-${chart_version}-$(printf '%s' "${token_seed}" | sha256sum | cut -d' ' -f1 | cut -c1-32)"
-          client_request_token="${client_request_token:0:64}"
-          echo "Using Marketplace client request token: ${client_request_token}"
 
           jq -n \
             --arg product_id "${{ env.MARKETPLACE_PRODUCT_ID }}" \
@@ -957,6 +952,12 @@ jobs:
                 }
               }
             ]' > /tmp/marketplace-changeset.json
+
+          # Client request token must be stable for identical requests and different for changed payloads.
+          changeset_hash="$(sha256sum /tmp/marketplace-changeset.json | cut -d' ' -f1 | cut -c1-40)"
+          client_request_token="mp-${chart_version}-${changeset_hash}"
+          client_request_token="${client_request_token:0:64}"
+          echo "Using Marketplace client request token: ${client_request_token}"
 
           change_set_id="$(aws marketplace-catalog start-change-set \
             --catalog AWSMarketplace \
