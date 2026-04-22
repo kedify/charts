@@ -626,7 +626,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.11"
+          marketplace_chart_version="0.0.12"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -653,8 +653,13 @@ jobs:
           # Chart.lock may still carry external repositories; remove lock files from packaged tree.
           find "${tmp_chart_dir}" -type f -name Chart.lock -delete
           while IFS= read -r tmpl_file; do
-            sed -E -i 's/\{\{[[:space:]]*\.Release\.Service[[:space:]]*\}\}/{{ "Helm" }}/g' "${tmpl_file}"
+            sed -E -i 's/\{\{[-[:space:]]*\.Release\.Service[-[:space:]]*\}\}/{{ "Helm" }}/g' "${tmpl_file}"
           done < <(find "${tmp_chart_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.tpl' -o -name '*.txt' \) | sort)
+          if rg -n '\.Release\.Service' "${tmp_chart_dir}" >/dev/null; then
+            echo "Found unsupported .Release.Service references in packaged chart tree" >&2
+            rg -n '\.Release\.Service' "${tmp_chart_dir}" >&2 || true
+            exit 1
+          fi
           sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
           helm package "${tmp_chart_dir}" --destination dist
           echo "MARKETPLACE_CHART_VERSION=${marketplace_chart_version}" >> "${GITHUB_ENV}"
@@ -906,12 +911,8 @@ jobs:
                           Namespace: "keda",
                           OverrideParameters: [
                             {
-                              Key: "agent+serviceAccount+name",
+                              Key: "serviceAccountName",
                               DefaultValue: "${AWSMP_SERVICE_ACCOUNT}"
-                            },
-                            {
-                              Key: "clusterName",
-                              DefaultValue: "cluster-1"
                             }
                           ],
                           Description: ("Helm delivery option for " + $version_title),
