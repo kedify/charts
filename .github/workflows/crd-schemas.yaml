@@ -1,0 +1,54 @@
+name: CRD Schemas
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'kedify-agent/files/*'
+permissions:
+  contents: read
+
+jobs:
+  build-helm-doc:
+    permissions:
+      contents: write  # for peter-evans/create-pull-request to create branch
+      pull-requests: write  # for peter-evans/create-pull-request to create a PR
+    name: Update Helm Doc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: generate schemas for Kedify CRDs
+        run: |
+          python3 -m pip install -r .github/scripts/requirements.txt
+          CONVERSION_SCRIPT="${PWD}/.github/scripts/openapi2jsonschema.py"
+          pushd ./crd-schemas
+          for file in ../kedify-agent/files/* ; do
+            if [[ -f "$file" ]]; then
+              ${CONVERSION_SCRIPT} $file
+            fi
+          done
+          popd
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        id: cpr
+        with:
+          title: "Update CRD Schemas"
+          branch: ci-crd-schemas
+          add-paths: |
+            crd-schemas/*
+          labels: skip-ci
+          delete-branch: true
+          base: main
+          signoff: true
+          token: ${{ secrets.PAT_TOKEN }}
+          body: |
+            :package: CRD schemas update :package:
+            ### automated change
+            Running openapi2jsonschema tool on latest CRD files.
+            This automated PR was created by [this action](https://github.com/kedify/charts/actions/runs/${{ github.run_id }}).
+      - name: Check PR
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}" | tee -a "$GITHUB_STEP_SUMMARY"
