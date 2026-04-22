@@ -198,9 +198,12 @@ jobs:
             yq -r '
               ..
               | select(type == "!!map" and has("repository") and has("tag"))
-              | [(.registry // ""), (.repository | tostring), (.tag | tostring)]
+              | [(.registry // "__NOREGISTRY__"), (.repository | tostring), (.tag | tostring)]
             | @tsv
             ' "${values_file}" | while IFS=$'\t' read -r registry repository tag; do
+              if [[ "${registry}" == "__NOREGISTRY__" ]]; then
+                registry=""
+              fi
               if ! is_nonempty "${repository}"; then
                 continue
               fi
@@ -638,7 +641,7 @@ jobs:
               --repository-name "${dst_repo_name}" \
               --region "${{ env.AWS_REGION }}" \
               --image-ids imageTag="${dst_tag}" >/dev/null 2>&1; then
-              echo "Image tag already exists, skipping mirror: ${dst_tag}"
+              echo "Image already exists in ECR, skipping mirror: ${dst}"
               continue
             fi
 
