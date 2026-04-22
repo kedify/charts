@@ -577,7 +577,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.6"
+          marketplace_chart_version="0.0.7"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -761,9 +761,10 @@ jobs:
 
           # Include:
           # - rendered images from the default Marketplace install path,
+          # - full mirrored image list (all addon images),
           # - required non-rendered runtime image(s) (kedify-proxy envoy).
           # Keep only fully-qualified tagged image URIs.
-          cat /tmp/marketplace-container-images.txt /tmp/extra-marketplace-images.txt \
+          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/extra-marketplace-images.txt \
             | grep -vE '^(---)?$' \
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+:[^[:space:]]+$' \
             | grep -vE ':latest$' \
