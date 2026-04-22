@@ -43,6 +43,9 @@ agent:
     globalValues:
       logging:
         format: plaintext
+      image:
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/envoy
+        tag: v1.37.0
     # configuration options for kedify-proxy envoy fleet xDS
     globalEnvoyConfigs:
       # see available options:
@@ -94,13 +97,13 @@ agent:
         disabled: true
   image:
     tag: "v0.5.4"
-    repository: ghcr.io/kedify/agent
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/agent
     pullPolicy: Always
   imagePullSecrets: []
   # container image for {post,pre}-install helm hooks that help with CR(D) installation
   kubectlImage:
     tag: "v1.33.1"
-    repository: ghcr.io/kedify/kubectl
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kubectl
     pullPolicy: Always
   # comma-separated list of namespaces where pod utilization metrics should be collected
   # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
@@ -245,20 +248,75 @@ keda:
       enabled: true
     webhooks:
       enabled: true
+  image:
+    keda:
+      registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+      repository: kedify/keda-operator
+      tag: v2.19.0-1
+    metricsApiServer:
+      registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+      repository: kedify/keda-metrics-apiserver
+      tag: v2.19.0-1
+    webhooks:
+      registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+      repository: kedify/keda-admission-webhooks
+      tag: v2.19.0-1
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
   interceptor:
     scaledObject:
       waitForCrd: true
+  images:
+    operator: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/http-add-on-operator
+    interceptor: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/http-add-on-interceptor
+    scaler: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/http-add-on-scaler
+    tag: v0.11.1-1
+    kubeRbacProxy:
+      name: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kube-rbac-proxy
+      tag: v0.18.2
+  kubectlImage:
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kubectl
+    tag: v1.33.1
 otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false
   fullnameOverride: kedify-otel-scaler
   otelOperator:
     enabled: true
+    manager:
+      image:
+        tag: 0.131.0
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/opentelemetry-operator
+      collectorImage:
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/opentelemetry-collector-k8s
+        tag: 0.131.1
+    kubeRBACProxy:
+      image:
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kube-rbac-proxy
+        tag: v0.19.1
+    testFramework:
+      image:
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/busybox
+        tag: 1.36.1
+  image:
+    tag: v0.1.3
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/otel-add-on
+  kubectlImage:
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kubectl
+    tag: v1.33.1
 kedify-predictor:
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   fullnameOverride: kedify-predictor
+  image:
+    tag: v0.1.4
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/keda-prophet
+  kedaPredictionController:
+    image:
+      tag: v0.1.4
+      repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/keda-prediction-controller
+  kubectlImage:
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/kedify/kubectl
+    tag: v1.33.1

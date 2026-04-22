@@ -1,0 +1,222 @@
+# Default values for kedify-predictor.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: ghcr.io/kedify/keda-prophet
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+settings:
+  logs:
+    # -- Can be one of 'debug', 'info', 'error', or any integer value > 0
+    # which corresponds to custom debug levels of increasing verbosity
+    logLvl: info
+
+    # -- one of: info, error, panic
+    stackTracesLvl: error
+  storage:
+    modelsPvcSize: 500Mi
+    dbPvcSize: 500Mi
+    dbFile: /data/db.sqlite
+    modelsPath: /models
+    className: ""
+    accessModes:
+    - ReadWriteOnce
+
+kedaPredictionController:
+  enabled: true
+  kedaMetricsAddress: keda-operator.keda.svc:9666
+  internalMetricsPort: 8080
+  kedaProphetAddress: ":8000"
+  otlpReceiver:
+    enabled: true
+    port: 4317
+    # nodePort: 31112
+    tls:
+      # -- (optional) path to CA certificate. When provided, the client certificate will be verified using this CA where "client" ~ another OTLP exporter.
+      caFile: ""
+      # -- (optional) path to TLS certificate that will be used for OTLP receiver
+      certFile: ""
+      # -- (optional) path to TLS key that will be used for OTLP receiver
+      keyFile: ""
+      # -- (optional) specifies the duration after which the certificates will be reloaded.
+      # This is useful when using the CertManager for rotating the certs mounted as Secrets.
+      reloadInterval: "5m"
+  noSharedVolumes: false
+  retrainUsingJobs: true
+  extraEnv: []
+  image:
+    repository: ghcr.io/kedify/keda-prediction-controller
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  crd:
+    create: true
+    orphan: true
+    asPostInstall: true
+
+db:
+  type: sqlite
+#db:
+#   type: "postgres"
+#   host: "postgres.keda.svc"
+#   port: "5432"
+#   user: "predictor"
+#   # use either this or 'existingSecret' not both
+#   password: "***"
+#   name: "predictor"
+#
+#   # if enabled, the env vars won't be passed as plain text key-value pairs. Configmap and secret (for password) will be created and
+#   # env vars will be sourced from it. This will create the secret. If the password is already in a secret, use 'existingSecret'
+#   # useSecretAndConfigmap: true
+#
+#   # use either this or 'password' not both
+#   # existingSecret: ""
+#
+#   # key for k8s secret under which password is stored - default DB_PASSWORD
+#   # existingSecretPasswordKey: ""
+
+kubectlImage:
+  tag: "v1.33.1"
+  repository: ghcr.io/kedify/kubectl
+  pullPolicy: Always
+  pullSecrets: []
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+   fsGroup: 65532
+
+securityContext: 
+  allowPrivilegeEscalation: false
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 8000
+  # nodePort: 31111
+
+resources: 
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 300m
+    memory: 256Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /liveness
+    port: http
+  periodSeconds: 25
+  timeoutSeconds: 8
+  failureThreshold: 6
+readinessProbe:
+  httpGet:
+    path: /readiness
+    port: http
+  initialDelaySeconds: 4
+  periodSeconds: 15
+  timeoutSeconds: 8
+  failureThreshold: 6
+
+# Pre-defined volumes on the output Deployment definition.
+volumes:
+  - name: sqlite
+    persistentVolumeClaim:
+      claimName: prophet-sqlite
+  - name: models
+    persistentVolumeClaim:
+      claimName: prophet-models
+
+# Additional volumes on the output Deployment definition.
+extraVolumes: []
+
+# Pre-defined volumeMounts on the output Deployment definition.
+volumeMounts:
+  - name: sqlite
+    mountPath: /data
+  - name: models
+    mountPath: /models
+
+# Additional volumeMounts on the output Deployment definition.
+extraVolumeMounts: []
+
+extraContainers: ""
+# extraContainers: |
+#   - name: cloudsql-proxy
+#     image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+#     args:
+#     - --private-ip
+#     - --structured-logs
+#     - --auto-iam-authn
+#     - foo:us-central1:bar-backend
+
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          app: kedify-predictor
+      topologyKey: kubernetes.io/hostname
+
+asciiArt: true
+
+extraObjects: []
+# - apiVersion: "cilium.io/v2"
+#   kind: CiliumNetworkPolicy
+#   metadata:
+#     name: "keda-prophet-netpol"
+#   spec:
+#     endpointSelector:
+#       matchLabels:
+#         app: keda-prophet
+#     egress:
+#       - toServices:
+#           k8sService:
+#             serviceName: keda-operator
+#             namespace: keda
+#         toPorts:
+#         - ports:
+#           - port: "9666"
+#             protocol: TCP
+#     ingress:
+#       - fromEntities:
+#         - world
+#         toPorts:
+#         - ports:
+#           - port: "8000"
+#             protocol: TCP
+#           - port: "8080"
+#             protocol: TCP
+#           - port: "8081"
+#             protocol: TCP
