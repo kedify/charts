@@ -160,13 +160,6 @@ jobs:
           set -euo pipefail
           CHART_DIR="kedify-agent"
           ECR_IMAGE_FULL_PREFIX="${ECR_REGISTRY}/${ECR_IMAGE_REPOSITORY_PREFIX}"
-          ROOT_CHART_VERSION="$(yq -r '.version // ""' "${CHART_DIR}/Chart.yaml")"
-          DEFAULT_IMAGE_TAG="${ROOT_CHART_VERSION#v}"
-          if [[ -z "${DEFAULT_IMAGE_TAG}" || "${DEFAULT_IMAGE_TAG}" == "null" ]]; then
-            echo "Failed to derive default image tag from ${CHART_DIR}/Chart.yaml version (${ROOT_CHART_VERSION})" >&2
-            exit 1
-          fi
-          export DEFAULT_IMAGE_TAG
           export ECR_REGISTRY ECR_REPOSITORY_PREFIX ECR_IMAGE_REPOSITORY_PREFIX ECR_IMAGE_FULL_PREFIX
 
           # Unpack all chart archives recursively so nested dependency values.yaml files are discoverable.
@@ -180,6 +173,7 @@ jobs:
           done
 
           : > /tmp/src-images.txt
+          : > /tmp/source-image-candidates.tsv
           : > /tmp/image-map.tsv
           : > /tmp/extra-marketplace-images.txt
 
@@ -190,11 +184,14 @@ jobs:
 
           collect_repo_tag_images() {
             local values_file="$1"
+            local chart_dir chart_app_version
+            chart_dir="$(dirname "${values_file}")"
+            chart_app_version="$(yq -r '.appVersion // ""' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
             yq -r '
               ..
               | select(type == "!!map" and has("repository") and has("tag"))
               | [(.registry // ""), (.repository | tostring), (.tag | tostring)]
-              | @tsv
+            | @tsv
             ' "${values_file}" | while IFS=$'\t' read -r registry repository tag; do
               if ! is_nonempty "${repository}"; then
                 continue
@@ -209,7 +206,7 @@ jobs:
                 fi
               fi
               if ! is_nonempty "${tag}"; then
-                tag="${DEFAULT_IMAGE_TAG}"
+                tag="${chart_app_version}"
               fi
               if ! is_nonempty "${tag}"; then
                 continue
@@ -323,21 +320,6 @@ jobs:
                 .tag = ((.tag // "") | tostring) |
                 .repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/" + (.repository | split("/")[-1]))
               )
-            ' "${values_file}"
-
-            # Marketplace requires explicit image tags in values.yaml.
-            # Default any empty tag to the main chart version (without leading 'v').
-            yq -i '
-              (
-                ..
-                | select(
-                    type == "!!map"
-                    and has("repository")
-                    and has("tag")
-                    and (.tag == null or (.tag | tostring) == "")
-                  )
-                | .tag
-              ) = strenv(DEFAULT_IMAGE_TAG)
             ' "${values_file}"
 
             # For name+tag pairs, rewrite to per-image Marketplace repositories and preserve tag.
@@ -475,6 +457,16 @@ jobs:
           fi
 
           sort -u /tmp/src-images.txt -o /tmp/src-images.txt
+          while IFS= read -r src; do
+            [[ -z "${src}" ]] && continue
+            src_clean="${src%@*}"
+            src_tag="${src_clean##*:}"
+            src_repo="${src_clean%:*}"
+            [[ "${src_repo}" == "${src_tag}" ]] && continue
+            image_name="${src_repo##*/}"
+            printf '%s\t%s\t%s\n' "${image_name}" "${src_tag}" "${src_clean}" >> /tmp/source-image-candidates.tsv
+          done < /tmp/src-images.txt
+          sort -u /tmp/source-image-candidates.tsv -o /tmp/source-image-candidates.tsv
           : > /tmp/image-map.tsv
 
           while IFS= read -r src; do
@@ -653,21 +645,39 @@ jobs:
               elif [[ "${src_to_pull}" == "${dst}" ]]; then
                 component="${dst_repo_name##*/}"
                 pulled="false"
-                for candidate in \
-                  "ghcr.io/kedify/${component}:${dst_tag}" \
-                  "docker.io/library/${component}:${dst_tag}" \
-                  "${component}:${dst_tag}" \
-                  "docker.io/envoyproxy/${component}:${dst_tag}" \
-                  "quay.io/brancz/${component}:${dst_tag}" \
-                  "ghcr.io/open-telemetry/opentelemetry-operator/${component}:${dst_tag}" \
-                  "ghcr.io/open-telemetry/opentelemetry-collector-releases/${component}:${dst_tag}"; do
-                  echo "Retrying pull from inferred source ${candidate}"
-                  if docker pull "${candidate}"; then
-                    src_to_pull="${candidate}"
-                    pulled="true"
-                    break
+                # Prefer known source image discovered from chart values. First exact tag match,
+                # then fallback to any known tag for the same component (retag to Marketplace tag).
+                source_candidates="/tmp/source-image-candidates.tsv"
+                if [[ -f "${source_candidates}" ]]; then
+                  preferred_src="$(awk -F'\t' -v c="${component}" -v t="${dst_tag}" '$1==c && $2==t {print $3; exit}' "${source_candidates}" || true)"
+                  if [[ -z "${preferred_src}" ]]; then
+                    preferred_src="$(awk -F'\t' -v c="${component}" '$1==c {print $3; exit}' "${source_candidates}" || true)"
                   fi
-                done
+                  if [[ -n "${preferred_src}" ]]; then
+                    echo "Retrying pull from discovered source ${preferred_src}"
+                    if docker pull "${preferred_src}"; then
+                      src_to_pull="${preferred_src}"
+                      pulled="true"
+                    fi
+                  fi
+                fi
+                if [[ "${pulled}" != "true" ]]; then
+                  for candidate in \
+                    "ghcr.io/kedify/${component}:${dst_tag}" \
+                    "docker.io/library/${component}:${dst_tag}" \
+                    "${component}:${dst_tag}" \
+                    "docker.io/envoyproxy/${component}:${dst_tag}" \
+                    "quay.io/brancz/${component}:${dst_tag}" \
+                    "ghcr.io/open-telemetry/opentelemetry-operator/${component}:${dst_tag}" \
+                    "ghcr.io/open-telemetry/opentelemetry-collector-releases/${component}:${dst_tag}"; do
+                    echo "Retrying pull from inferred source ${candidate}"
+                    if docker pull "${candidate}"; then
+                      src_to_pull="${candidate}"
+                      pulled="true"
+                      break
+                    fi
+                  done
+                fi
                 if [[ "${pulled}" != "true" ]]; then
                   echo "Failed to infer pull source for image: ${dst}" >&2
                   exit 1
