@@ -23,6 +23,7 @@ jobs:
         run: |
           python3 -m pip install -r .github/scripts/requirements.txt
           CONVERSION_SCRIPT="${PWD}/.github/scripts/openapi2jsonschema.py"
+          export FILENAME_FORMAT='{kind}-{group}-{version}'
           pushd ./crd-schemas
           for file in ../kedify-agent/files/* ; do
             if [[ -f "$file" ]]; then
