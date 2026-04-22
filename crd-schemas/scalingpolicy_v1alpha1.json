@@ -1,0 +1,337 @@
+{
+  "description": "ScalingPolicy is the Schema for the scalingpolicies API",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "ScalingPolicySpec defines the desired state of ScalingPolicy",
+      "properties": {
+        "actions": {
+          "description": "Action is the list of actions to be taken",
+          "items": {
+            "description": "ScalingAction defines the action to be taken",
+            "properties": {
+              "adjustment": {
+                "description": "ActionAdjustment defines the adjustment for the action",
+                "properties": {
+                  "idleReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "maxReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "minReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "pauseConfig": {
+                    "description": "PauseConfig defines the pause configuration",
+                    "properties": {
+                      "paused": {
+                        "description": "Paused is the flag to pause the scaling policy\nautoscaling.keda.sh/paused",
+                        "type": "boolean"
+                      },
+                      "replicas": {
+                        "description": "Replicas is the number of replicas to be set when the scaling policy is paused\nautoscaling.keda.sh/paused-replicas",
+                        "format": "int32",
+                        "type": "integer"
+                      }
+                    },
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "pollingInterval": {
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              },
+              "name": {
+                "type": "string"
+              },
+              "priority": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "trigger": {
+                "description": "ActionTrigger defines the trigger for the action",
+                "properties": {
+                  "schedule": {
+                    "description": "ActionTriggerSchedule defines the schedule for the trigger",
+                    "properties": {
+                      "end": {
+                        "type": "string"
+                      },
+                      "start": {
+                        "type": "string"
+                      },
+                      "timezone": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "end",
+                      "start",
+                      "timezone"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schedule"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "adjustment",
+              "name"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "targets": {
+          "description": "Targets is the list target resources to be modified",
+          "items": {
+            "description": "ScalingActionTarget defines the target resource to be modified",
+            "properties": {
+              "apiVersion": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "actions",
+        "targets"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "ScalingPolicyStatus defines the observed state of ScalingPolicy",
+      "properties": {
+        "actions": {
+          "items": {
+            "description": "ScalingPolicyStatusAction defines the status of the action",
+            "properties": {
+              "active": {
+                "type": "boolean"
+              },
+              "applied": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "scheduleEnd": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "scheduleStart": {
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "conditions": {
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API Resource.",
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.\nThis may be an empty string.",
+                "maxLength": 32768,
+                "type": "string"
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.generation that the condition was set based upon.\nFor instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date\nwith respect to the current state of the instance.",
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition.\nProducers of specific condition types may define expected values and meanings for this field,\nand whether the values are considered a guaranteed API.\nThe value should be a CamelCase string.\nThis field may not be empty.",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$",
+                "type": "string"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "schedule": {
+          "description": "ScheduleStatus defines the status of the schedule",
+          "properties": {
+            "lastEnd": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "lastStart": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "nextEnd": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "nextSchedule": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "nextStart": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
+        "targets": {
+          "additionalProperties": {
+            "description": "ScalingPolicyStatusTarget defines the status of the target",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "originalConfig": {
+                "description": "ActionAdjustment defines the adjustment for the action",
+                "properties": {
+                  "idleReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "maxReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "minReplicaCount": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "pauseConfig": {
+                    "description": "PauseConfig defines the pause configuration",
+                    "properties": {
+                      "paused": {
+                        "description": "Paused is the flag to pause the scaling policy\nautoscaling.keda.sh/paused",
+                        "type": "boolean"
+                      },
+                      "replicas": {
+                        "description": "Replicas is the number of replicas to be set when the scaling policy is paused\nautoscaling.keda.sh/paused-replicas",
+                        "format": "int32",
+                        "type": "integer"
+                      }
+                    },
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "pollingInterval": {
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              },
+              "reason": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "status"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "object"
+        },
+        "validatedGeneration": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "type": "object"
+}
