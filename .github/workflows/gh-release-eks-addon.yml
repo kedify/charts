@@ -125,8 +125,8 @@ jobs:
           set -euo pipefail
           helm template ./kedify-agent -n keda \
             -f ./kedify-agent/test/test-values.yaml \
-            --set otel-add-on.enabled=true \
-            --set kedify-predictor.enabled=true > /tmp/kedify-agent-rendered.yaml
+            --set otel-add-on.enabled=false \
+            --set kedify-predictor.enabled=false > /tmp/kedify-agent-rendered.yaml
 
   publish:
     runs-on: ubuntu-latest
@@ -515,8 +515,8 @@ jobs:
           helm template test ./kedify-agent -n keda \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
-            --set otel-add-on.enabled=true \
-            --set kedify-predictor.enabled=true > /tmp/kedify-agent-local-rendered.yaml
+            --set otel-add-on.enabled=false \
+            --set kedify-predictor.enabled=false > /tmp/kedify-agent-local-rendered.yaml
 
           yq -r '
             ..
@@ -572,7 +572,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.3"
+          marketplace_chart_version="0.0.4"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -735,8 +735,8 @@ jobs:
             --version "${chart_version}" \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
-            --set otel-add-on.enabled=true \
-            --set kedify-predictor.enabled=true >/tmp/kedify-agent-from-oci.yaml
+            --set otel-add-on.enabled=false \
+            --set kedify-predictor.enabled=false >/tmp/kedify-agent-from-oci.yaml
 
       - name: Build Marketplace declared ContainerImages from rendered OCI chart
         run: |
