@@ -24,8 +24,22 @@ jobs:
     outputs:
       should_release: ${{ steps.milestone_tracking.outputs.should_release }}
       version: ${{ steps.milestone_tracking.outputs.version }}
+      merge_commit_sha: ${{ steps.merge_commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
+      - name: Get merge commit SHA
+        id: merge_commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+        run: |
+          set -euo pipefail
+          sha=$(gh pr view -R kedify/charts "${PR_NUMBER}" --json 'mergeCommit' --jq '.mergeCommit.oid')
+          if [[ -z "$sha" || "$sha" == "null" ]]; then
+              echo "Failed to resolve merge commit SHA for PR #${PR_NUMBER}" >&2
+              exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
       - name: Ensure correct milestone
         id: milestone_tracking
         env:
@@ -59,21 +73,24 @@ jobs:
               gh pr edit -R kedify/charts "$pr" --milestone "$milestone"
           done
           release_tag=${milestone#*/}
-          pr_body="$(gh pr view $PR_NUMBER --json 'body' --jq '.body')" 
+          pr_body="$(gh pr view $PR_NUMBER --json 'body' --jq '.body')"
 
           if gh release view $milestone > /dev/null; then
               echo "release $milestone already exists"
           else
               echo "creating release $milestone"
-              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}"
+              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}" --target "${{ steps.merge_commit.outputs.sha }}"
           fi
           echo "should_release=true" >> $GITHUB_OUTPUT
           echo "version=$release_tag" >> $GITHUB_OUTPUT
   release:
     needs: milestone_tracker
+    if: needs.milestone_tracker.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
       - name: Publish ${{ inputs.chart }} Helm Chart
         uses: wozniakjan/helm-gh-pages@single_chart_path
         if: "${{ needs.milestone_tracker.outputs.should_release == 'true' }}"
