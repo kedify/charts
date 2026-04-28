@@ -90,6 +90,8 @@ jobs:
           kubectl get pods -A
 
   publish:
+    outputs:
+      released_version: ${{ steps.version.outputs.newVersion }}
     runs-on: ubuntu-latest
     needs: [test]
     steps:
@@ -218,3 +220,12 @@ jobs:
           echo "::group::resulting YAML manifests"
           helm get manifest -n keda agent
           echo "::endgroup::"
+
+  update-marketing-air-gapped-doc:
+    if: inputs.chart == 'kedify-agent'
+    needs: [publish]
+    uses: ./.github/workflows/update-marketing-air-gapped-doc.yml
+    with:
+      chart_version: ${{ needs.publish.outputs.released_version }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
