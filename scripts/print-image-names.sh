@@ -70,6 +70,20 @@ print_images_by_helm_template() {
   ' "$rendered_file" | grep -v busybox | sort -u
 }
 
+print_kedify_proxy_images() {
+  local repo_root envoy_tag
+
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  envoy_tag="$(yq -r '.appVersion // ""' "$repo_root/kedify-proxy/Chart.yaml")"
+
+  if [[ -z "$envoy_tag" || "$envoy_tag" == "null" ]]; then
+    echo "Failed to read appVersion from $repo_root/kedify-proxy/Chart.yaml" >&2
+    return 1
+  fi
+
+  printf 'envoyproxy/envoy:%s\n' "$envoy_tag"
+}
+
 resolve_amd64_digest() {
   local image="$1"
   local inspect_json digest
@@ -93,7 +107,12 @@ main() {
   local image
   while IFS= read -r image; do
     resolve_amd64_digest "$image"
-  done < <(print_images_by_helm_template "$CHART_DIR")
+  done < <(
+    {
+      print_images_by_helm_template "$CHART_DIR"
+      print_kedify_proxy_images
+    } | sort -u
+  )
 }
 
 main
