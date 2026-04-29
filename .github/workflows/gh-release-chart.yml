@@ -121,12 +121,32 @@ jobs:
           dependencies: "kedify,https://kedify.github.io/charts"
           charts_dir: "."
       - name: Push Tag
+        id: push_tag
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
           create_annotated_tag: true
           tag_prefix: ""
           custom_tag: ${{ inputs.chart }}-${{ steps.version.outputs.newVersion }}
+      - name: Generate air-gapped image digests JSON
+        if: inputs.chart == 'kedify-agent'
+        run: |
+          set -euo pipefail
+          mkdir -p ./artifacts
+          CHART_DIR="$PWD/kedify-agent" "$PWD/scripts/print-image-names.sh" > ./artifacts/air-gapped-images.txt
+          "$PWD/scripts/update-generated-images-json.sh" \
+            "./artifacts/generated-images.json" \
+            "./artifacts/air-gapped-images.txt" \
+            "${{ steps.version.outputs.newVersion }}" \
+            "$(date -u +%F)"
+          cat ./artifacts/generated-images.json
+      - name: Upload image digest asset to existing GitHub release
+        if: inputs.chart == 'kedify-agent'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "${{ steps.push_tag.outputs.new_tag }}" ./artifacts/generated-images.json --repo kedify/charts --clobber
       - name: Create k3s cluster
         if: inputs.chart == 'keda' || inputs.chart == 'kedify-agent'
         uses: AbsaOSS/k3d-action@v2
