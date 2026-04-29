@@ -146,7 +146,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
-          gh release upload "${{ steps.push_tag.outputs.new_tag }}" ./artifacts/generated-images.json --clobber
+          gh release upload "${{ steps.push_tag.outputs.new_tag }}" ./artifacts/generated-images.json --repo kedify/charts --clobber
       - name: Create k3s cluster
         if: inputs.chart == 'keda' || inputs.chart == 'kedify-agent'
         uses: AbsaOSS/k3d-action@v2
