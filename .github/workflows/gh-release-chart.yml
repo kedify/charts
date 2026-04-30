@@ -238,3 +238,14 @@ jobs:
           echo "::group::resulting YAML manifests"
           helm get manifest -n keda agent
           echo "::endgroup::"
+      - name: Trigger Openshift Operator release
+        if: inputs.chart == 'kedify-agent'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          set -euo pipefail
+          chart_version="${{ steps.version.outputs.newVersion }}"
+          operator_input_version="${chart_version#v}"
+          gh workflow run release.yaml \
+            --repo kedify/kedify-agent-helm-operator \
+            -f version="${operator_input_version}"
