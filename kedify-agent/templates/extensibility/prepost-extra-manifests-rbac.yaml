@@ -1,7 +1,11 @@
+{{- if not .Values.hookless }}
+
 {{- with .Values.agent.extraPreInstallObjects }}
 {{ include "preInstallRbac" $ }}
 {{- end }}
 
 {{- with .Values.agent.extraPostInstallObjects }}
 {{ include "postInstallRbac" $ }}
+{{- end }}
+
 {{- end }}

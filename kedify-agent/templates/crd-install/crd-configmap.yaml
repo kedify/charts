@@ -12,10 +12,12 @@ kind: ConfigMap
 metadata:
   name: {{ include "crdInstall" . }}-{{ $path | base | trimSuffix ".yaml" }}
   namespace: {{ .Release.Namespace | quote }}
-  annotations:
+  {{- if not .Values.hookless }}
+  annotations:  
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-5"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
     role: {{ include "crdInstallSelector" . | quote }}

@@ -1,6 +1,8 @@
 clusterName: "cluster-1"
 # when set to true, the schema validation will be disabled
 disableSchemaValidation: false
+# when set to true, the helm hooks will be disabled for CRD & CR installation
+hookless: false
 agent:
   replicas: 1
   # you should already have this

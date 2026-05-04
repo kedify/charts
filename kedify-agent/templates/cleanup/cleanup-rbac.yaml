@@ -1,3 +1,4 @@
+{{- if not .Values.hookless }}
 {{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration }}
 apiVersion: v1
 kind: ServiceAccount
@@ -136,5 +137,6 @@ subjects:
 - kind: ServiceAccount
   name: kedify-cleanup
   namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}

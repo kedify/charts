@@ -4,10 +4,12 @@ kind: Job
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace | quote }}
+  {{- if not .Values.hookless }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-1"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
     role: {{ include "crdInstallSelector" . | quote }}
@@ -37,10 +39,26 @@ spec:
         - sh
         - -c
         - |
-          set -o errexit ; set -o xtrace ; set -o nounset
+          set -o errexit ; set -o nounset
           # piping stderr to stdout means kubectl's errors are surfaced
           # in the pod's logs.
           kubectl apply --server-side -f /data/ 2>&1
+          echo "CRDs were applied..."
+        
+        {{- if .Values.hookless }}
+          echo "Waiting for CRDs to register in API server..."
+          {{- range without (include "getCrdFQNames" $ | splitList "\n") "" }}
+          while ! kubectl wait --for condition=established --timeout=300s crd/{{ . }} 2> /dev/null; do sleep .5 && printf .; done
+          {{- end }}
+          {{- range $path, $_ := $.Files.Glob "files/**" }}
+          kubectl delete -n {{ $.Release.Namespace }} cm/{{ include "crdInstall" $ }}-{{ $path | base | trimSuffix ".yaml" }} --ignore-not-found
+          {{- end }}
+          echo "Deleting itself in 10 seconds..."
+          sleep 10 && kubectl delete -n {{ .Release.Namespace }} --ignore-not-found \
+            sa/{{ include "crdInstall" . | quote }} \
+            job/{{ include "crdInstall" . | quote }} \
+            clusterrole/{{ include "crdInstall" . | quote }}
+        {{- end }}
         {{- with .Values.agent.securityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -83,5 +101,5 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  backoffLimit: 4
+  backoffLimit: 2
 {{- end }}

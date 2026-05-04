@@ -69,11 +69,20 @@ CRD installation labels
 {{- end -}}
 
 {{- define "crdInstallAnnotations" -}}
+{{- if not .Values.hookless }}
 "helm.sh/hook": "pre-install,pre-upgrade"
 "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded,hook-failed"
+{{- end }}
 {{- end -}}
 
 {{/* Create a label which can be used to select any orphaned crd-install hook resources */}}
 {{- define "crdInstallSelector" -}}
 {{- printf "%s" "crd-install-hook" -}}
+{{- end -}}
+
+{{/* Get the fully qualified names of all CRDs inside /files directory */}}
+{{- define "getCrdFQNames" -}}
+{{- range $path, $_ := .Files.Glob "files/**" }}
+{{- printf "%s\n" (( $.Files.Get $path | fromYaml).metadata).name -}}
+{{- end -}}
 {{- end -}}

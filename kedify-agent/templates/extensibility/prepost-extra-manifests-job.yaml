@@ -1,3 +1,5 @@
+{{- if not .Values.hookless }}
+
 {{- with .Values.agent.extraPreInstallObjects }}
 {{ include "preInstallJob" $ }}
 {{- end }}
@@ -5,3 +7,6 @@
 {{- with .Values.agent.extraPostInstallObjects }}
 {{ include "postInstallJob" $ }}
 {{- end }}
+
+{{- end }}
+

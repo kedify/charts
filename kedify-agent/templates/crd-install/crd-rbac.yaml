@@ -4,10 +4,12 @@ kind: ServiceAccount
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if not .Values.hookless }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-4"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
     role: {{ include "crdInstallSelector" . | quote }}
@@ -17,10 +19,12 @@ kind: ClusterRole
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if not .Values.hookless }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-3"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
     role: {{ include "crdInstallSelector" . | quote }}
@@ -34,28 +38,65 @@ rules:
   - get
   - patch
   resourceNames:
-  - kedifyconfigurations.install.kedify.io
-  - scalingpolicies.keda.kedify.io
-  - podresourceprofiles.keda.kedify.io
-  - podresourceautoscalers.keda.kedify.io
-  - distributedscaledobjects.keda.kedify.io
-  - distributedscaledjobs.keda.kedify.io
+  {{- range without (include "getCrdFQNames" $ | splitList "\n") "" }}
+  - {{ . }}
+  {{- end }}
 - apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
   verbs:
   - create
+  - list
+
+{{- if .Values.hookless }}
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  verbs:
+  - delete
+  resourceNames:
+  - {{ include "crdInstall" . | quote }}
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - delete
+  resourceNames:
+  - {{ include "crdInstall" . | quote }}
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - delete
+  resourceNames:
+  - {{ include "crdInstall" . | quote }}
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - delete
+  resourceNames:
+  {{- range $path, $_ := $.Files.Glob "files/**" }}
+  - {{ include "crdInstall" $ }}-{{ $path | base | trimSuffix ".yaml" }}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if not .Values.hookless }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-2"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ include "crdInstall" . | quote }}
     role: {{ include "crdInstallSelector" . | quote }}
