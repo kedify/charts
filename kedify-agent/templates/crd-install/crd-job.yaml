@@ -1,10 +1,11 @@
 {{- if .Values.agent.createCrds }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace | quote }}
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-1"
@@ -45,12 +46,12 @@ spec:
           kubectl apply --server-side -f /data/ 2>&1
           echo "CRDs were applied..."
         
-        {{- if .Values.hookless }}
+        {{- if eq .Values.hooks "jobs" }}
           echo "Waiting for CRDs to register in API server..."
           {{- range without (include "getCrdFQNames" $ | splitList "\n") "" }}
           while ! kubectl wait --for condition=established --timeout=300s crd/{{ . }} 2> /dev/null; do sleep .5 && printf .; done
           {{- end }}
-          {{- range $path, $_ := $.Files.Glob "files/**" }}
+          {{- range $path, $_ := $.Files.Glob "files/crds/**" }}
           kubectl delete -n {{ $.Release.Namespace }} cm/{{ include "crdInstall" $ }}-{{ $path | base | trimSuffix ".yaml" }} --ignore-not-found
           {{- end }}
           echo "Deleting itself in 10 seconds..."
@@ -64,7 +65,7 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         volumeMounts:
-{{- range $path, $_ := .Files.Glob "files/**" }}
+{{- range $path, $_ := .Files.Glob "files/crds/**" }}
         - name: {{ $path | base | trimSuffix ".yaml" }}
           mountPath: /data/{{ $path | base }}
           subPath: {{ $path | base }}
@@ -78,7 +79,7 @@ spec:
             memory: 64Mi
       volumes:
 {{ $currentScope := . }}
-{{- range $path, $_ := .Files.Glob "files/**" }}
+{{- range $path, $_ := .Files.Glob "files/crds/**" }}
     {{- with $currentScope }}
       - name: {{ $path | base | trimSuffix ".yaml" }}
         configMap:
@@ -102,4 +103,5 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
   backoffLimit: 2
+{{- end }}
 {{- end }}

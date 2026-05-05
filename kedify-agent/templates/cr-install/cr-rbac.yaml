@@ -1,10 +1,11 @@
 {{- if .Values.agent.createKedifyConfiguration }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: install-crs
   namespace: {{ .Release.Namespace }}
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
@@ -15,7 +16,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: install-crs
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
@@ -45,7 +46,7 @@ rules:
   verbs:
   - list
 
-{{- if .Values.hookless }}
+  {{- if eq .Values.hooks "jobs" }}
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
@@ -84,7 +85,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: install-crs
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
@@ -98,4 +99,5 @@ subjects:
 - kind: ServiceAccount
   name: install-crs
   namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}

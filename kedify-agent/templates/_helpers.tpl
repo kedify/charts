@@ -69,7 +69,7 @@ CRD installation labels
 {{- end -}}
 
 {{- define "crdInstallAnnotations" -}}
-{{- if not .Values.hookless }}
+{{- if eq .Values.hooks "helm" }}
 "helm.sh/hook": "pre-install,pre-upgrade"
 "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded,hook-failed"
 {{- end }}
@@ -80,9 +80,9 @@ CRD installation labels
 {{- printf "%s" "crd-install-hook" -}}
 {{- end -}}
 
-{{/* Get the fully qualified names of all CRDs inside /files directory */}}
+{{/* Get the fully qualified names of all CRDs inside /files/crds directory */}}
 {{- define "getCrdFQNames" -}}
-{{- range $path, $_ := .Files.Glob "files/**" }}
+{{- range $path, $_ := .Files.Glob "files/crds/**" }}
 {{- printf "%s\n" (( $.Files.Get $path | fromYaml).metadata).name -}}
 {{- end -}}
 {{- end -}}

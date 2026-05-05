@@ -1,4 +1,4 @@
-{{- if not .Values.hookless }}
+{{- if eq .Values.hooks "helm" }}
 {{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration }}
 apiVersion: v1
 kind: ServiceAccount

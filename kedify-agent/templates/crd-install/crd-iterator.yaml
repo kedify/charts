@@ -1,19 +1,25 @@
 {{- if .Values.agent.createCrds }}
+{{ $currentScope := . }}
+
+  {{- range $path, $_ := .Files.Glob "files/crds/**" }}
+    {{- with $currentScope }}
+---
+      {{- if eq .Values.hooks "argo" }}
+      {{- $crdOrig := (tpl ($.Files.Get $path) .) | fromYaml }}
+      {{- $crdPatch := dict "metadata" (dict "annotations" (dict "argocd.argoproj.io/sync-wave" "-5")) }}
+        {{ toYaml (deepCopy $crdOrig | merge $crdPatch) }}
+      {{- else }}
 {{/*
 We have to create individual configmaps for each CRD - they might exceed the total
 allowed length for a configmap if they are combined.
 */}}
-{{ $currentScope := . }}
-  {{- range $path, $_ := .Files.Glob "files/**" }}
-    {{- with $currentScope }}
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "crdInstall" . }}-{{ $path | base | trimSuffix ".yaml" }}
   namespace: {{ .Release.Namespace | quote }}
-  {{- if not .Values.hookless }}
-  annotations:  
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-5"
     {{- include "crdInstallAnnotations" . | nindent 4 }}
@@ -24,6 +30,7 @@ metadata:
 data:
   content: |
 {{ tpl ($.Files.Get $path) . | indent 4 }}
+      {{- end }}
     {{- end }}
   {{- end }}
 {{- end }}

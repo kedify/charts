@@ -1,10 +1,11 @@
 {{- if .Values.agent.createCrds }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-4"
@@ -19,7 +20,7 @@ kind: ClusterRole
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-3"
@@ -49,7 +50,7 @@ rules:
   - create
   - list
 
-{{- if .Values.hookless }}
+{{- if eq .Values.hooks "jobs" }}
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
@@ -81,7 +82,7 @@ rules:
   verbs:
   - delete
   resourceNames:
-  {{- range $path, $_ := $.Files.Glob "files/**" }}
+  {{- range $path, $_ := $.Files.Glob "files/crds/**" }}
   - {{ include "crdInstall" $ }}-{{ $path | base | trimSuffix ".yaml" }}
   {{- end }}
 {{- end }}
@@ -91,7 +92,7 @@ kind: ClusterRoleBinding
 metadata:
   name: {{ include "crdInstall" . }}
   namespace: {{ .Release.Namespace }}
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     # create hook dependencies in the right order
     "helm.sh/hook-weight": "-2"
@@ -108,4 +109,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "crdInstall" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}

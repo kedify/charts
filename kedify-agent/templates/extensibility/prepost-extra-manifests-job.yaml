@@ -1,4 +1,4 @@
-{{- if not .Values.hookless }}
+{{- if eq .Values.hooks "helm" }}
 
 {{- with .Values.agent.extraPreInstallObjects }}
 {{ include "preInstallJob" $ }}

@@ -1,4 +1,5 @@
 {{- if .Values.agent.createKedifyConfiguration }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -6,7 +7,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: create-default-kedifyconfig
-  {{- if not .Values.hookless }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "1"
@@ -87,7 +88,7 @@ spec:
             exit 1
           fi
 
-        {{- if .Values.hookless }}
+        {{- if eq .Values.hooks "jobs" }}
           kubectl delete -n {{ .Release.Namespace }} cm/default-kedifyconfig --ignore-not-found || true
           echo "Deleting itself in 10 seconds..."
           sleep 10 && kubectl delete -n {{ .Release.Namespace }} --ignore-not-found \
@@ -107,4 +108,5 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
 {{- end }}
