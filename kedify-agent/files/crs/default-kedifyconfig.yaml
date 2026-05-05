@@ -1,0 +1,13 @@
+apiVersion: install.kedify.io/v1alpha1
+kind: KedifyConfiguration
+metadata:
+  name: kedify
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterName: {{ .Values.clusterName }}
+  {{- if .Values.agent.cloudAccountID }}
+  cloudAccountID: "{{ .Values.agent.cloudAccountID }}"
+  {{- end }}
+  kedaInstallations:
+  - namespace: {{ .Release.Namespace }}
+{{ toYaml .Values.agent.kedifyConfiguration | indent 4 }}
