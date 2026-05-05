@@ -88,12 +88,12 @@ spec:
           fi
 
         {{- if .Values.hookless }}
-          kubectl delete -n {{ .Release.Namespace }} cm/default-kedifyconfig --ignore-not-found
+          kubectl delete -n {{ .Release.Namespace }} cm/default-kedifyconfig --ignore-not-found || true
           echo "Deleting itself in 10 seconds..."
           sleep 10 && kubectl delete -n {{ .Release.Namespace }} --ignore-not-found \
             sa/install-crs \
             job/create-default-kedifyconfig \
-            clusterrole/install-crs
+            clusterrole/install-crs || true
         {{- end }}
       {{- with .Values.agent.nodeSelector }}
       nodeSelector:
