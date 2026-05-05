@@ -1,7 +1,11 @@
+{{- if eq .Values.hooks "helm" }}
+
 {{- with .Values.agent.extraPreInstallObjects }}
 {{ include "preInstallConfigmap" $ }}
 {{- end }}
 
 {{- with .Values.agent.extraPostInstallObjects }}
 {{ include "postInstallConfigmap" $ }}
+{{- end }}
+
 {{- end }}

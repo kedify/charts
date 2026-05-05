@@ -1,22 +1,27 @@
 {{- if .Values.agent.createKedifyConfiguration }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: install-crs
   namespace: {{ .Release.Namespace }}
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
     helm.sh/hook-weight: "0"
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: install-crs
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
     helm.sh/hook-weight: "0"
+  {{- end }}
 rules:
 - apiGroups:
   - install.kedify.io
@@ -40,15 +45,52 @@ rules:
   - customresourcedefinitions
   verbs:
   - list
+
+  {{- if eq .Values.hooks "jobs" }}
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  verbs:
+  - delete
+  resourceNames:
+  - install-crs
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - delete
+  resourceNames:
+  - install-crs
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - delete
+  resourceNames:
+  - create-default-kedifyconfig
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - delete
+  resourceNames:
+  - default-kedifyconfig
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: install-crs
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: "pre-install,pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
     helm.sh/hook-weight: "0"
+  {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -57,4 +99,5 @@ subjects:
 - kind: ServiceAccount
   name: install-crs
   namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}

@@ -1,0 +1,45 @@
+# kubectl apply --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/refs/tags/stable/manifests/install.yaml
+# kubectl create clusterrolebinding delete-me --clusterrole cluster-admin --serviceaccount default:argocd-application-controller
+# kubectl apply -f argocd-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kedify-agent
+  namespace: default
+spec:
+  ignoreDifferences:
+  - namespace: keda
+    kind: Secret
+    jsonPointers:
+    - /data/agent_id
+  - namespace: keda
+    kind: Deployment
+    jsonPointers:
+    - /spec/template/spec/containers/0/args
+  project: default
+  source:
+    repoURL: ghcr.io/kedify/charts
+    chart: kedify-agent
+    # UPDATE ME
+    targetRevision: v0.5.5-hookless
+    helm:
+      releaseName: agent
+      valuesObject:
+        clusterName: "argocd-test-cluster"
+        hooks: argo
+        agent:
+          #kedifyServer: kedify-proxy.api.dev.kedify.io:443
+          # CHANGE ME
+          orgId: "***"
+          apiKey: "kfy_***"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keda
+  syncPolicy:
+    automated:
+      enabled: true
+    syncOptions:
+      - CreateNamespace=true
+      - Prune=false
+      - RespectIgnoreDifferences=true
+      - ServerSideApply=true
