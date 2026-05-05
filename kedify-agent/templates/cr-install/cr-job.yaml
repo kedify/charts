@@ -1,4 +1,5 @@
 {{- if .Values.agent.createKedifyConfiguration }}
+{{- if ne .Values.hooks "argo" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -6,13 +7,15 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: create-default-kedifyconfig
+  {{- if eq .Values.hooks "helm" }}
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "1"
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
+  {{- end }}
 spec:
   ttlSecondsAfterFinished: 43200 # 12h
-  backoffLimit: 4
+  backoffLimit: 2
   template:
     metadata:
       annotations:
@@ -46,11 +49,8 @@ spec:
         args:
         - -c
         - |
-          while ! kubectl get crd kedifyconfigurations.install.kedify.io
-          do
-            echo "Waiting for CRD kedifyconfigurations.install.kedify.io to exist"
-            sleep 5
-          done
+          echo "Waiting for CRD kedifyconfigurations.install.kedify.io to exist & register"
+          while ! kubectl wait --for condition=established --timeout=300s crd/kedifyconfigurations.install.kedify.io 2> /dev/null; do sleep .5 && printf .; done
         {{- with .Values.agent.securityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -75,12 +75,27 @@ spec:
           set -o nounset
           for i in $(seq 20)
           do
-            kubectl apply -f /data/ 2>&1 && exit 0
+            kubectl apply -f /data/ 2>&1 && {
+              _ok=1
+              break
+            }
             _sec=$(echo "1.5^$i" | bc)
             echo "Waiting ${_sec} seconds.."
             sleep ${_sec}
           done
-          exit 1
+          if [ -z "${_ok:-}" ]; then
+            echo "Failed to apply default KedifyConfiguration after 20 attempts, exiting with error"
+            exit 1
+          fi
+
+        {{- if eq .Values.hooks "jobs" }}
+          kubectl delete -n {{ .Release.Namespace }} cm/default-kedifyconfig --ignore-not-found || true
+          echo "Deleting itself in 10 seconds..."
+          sleep 10 && kubectl delete -n {{ .Release.Namespace }} --ignore-not-found \
+            sa/install-crs \
+            job/create-default-kedifyconfig \
+            clusterrole/install-crs || true
+        {{- end }}
       {{- with .Values.agent.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -93,4 +108,5 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
 {{- end }}

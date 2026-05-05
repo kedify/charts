@@ -24,6 +24,17 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+    {{- if and (ne .Values.hooks "helm") .Values.agent.createKedifyConfiguration }}
+      initContainers:
+        - name: wait-for-cr
+          image: {{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}
+          imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
+          command: ["sh", "-c", "until kubectl get -n {{ .Release.Namespace }} kedify kedify; do echo waiting for KedifyConfiguration CR; sleep 1; done"]
+          {{- with .Values.agent.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+    {{- end }}
       containers:
         - args:
           - --leader-elect
