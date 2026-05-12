@@ -109,6 +109,10 @@ spec:
             - name: PRA_REQUIRES_ANNOTATED_PODS
               value: {{ .Values.agent.features.praRequiresAnnotatedPods | quote }}
             {{- end }}
+            {{- if not .Values.agent.features.recommendationsForLabeledNamespaces }}
+            - name: METRICS_FOR_LABELED_NAMESPACES_ENABLED
+              value: {{ .Values.agent.features.recommendationsForLabeledNamespaces | quote }}
+            {{- end }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
             - name: RBAC_READ_NODES
