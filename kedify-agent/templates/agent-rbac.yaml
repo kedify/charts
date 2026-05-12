@@ -184,7 +184,17 @@ kind: ClusterRole
 metadata:
   name: kedify-manager-role
 rules:
-# to get kube-system UUID for self-registration in fleet installation & for metrics in a namespace if requested by a label on the namespace
+# to get kube-system UUID for self-registration in fleet installation
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  resourceNames:
+  - kube-system
+{{- if .Values.agent.features.recommendationsForLabeledNamespaces }}
+# for metrics in a namespace if requested by a label on the namespace
 - apiGroups:
   - ""
   resources:
@@ -195,6 +205,7 @@ rules:
   - patch
   - update
   - watch
+{{- end }}
 # for reporting status about KEDA installation to dashboard
 - apiGroups:
   - apiregistration.k8s.io
