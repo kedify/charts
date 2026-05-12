@@ -129,6 +129,7 @@ agent:
     distributedScaledObjectsEnabled: false
     distributedScaledJobsEnabled: false
     scalingPoliciesEnabled: true
+    recommendationsForLabeledNamespaces: true
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
     # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period

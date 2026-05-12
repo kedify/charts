@@ -193,6 +193,19 @@ rules:
   - get
   resourceNames:
   - kube-system
+{{- if .Values.agent.features.recommendationsForLabeledNamespaces }}
+# for metrics in a namespace if requested by a label on the namespace
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+{{- end }}
 # for reporting status about KEDA installation to dashboard
 - apiGroups:
   - apiregistration.k8s.io
