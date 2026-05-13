@@ -392,6 +392,10 @@
                     "description": "Info contains additional information about the cluster status",
                     "type": "string"
                   },
+                  "provider": {
+                    "description": "Provider is the cluster provider type (for example file, kubeconfig)",
+                    "type": "string"
+                  },
                   "state": {
                     "description": "State is the current state of the cluster",
                     "type": "string"
