@@ -90,6 +90,14 @@ spec:
                     name:
                       type: string
                     priority:
+                      description: |-
+                        Priority orders actions when more than one is active at the same time.
+                        Higher numeric value means higher priority. Adjustments are merged field by
+                        field in ascending priority order (ties broken by lexicographic name), so a
+                        non-nil field on the highest-priority action overrides the same field from
+                        lower-priority actions; fields left unset fall through to lower-priority
+                        values.
+                        Required when more than one action is defined.
                       format: int32
                       type: integer
                     trigger:
