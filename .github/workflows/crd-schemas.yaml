@@ -44,6 +44,8 @@ jobs:
           delete-branch: true
           base: main
           signoff: true
+          committer: "kedifybot <153312683+kedifybot@users.noreply.github.com>"
+          author: "kedifybot <153312683+kedifybot@users.noreply.github.com>"
           token: ${{ secrets.PAT_TOKEN }}
           body: |
             :package: CRD schemas update :package:
