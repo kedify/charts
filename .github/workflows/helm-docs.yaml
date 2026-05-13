@@ -44,6 +44,8 @@ jobs:
           delete-branch: true
           base: main
           signoff: true
+          committer: "kedifybot <153312683+kedifybot@users.noreply.github.com>"
+          author: "kedifybot <153312683+kedifybot@users.noreply.github.com>"
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             :package: kedify-agent/README.md and kedify-proxy/README.md update :package:
