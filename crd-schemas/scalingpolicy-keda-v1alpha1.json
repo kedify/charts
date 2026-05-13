@@ -63,6 +63,7 @@
                 "type": "string"
               },
               "priority": {
+                "description": "Priority orders actions when more than one is active at the same time.\nHigher numeric value means higher priority. Adjustments are merged field by\nfield in ascending priority order (ties broken by lexicographic name), so a\nnon-nil field on the highest-priority action overrides the same field from\nlower-priority actions; fields left unset fall through to lower-priority\nvalues.\nRequired when more than one action is defined.",
                 "format": "int32",
                 "type": "integer"
               },
