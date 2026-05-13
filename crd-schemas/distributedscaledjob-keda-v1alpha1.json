@@ -8930,6 +8930,10 @@
                 "format": "int32",
                 "type": "integer"
               },
+              "provider": {
+                "description": "Provider is the cluster provider type (for example file, kubeconfig)",
+                "type": "string"
+              },
               "runningJobs": {
                 "description": "RunningJobs is the current number of running jobs in the member cluster",
                 "format": "int32",
