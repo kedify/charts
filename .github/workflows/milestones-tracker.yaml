@@ -14,7 +14,7 @@ on:
     secrets:
       PAT_TOKEN:
         description: 'PAT for gh CLI operations requiring elevated permissions'
-        required: true
+        required: false
 
 permissions:
   contents: write
@@ -121,6 +121,15 @@ jobs:
     if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
     runs-on: ubuntu-latest
     steps:
+      - name: Validate PAT token presence for kedify-agent post-release
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAT_TOKEN:-}" ]]; then
+            echo "PAT_TOKEN secret is required for kedify-agent post_release (asset upload + operator release trigger)." >&2
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
