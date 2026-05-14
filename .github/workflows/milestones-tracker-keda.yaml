@@ -20,3 +20,5 @@ jobs:
     with:
       chart: keda
       prNumber: ${{ github.event.pull_request.number }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}

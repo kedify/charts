@@ -11,6 +11,10 @@ on:
         description: 'pull request number'
         type: string
         required: true
+    secrets:
+      PAT_TOKEN:
+        description: 'PAT for gh CLI operations requiring elevated permissions'
+        required: true
 
 permissions:
   contents: write
@@ -133,13 +137,13 @@ jobs:
           cat ./artifacts/generated-images.json
       - name: Upload image digest asset to existing GitHub release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
           gh release upload "${{ inputs.chart }}/${{ needs.milestone_tracker.outputs.version }}" ./artifacts/generated-images.json --repo kedify/charts --clobber
       - name: Trigger Openshift Operator release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
           chart_version="${{ needs.milestone_tracker.outputs.version }}"
