@@ -654,7 +654,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.17"
+          marketplace_chart_version="0.0.18"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -900,7 +900,7 @@ jobs:
           helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
           printf '%s\n' "${helm_chart_uri}" > /tmp/marketplace-helm-chart-uri.txt
 
-      - name: Smoke test chart pull from OCI (AWS flags)
+      - name: Smoke test chart pull from OCI (EKS defaults)
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
@@ -911,16 +911,50 @@ jobs:
             --no-hooks \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
-            >/tmp/kedify-agent-from-oci.yaml
+            >/tmp/kedify-agent-from-oci-eks-defaults.yaml
 
           # In jobs mode, CRD/CR install resources must still render with --no-hooks.
-          if ! yq -e 'select(.kind == "Job" and (.metadata.labels.role // "") == "crd-install-hook") | .metadata.name' /tmp/kedify-agent-from-oci.yaml >/dev/null; then
+          if ! yq -e 'select(.kind == "Job" and (.metadata.labels.role // "") == "crd-install-hook") | .metadata.name' /tmp/kedify-agent-from-oci-eks-defaults.yaml >/dev/null; then
             echo "Missing CRD installer Job in --no-hooks render (expected hooks=jobs behavior)." >&2
             exit 1
           fi
 
-          if ! yq -e 'select(.kind == "Job" and .metadata.name == "create-default-kedifyconfig") | .metadata.name' /tmp/kedify-agent-from-oci.yaml >/dev/null; then
+          if ! yq -e 'select(.kind == "Job" and .metadata.name == "create-default-kedifyconfig") | .metadata.name' /tmp/kedify-agent-from-oci-eks-defaults.yaml >/dev/null; then
             echo "Missing default KedifyConfiguration installer Job in --no-hooks render." >&2
+            exit 1
+          fi
+
+          # EKS delivery should install HTTP add-on by default.
+          if ! yq -e 'select(.kind == "Deployment" and .metadata.name == "keda-add-ons-http-interceptor") | .metadata.name' /tmp/kedify-agent-from-oci-eks-defaults.yaml >/dev/null; then
+            echo "Missing keda-add-ons-http interceptor Deployment in default OCI render." >&2
+            exit 1
+          fi
+
+      - name: Render OCI chart for Marketplace image validation (HTTP add-on disabled)
+        run: |
+          set -euo pipefail
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          helm template test \
+            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
+            --version "${chart_version}" \
+            --include-crds \
+            --no-hooks \
+            --set agent.createApiKeySecret=false \
+            --set agent.orgId="" \
+            --set keda-add-ons-http.enabled=false \
+            >/tmp/kedify-agent-from-oci-aws-validation.yaml
+
+          yq -r '
+            ..
+            | select(type == "!!map" and has("image"))
+            | .image
+            | select(. != null and . != "")
+          ' /tmp/kedify-agent-from-oci-aws-validation.yaml \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
+            | sort -u > /tmp/oci-aws-validation-images.txt
+
+          if grep -Fq 'http-add-on-' /tmp/oci-aws-validation-images.txt; then
+            echo "HTTP add-on images are present in AWS validation render despite keda-add-ons-http.enabled=false." >&2
             exit 1
           fi
 
@@ -932,14 +966,14 @@ jobs:
             | select(type == "!!map" and has("image"))
             | .image
             | select(. != null and . != "")
-          ' /tmp/kedify-agent-from-oci.yaml \
+          ' /tmp/kedify-agent-from-oci-aws-validation.yaml \
             | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/; s#^/##' \
             | grep -vE '^(---)?$' \
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
             | sort -u > /tmp/marketplace-container-images.txt
 
           # Include:
-          # - rendered images from the default Marketplace install path,
+          # - rendered images from the AWS validation render path (HTTP add-on disabled),
           # - full mirrored image list (all addon images),
           # - required non-rendered runtime image(s) (kedify-proxy envoy).
           # Keep only fully-qualified tagged image URIs.
@@ -956,7 +990,7 @@ jobs:
           mirror_count="$(wc -l < /tmp/dst-images.txt | tr -d '[:space:]')"
           marketplace_count="$(wc -l < /tmp/marketplace-container-images.txt | tr -d '[:space:]')"
           echo "Mirror image list count (all addon images): ${mirror_count}"
-          echo "Marketplace ContainerImages count (rendered default install): ${marketplace_count}"
+          echo "Marketplace ContainerImages count (AWS validation render path): ${marketplace_count}"
           echo "Marketplace ContainerImages:"
           cat /tmp/marketplace-container-images.txt
 
@@ -1123,7 +1157,7 @@ jobs:
             echo
             echo "- Helm chart URI: \`${helm_chart_uri}\`"
             echo "- Mirrored container images (all addon images): \`${mirror_image_count}\`"
-            echo "- Marketplace ContainerImages (rendered default install): \`${marketplace_image_count}\`"
+            echo "- Marketplace ContainerImages (AWS validation render path): \`${marketplace_image_count}\`"
             echo
             echo "Mirrored container image URIs:"
             echo
