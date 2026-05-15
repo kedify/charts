@@ -654,7 +654,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.16"
+          marketplace_chart_version="0.0.17"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -695,8 +695,14 @@ jobs:
             for required in \
               HTTP_OPERATOR_IMAGE HTTP_INTERCEPTOR_IMAGE HTTP_SCALER_IMAGE HTTP_IMAGE_TAG \
               HTTP_KUBE_RBAC_PROXY_IMAGE HTTP_KUBE_RBAC_PROXY_TAG HTTP_KUBECTL_IMAGE HTTP_KUBECTL_TAG; do
-              if [[ -z "${!required:-}" ]]; then
+              if [[ -z "${!required:-}" || "${!required}" == "null" ]]; then
                 echo "Missing required ${required} while preparing keda-add-ons-http marketplace values." >&2
+                exit 1
+              fi
+            done
+            for required_image in HTTP_OPERATOR_IMAGE HTTP_INTERCEPTOR_IMAGE HTTP_SCALER_IMAGE HTTP_KUBE_RBAC_PROXY_IMAGE HTTP_KUBECTL_IMAGE; do
+              if [[ "${!required_image}" == /* ]]; then
+                echo "Invalid ${required_image} value '${!required_image}' (expected fully-qualified repository)." >&2
                 exit 1
               fi
             done
@@ -717,19 +723,23 @@ jobs:
 
             # AWS Marketplace validator is strict about image references in values.yaml and
             # can reject templates using coalesce/default chains for image tags.
-            # For Marketplace package only, point deployments to explicit pinned tag fields.
+            # For Marketplace package only, use a simple repository+tag pattern from the same map.
             http_templates_dir="${tmp_chart_dir}/charts/keda-add-ons-http/templates"
-            sed -i 's/{{ coalesce .Values.pinnedImages.interceptor.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.interceptor.tag }}/g' "${http_templates_dir}/interceptor/deployment.yaml"
-            sed -i 's/{{ coalesce .Values.pinnedImages.scaler.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.scaler.tag }}/g' "${http_templates_dir}/scaler/deployment.yaml"
-            sed -i 's/{{ coalesce .Values.pinnedImages.operator.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.operator.tag }}/g' "${http_templates_dir}/operator/deployment.yaml"
+            sed -i 's/{{ coalesce .Values.pinnedImages.interceptor.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.images.tag }}/g' "${http_templates_dir}/interceptor/deployment.yaml"
+            sed -i 's/{{ coalesce .Values.pinnedImages.scaler.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.images.tag }}/g' "${http_templates_dir}/scaler/deployment.yaml"
+            sed -i 's/{{ coalesce .Values.pinnedImages.operator.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.images.tag }}/g' "${http_templates_dir}/operator/deployment.yaml"
 
             # Preflight: ensure packaged subchart templates now reference explicit values.yaml keys.
-            if ! grep -Fq '{{ .Values.images.interceptor }}:{{ .Values.pinnedImages.interceptor.tag }}' "${http_templates_dir}/interceptor/deployment.yaml"; then
-              echo "keda-add-ons-http interceptor template was not rewritten to explicit pinned tag reference." >&2
+            if ! grep -Fq '{{ .Values.images.interceptor }}:{{ .Values.images.tag }}' "${http_templates_dir}/interceptor/deployment.yaml"; then
+              echo "keda-add-ons-http interceptor template was not rewritten to .Values.images.tag reference." >&2
               exit 1
             fi
-            if ! grep -Fq '{{ .Values.images.scaler }}:{{ .Values.pinnedImages.scaler.tag }}' "${http_templates_dir}/scaler/deployment.yaml"; then
-              echo "keda-add-ons-http scaler template was not rewritten to explicit pinned tag reference." >&2
+            if ! grep -Fq '{{ .Values.images.scaler }}:{{ .Values.images.tag }}' "${http_templates_dir}/scaler/deployment.yaml"; then
+              echo "keda-add-ons-http scaler template was not rewritten to .Values.images.tag reference." >&2
+              exit 1
+            fi
+            if ! grep -Fq '{{ .Values.images.operator }}:{{ .Values.images.tag }}' "${http_templates_dir}/operator/deployment.yaml"; then
+              echo "keda-add-ons-http operator template was not rewritten to .Values.images.tag reference." >&2
               exit 1
             fi
           fi
@@ -742,9 +752,9 @@ jobs:
           while IFS= read -r tmpl_file; do
             sed -E -i 's/\.Release\.Service/"Helm"/g' "${tmpl_file}"
           done < <(find "${tmp_chart_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.tpl' -o -name '*.txt' \) | sort)
-          if rg -n '\.Release\.Service' "${tmp_chart_dir}" >/dev/null; then
+          if grep -R -n '\.Release\.Service' "${tmp_chart_dir}" >/dev/null; then
             echo "Found unsupported .Release.Service references in packaged chart tree" >&2
-            rg -n '\.Release\.Service' "${tmp_chart_dir}" >&2 || true
+            grep -R -n '\.Release\.Service' "${tmp_chart_dir}" >&2 || true
             exit 1
           fi
           sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
