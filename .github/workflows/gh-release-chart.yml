@@ -251,9 +251,3 @@ jobs:
           gh workflow run release.yaml \
             --repo kedify/kedify-agent-helm-operator \
             -f version="${operator_input_version}"
-
-  aws-addon:
-    if: inputs.chart == 'kedify-agent'
-    needs: [publish]
-    uses: ./.github/workflows/gh-release-eks-addon.yml
-    secrets: inherit

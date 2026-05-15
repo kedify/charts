@@ -637,6 +637,9 @@ jobs:
           # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
           yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
           yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
+          # AWS EKS add-on rendering uses `helm template --no-hooks`.
+          # Switch to jobs mode so CRD/CR installation is rendered as regular manifests.
+          yq -i '.hooks = "jobs"' "${tmp_chart_dir}/values.yaml"
           # Ensure all nested dependency charts are physically present (unpacked) in package tree.
           while true; do
             mapfile -t chart_pkgs < <(find "${tmp_chart_dir}" -type f -name '*.tgz' | sort)
