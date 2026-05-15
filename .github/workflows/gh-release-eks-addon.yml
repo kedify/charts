@@ -724,11 +724,11 @@ jobs:
             sed -i 's/{{ coalesce .Values.pinnedImages.operator.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.operator.tag }}/g' "${http_templates_dir}/operator/deployment.yaml"
 
             # Preflight: ensure packaged subchart templates now reference explicit values.yaml keys.
-            if ! rg -F --quiet '{{ .Values.images.interceptor }}:{{ .Values.pinnedImages.interceptor.tag }}' "${http_templates_dir}/interceptor/deployment.yaml"; then
+            if ! grep -Fq '{{ .Values.images.interceptor }}:{{ .Values.pinnedImages.interceptor.tag }}' "${http_templates_dir}/interceptor/deployment.yaml"; then
               echo "keda-add-ons-http interceptor template was not rewritten to explicit pinned tag reference." >&2
               exit 1
             fi
-            if ! rg -F --quiet '{{ .Values.images.scaler }}:{{ .Values.pinnedImages.scaler.tag }}' "${http_templates_dir}/scaler/deployment.yaml"; then
+            if ! grep -Fq '{{ .Values.images.scaler }}:{{ .Values.pinnedImages.scaler.tag }}' "${http_templates_dir}/scaler/deployment.yaml"; then
               echo "keda-add-ons-http scaler template was not rewritten to explicit pinned tag reference." >&2
               exit 1
             fi
