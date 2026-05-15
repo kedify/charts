@@ -28,3 +28,5 @@ jobs:
     with:
       chart: ${{ inputs.chart }}
       prNumber: ${{ inputs.prNumber }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
