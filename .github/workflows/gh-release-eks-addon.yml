@@ -177,17 +177,37 @@ jobs:
           : > /tmp/image-map.tsv
           : > /tmp/extra-marketplace-images.txt
 
-          # Ensure Marketplace-required explicit tags for images that upstream charts leave empty.
-          yq -i '
-            .["otel-add-on"].image.tag = "v0.1.3" |
-            .["otel-add-on"].otelOperator.manager.image.tag = "0.131.0" |
-            .["kedify-predictor"].image.tag = "v0.1.4" |
-            .["kedify-predictor"].kedaPredictionController.image.tag = "v0.1.4"
-          ' "${CHART_DIR}/values.yaml"
+          ROOT_CHART_VERSION="$(yq -r '.version // ""' "${CHART_DIR}/Chart.yaml")"
 
           is_nonempty() {
             local v="${1:-}"
             [[ -n "${v}" && "${v}" != "null" ]]
+          }
+
+          chart_default_tag() {
+            local chart_dir="$1"
+            local tag
+            tag="$(yq -r '.appVersion // .version // ""' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
+            if ! is_nonempty "${tag}"; then
+              tag="${ROOT_CHART_VERSION}"
+            fi
+            echo "${tag}"
+          }
+
+          resolve_tag_from_values_or_chart() {
+            local values_file="$1"
+            local yq_expr="$2"
+            local fallback_chart_dir="$3"
+            local tag
+
+            tag="$(yq -r "${yq_expr} // \"\"" "${values_file}" 2>/dev/null || true)"
+            if ! is_nonempty "${tag}"; then
+              tag="$(chart_default_tag "${fallback_chart_dir}")"
+            fi
+            if ! is_nonempty "${tag}"; then
+              tag="${ROOT_CHART_VERSION}"
+            fi
+            echo "${tag}"
           }
 
           collect_repo_tag_images() {
@@ -395,22 +415,6 @@ jobs:
               )
             ' "${values_file}"
 
-            # Marketplace disallows 'latest' tags. Pin busybox to a concrete version.
-            yq -i '
-              (
-                ..
-                | select(
-                    type == "!!map"
-                    and has("repository")
-                    and has("tag")
-                    and .repository != null and .repository != ""
-                    and (.repository | split("/")[-1]) == "busybox"
-                    and .tag != null and (.tag | tostring) == "latest"
-                  )
-              ) |= (
-                .tag = "1.36.1"
-              )
-            ' "${values_file}"
           }
 
           # Collect images from parent + nested subchart values for complete ECR mirroring.
@@ -458,48 +462,76 @@ jobs:
             | .agent.kedifyProxy.globalValues.image.tag = strenv(PROXY_DST_TAG)
           ' "${CHART_DIR}/values.yaml"
 
+          # Resolve dependency image tags dynamically from dependency chart defaults/values,
+          # then fallback to dependency chart version metadata.
+          keda_values="${CHART_DIR}/charts/keda/values.yaml"
+          keda_chart_dir="${CHART_DIR}/charts/keda"
+          http_values="${CHART_DIR}/charts/keda-add-ons-http/values.yaml"
+          http_chart_dir="${CHART_DIR}/charts/keda-add-ons-http"
+          predictor_values="${CHART_DIR}/charts/kedify-predictor/values.yaml"
+          predictor_chart_dir="${CHART_DIR}/charts/kedify-predictor"
+          otel_values="${CHART_DIR}/charts/otel-add-on/values.yaml"
+          otel_chart_dir="${CHART_DIR}/charts/otel-add-on"
+          otel_operator_chart_dir="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator"
+
+          export KEDA_OPERATOR_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.keda.tag' "${keda_chart_dir}")"
+          export KEDA_METRICS_APISERVER_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.metricsApiServer.tag' "${keda_chart_dir}")"
+          export KEDA_WEBHOOKS_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.webhooks.tag' "${keda_chart_dir}")"
+          export HTTP_ADDON_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.images.tag' "${http_chart_dir}")"
+          export HTTP_ADDON_KUBE_RBAC_PROXY_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.images.kubeRbacProxy.tag' "${http_chart_dir}")"
+          export HTTP_ADDON_KUBECTL_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.kubectlImage.tag' "${http_chart_dir}")"
+          export PREDICTOR_TAG="$(resolve_tag_from_values_or_chart "${predictor_values}" '.image.tag' "${predictor_chart_dir}")"
+          export PREDICTOR_CONTROLLER_TAG="$(resolve_tag_from_values_or_chart "${predictor_values}" '.kedaPredictionController.image.tag' "${predictor_chart_dir}")"
+          export PREDICTOR_KUBECTL_TAG="$(resolve_tag_from_values_or_chart "${predictor_values}" '.kubectlImage.tag' "${predictor_chart_dir}")"
+          export OTEL_ADDON_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.image.tag' "${otel_chart_dir}")"
+          export OTEL_KUBECTL_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.kubectlImage.tag' "${otel_chart_dir}")"
+          export OTEL_OPERATOR_MANAGER_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.manager.image.tag' "${otel_operator_chart_dir}")"
+          export OTEL_OPERATOR_COLLECTOR_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.manager.collectorImage.tag' "${otel_operator_chart_dir}")"
+          export OTEL_OPERATOR_KUBE_RBAC_PROXY_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.kubeRBACProxy.image.tag' "${otel_operator_chart_dir}")"
+          export OTEL_OPERATOR_BUSYBOX_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.testFramework.image.tag' "${otel_operator_chart_dir}")"
+
           # Pin dependency image overrides in parent values so packaged chart values
           # reference Marketplace ECR images without mutating subchart values files.
           yq -i '
             # keda
             .keda.image.keda.registry = strenv(ECR_REGISTRY) |
             .keda.image.keda.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-operator") |
-            .keda.image.keda.tag = "v2.19.0-1" |
+            .keda.image.keda.tag = strenv(KEDA_OPERATOR_TAG) |
             .keda.image.metricsApiServer.registry = strenv(ECR_REGISTRY) |
             .keda.image.metricsApiServer.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-metrics-apiserver") |
-            .keda.image.metricsApiServer.tag = "v2.19.0-1" |
+            .keda.image.metricsApiServer.tag = strenv(KEDA_METRICS_APISERVER_TAG) |
             .keda.image.webhooks.registry = strenv(ECR_REGISTRY) |
             .keda.image.webhooks.repository = (strenv(ECR_IMAGE_REPOSITORY_PREFIX) + "/keda-admission-webhooks") |
-            .keda.image.webhooks.tag = "v2.19.0-1" |
+            .keda.image.webhooks.tag = strenv(KEDA_WEBHOOKS_TAG) |
             # keda-add-ons-http
             .["keda-add-ons-http"].images.operator = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-operator") |
             .["keda-add-ons-http"].images.interceptor = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-interceptor") |
             .["keda-add-ons-http"].images.scaler = (strenv(ECR_IMAGE_FULL_PREFIX) + "/http-add-on-scaler") |
-            .["keda-add-ons-http"].images.tag = "v0.11.1-1" |
+            .["keda-add-ons-http"].images.tag = strenv(HTTP_ADDON_TAG) |
             .["keda-add-ons-http"].images.kubeRbacProxy.name = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kube-rbac-proxy") |
-            .["keda-add-ons-http"].images.kubeRbacProxy.tag = "v0.18.2" |
+            .["keda-add-ons-http"].images.kubeRbacProxy.tag = strenv(HTTP_ADDON_KUBE_RBAC_PROXY_TAG) |
             .["keda-add-ons-http"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
-            .["keda-add-ons-http"].kubectlImage.tag = "v1.33.1" |
+            .["keda-add-ons-http"].kubectlImage.tag = strenv(HTTP_ADDON_KUBECTL_TAG) |
             # kedify-predictor
             .["kedify-predictor"].image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/keda-prophet") |
-            .["kedify-predictor"].image.tag = "v0.1.4" |
+            .["kedify-predictor"].image.tag = strenv(PREDICTOR_TAG) |
             .["kedify-predictor"].kedaPredictionController.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/keda-prediction-controller") |
-            .["kedify-predictor"].kedaPredictionController.image.tag = "v0.1.4" |
+            .["kedify-predictor"].kedaPredictionController.image.tag = strenv(PREDICTOR_CONTROLLER_TAG) |
             .["kedify-predictor"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
-            .["kedify-predictor"].kubectlImage.tag = "v1.33.1" |
+            .["kedify-predictor"].kubectlImage.tag = strenv(PREDICTOR_KUBECTL_TAG) |
             # otel-add-on and nested opentelemetry-operator
             .["otel-add-on"].image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/otel-add-on") |
-            .["otel-add-on"].image.tag = "v0.1.3" |
+            .["otel-add-on"].image.tag = strenv(OTEL_ADDON_TAG) |
             .["otel-add-on"].kubectlImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kubectl") |
-            .["otel-add-on"].kubectlImage.tag = "v1.33.1" |
+            .["otel-add-on"].kubectlImage.tag = strenv(OTEL_KUBECTL_TAG) |
             .["otel-add-on"].otelOperator.manager.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/opentelemetry-operator") |
-            .["otel-add-on"].otelOperator.manager.image.tag = "0.131.0" |
+            .["otel-add-on"].otelOperator.manager.image.tag = strenv(OTEL_OPERATOR_MANAGER_TAG) |
             .["otel-add-on"].otelOperator.manager.collectorImage.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/opentelemetry-collector-k8s") |
-            .["otel-add-on"].otelOperator.manager.collectorImage.tag = "0.131.1" |
+            .["otel-add-on"].otelOperator.manager.collectorImage.tag = strenv(OTEL_OPERATOR_COLLECTOR_TAG) |
             .["otel-add-on"].otelOperator.kubeRBACProxy.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kube-rbac-proxy") |
-            .["otel-add-on"].otelOperator.kubeRBACProxy.image.tag = "v0.19.1" |
+            .["otel-add-on"].otelOperator.kubeRBACProxy.image.tag = strenv(OTEL_OPERATOR_KUBE_RBAC_PROXY_TAG) |
             .["otel-add-on"].otelOperator.testFramework.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/busybox") |
-            .["otel-add-on"].otelOperator.testFramework.image.tag = "1.36.1"
+            .["otel-add-on"].otelOperator.testFramework.image.tag = strenv(OTEL_OPERATOR_BUSYBOX_TAG)
           ' "${CHART_DIR}/values.yaml"
 
           # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
@@ -547,10 +579,6 @@ jobs:
             if [[ "${image_name}" == "${src_tag}" ]]; then
               echo "Skipping malformed image reference (name equals tag): ${src}" >&2
               continue
-            fi
-            if [[ "${image_name}" == "busybox" && "${src_tag}" == "latest" ]]; then
-              src_repo="docker.io/library/busybox"
-              src_tag="1.36.1"
             fi
             dst="${ECR_IMAGE_FULL_PREFIX}/${image_name}:${src_tag}"
             printf '%s\t%s\n' "${src}" "${dst}" >> /tmp/image-map.tsv
@@ -637,6 +665,9 @@ jobs:
           # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
           yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
           yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
+          # EKS Marketplace default install should include KEDA + HTTP add-on.
+          yq -i '.keda.enabled = true' "${tmp_chart_dir}/values.yaml"
+          yq -i '.["keda-add-ons-http"].enabled = true' "${tmp_chart_dir}/values.yaml"
           # AWS EKS add-on rendering uses `helm template --no-hooks`.
           # Switch to jobs mode so CRD/CR installation is rendered as regular manifests.
           yq -i '.hooks = "jobs"' "${tmp_chart_dir}/values.yaml"
@@ -806,19 +837,29 @@ jobs:
           helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
           printf '%s\n' "${helm_chart_uri}" > /tmp/marketplace-helm-chart-uri.txt
 
-      - name: Smoke test chart pull from OCI
+      - name: Smoke test chart pull from OCI (AWS flags)
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
           helm template test \
             "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
             --version "${chart_version}" \
+            --include-crds \
+            --no-hooks \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
-            --set keda.enabled=false \
-            --set keda-add-ons-http.enabled=false \
-            --set otel-add-on.enabled=false \
-            --set kedify-predictor.enabled=false >/tmp/kedify-agent-from-oci.yaml
+            >/tmp/kedify-agent-from-oci.yaml
+
+          # In jobs mode, CRD/CR install resources must still render with --no-hooks.
+          if ! yq -e 'select(.kind == "Job" and (.metadata.labels.role // "") == "crd-install-hook") | .metadata.name' /tmp/kedify-agent-from-oci.yaml >/dev/null; then
+            echo "Missing CRD installer Job in --no-hooks render (expected hooks=jobs behavior)." >&2
+            exit 1
+          fi
+
+          if ! yq -e 'select(.kind == "Job" and .metadata.name == "create-default-kedifyconfig") | .metadata.name' /tmp/kedify-agent-from-oci.yaml >/dev/null; then
+            echo "Missing default KedifyConfiguration installer Job in --no-hooks render." >&2
+            exit 1
+          fi
 
       - name: Build Marketplace declared ContainerImages from rendered OCI chart
         run: |
