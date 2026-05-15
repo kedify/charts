@@ -680,6 +680,41 @@ jobs:
               rm -f "${pkg}"
             done
           done
+          # Mirror parent overrides into subchart defaults so Marketplace validator can
+          # resolve rendered http-add-on image references directly from values.yaml files.
+          http_subchart_values="${tmp_chart_dir}/charts/keda-add-ons-http/values.yaml"
+          if [[ -f "${http_subchart_values}" ]]; then
+            export HTTP_OPERATOR_IMAGE="$(yq -r '.["keda-add-ons-http"].images.operator // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_INTERCEPTOR_IMAGE="$(yq -r '.["keda-add-ons-http"].images.interceptor // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_SCALER_IMAGE="$(yq -r '.["keda-add-ons-http"].images.scaler // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_IMAGE_TAG="$(yq -r '.["keda-add-ons-http"].images.tag // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_KUBE_RBAC_PROXY_IMAGE="$(yq -r '.["keda-add-ons-http"].images.kubeRbacProxy.name // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_KUBE_RBAC_PROXY_TAG="$(yq -r '.["keda-add-ons-http"].images.kubeRbacProxy.tag // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_KUBECTL_IMAGE="$(yq -r '.["keda-add-ons-http"].kubectlImage.repository // ""' "${tmp_chart_dir}/values.yaml")"
+            export HTTP_KUBECTL_TAG="$(yq -r '.["keda-add-ons-http"].kubectlImage.tag // ""' "${tmp_chart_dir}/values.yaml")"
+            for required in \
+              HTTP_OPERATOR_IMAGE HTTP_INTERCEPTOR_IMAGE HTTP_SCALER_IMAGE HTTP_IMAGE_TAG \
+              HTTP_KUBE_RBAC_PROXY_IMAGE HTTP_KUBE_RBAC_PROXY_TAG HTTP_KUBECTL_IMAGE HTTP_KUBECTL_TAG; do
+              if [[ -z "${!required:-}" ]]; then
+                echo "Missing required ${required} while preparing keda-add-ons-http marketplace values." >&2
+                exit 1
+              fi
+            done
+
+            yq -i '
+              .images.operator = strenv(HTTP_OPERATOR_IMAGE) |
+              .images.interceptor = strenv(HTTP_INTERCEPTOR_IMAGE) |
+              .images.scaler = strenv(HTTP_SCALER_IMAGE) |
+              .images.tag = strenv(HTTP_IMAGE_TAG) |
+              .pinnedImages.operator.tag = strenv(HTTP_IMAGE_TAG) |
+              .pinnedImages.interceptor.tag = strenv(HTTP_IMAGE_TAG) |
+              .pinnedImages.scaler.tag = strenv(HTTP_IMAGE_TAG) |
+              .images.kubeRbacProxy.name = strenv(HTTP_KUBE_RBAC_PROXY_IMAGE) |
+              .images.kubeRbacProxy.tag = strenv(HTTP_KUBE_RBAC_PROXY_TAG) |
+              .kubectlImage.repository = strenv(HTTP_KUBECTL_IMAGE) |
+              .kubectlImage.tag = strenv(HTTP_KUBECTL_TAG)
+            ' "${http_subchart_values}"
+          fi
           # EKS add-on validation requires dependent charts to be local and disallows Release.Service.
           while IFS= read -r chart_yaml; do
             yq -i '(.dependencies[]?) |= (.repository = ("file://charts/" + .name))' "${chart_yaml}"
