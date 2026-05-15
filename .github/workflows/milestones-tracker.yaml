@@ -11,6 +11,10 @@ on:
         description: 'pull request number'
         type: string
         required: true
+    secrets:
+      PAT_TOKEN:
+        description: 'PAT for gh CLI operations requiring elevated permissions'
+        required: false
 
 permissions:
   contents: write
@@ -111,3 +115,52 @@ jobs:
           registry: ghcr.io
           registry_username: kedify
           registry_password: ${{ secrets.GITHUB_TOKEN }}
+
+  post_release:
+    needs: [milestone_tracker, release]
+    if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PAT token presence for kedify-agent post-release
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAT_TOKEN:-}" ]]; then
+            echo "PAT_TOKEN secret is required for kedify-agent post_release (asset upload + operator release trigger)." >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+      - name: Generate air-gapped image digests JSON
+        env:
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p ./artifacts
+          CHART_DIR="$PWD/kedify-agent" "$PWD/scripts/print-image-names.sh" > ./artifacts/air-gapped-images.txt
+          "$PWD/scripts/update-generated-images-json.sh" \
+            "./artifacts/generated-images.json" \
+            "./artifacts/air-gapped-images.txt" \
+            "$VERSION" \
+            "$(date -u +%F)"
+          cat ./artifacts/generated-images.json
+      - name: Upload image digest asset to existing GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          CHART: ${{ inputs.chart }}
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release upload "$CHART/$VERSION" ./artifacts/generated-images.json --repo kedify/charts --clobber
+      - name: Trigger Openshift Operator release
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
+        run: |
+          set -euo pipefail
+          operator_input_version="${VERSION#v}"
+          gh workflow run release.yaml \
+            --repo kedify/kedify-agent-helm-operator \
+            -f version="${operator_input_version}"
