@@ -654,7 +654,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.15"
+          marketplace_chart_version="0.0.16"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -714,6 +714,24 @@ jobs:
               .kubectlImage.repository = strenv(HTTP_KUBECTL_IMAGE) |
               .kubectlImage.tag = strenv(HTTP_KUBECTL_TAG)
             ' "${http_subchart_values}"
+
+            # AWS Marketplace validator is strict about image references in values.yaml and
+            # can reject templates using coalesce/default chains for image tags.
+            # For Marketplace package only, point deployments to explicit pinned tag fields.
+            http_templates_dir="${tmp_chart_dir}/charts/keda-add-ons-http/templates"
+            sed -i 's/{{ coalesce .Values.pinnedImages.interceptor.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.interceptor.tag }}/g' "${http_templates_dir}/interceptor/deployment.yaml"
+            sed -i 's/{{ coalesce .Values.pinnedImages.scaler.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.scaler.tag }}/g' "${http_templates_dir}/scaler/deployment.yaml"
+            sed -i 's/{{ coalesce .Values.pinnedImages.operator.tag .Values.images.tag .Chart.AppVersion }}/{{ .Values.pinnedImages.operator.tag }}/g' "${http_templates_dir}/operator/deployment.yaml"
+
+            # Preflight: ensure packaged subchart templates now reference explicit values.yaml keys.
+            if ! rg -F --quiet '{{ .Values.images.interceptor }}:{{ .Values.pinnedImages.interceptor.tag }}' "${http_templates_dir}/interceptor/deployment.yaml"; then
+              echo "keda-add-ons-http interceptor template was not rewritten to explicit pinned tag reference." >&2
+              exit 1
+            fi
+            if ! rg -F --quiet '{{ .Values.images.scaler }}:{{ .Values.pinnedImages.scaler.tag }}' "${http_templates_dir}/scaler/deployment.yaml"; then
+              echo "keda-add-ons-http scaler template was not rewritten to explicit pinned tag reference." >&2
+              exit 1
+            fi
           fi
           # EKS add-on validation requires dependent charts to be local and disallows Release.Service.
           while IFS= read -r chart_yaml; do
