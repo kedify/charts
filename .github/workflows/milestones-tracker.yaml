@@ -134,6 +134,8 @@ jobs:
         with:
           ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
       - name: Generate air-gapped image digests JSON
+        env:
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
         run: |
           set -euo pipefail
           mkdir -p ./artifacts
@@ -141,22 +143,24 @@ jobs:
           "$PWD/scripts/update-generated-images-json.sh" \
             "./artifacts/generated-images.json" \
             "./artifacts/air-gapped-images.txt" \
-            "${{ needs.milestone_tracker.outputs.version }}" \
+            "$VERSION" \
             "$(date -u +%F)"
           cat ./artifacts/generated-images.json
       - name: Upload image digest asset to existing GitHub release
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          CHART: ${{ inputs.chart }}
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
         run: |
           set -euo pipefail
-          gh release upload "${{ inputs.chart }}/${{ needs.milestone_tracker.outputs.version }}" ./artifacts/generated-images.json --repo kedify/charts --clobber
+          gh release upload "$CHART/$VERSION" ./artifacts/generated-images.json --repo kedify/charts --clobber
       - name: Trigger Openshift Operator release
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          VERSION: ${{ needs.milestone_tracker.outputs.version }}
         run: |
           set -euo pipefail
-          chart_version="${{ needs.milestone_tracker.outputs.version }}"
-          operator_input_version="${chart_version#v}"
+          operator_input_version="${VERSION#v}"
           gh workflow run release.yaml \
             --repo kedify/kedify-agent-helm-operator \
             -f version="${operator_input_version}"
