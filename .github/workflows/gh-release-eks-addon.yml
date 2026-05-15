@@ -654,7 +654,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.18"
+          marketplace_chart_version="0.0.19"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -665,9 +665,11 @@ jobs:
           # Buyers provide credentials via a Kubernetes Secret as documented in UsageInstructions.
           yq -i '.agent.createApiKeySecret = false' "${tmp_chart_dir}/values.yaml"
           yq -i '.agent.orgId = ""' "${tmp_chart_dir}/values.yaml"
-          # EKS Marketplace default install should include KEDA + HTTP add-on.
+          # Keep KEDA enabled by default in Marketplace package.
+          # Keep HTTP add-on disabled in chart defaults for AWS validation compatibility.
+          # EKS install profile smoke tests below explicitly enable HTTP add-on.
           yq -i '.keda.enabled = true' "${tmp_chart_dir}/values.yaml"
-          yq -i '.["keda-add-ons-http"].enabled = true' "${tmp_chart_dir}/values.yaml"
+          yq -i '.["keda-add-ons-http"].enabled = false' "${tmp_chart_dir}/values.yaml"
           # AWS EKS add-on rendering uses `helm template --no-hooks`.
           # Switch to jobs mode so CRD/CR installation is rendered as regular manifests.
           yq -i '.hooks = "jobs"' "${tmp_chart_dir}/values.yaml"
@@ -900,7 +902,7 @@ jobs:
           helm_chart_uri="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}:${chart_version}"
           printf '%s\n' "${helm_chart_uri}" > /tmp/marketplace-helm-chart-uri.txt
 
-      - name: Smoke test chart pull from OCI (EKS defaults)
+      - name: Smoke test chart pull from OCI (EKS install profile)
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
@@ -911,6 +913,8 @@ jobs:
             --no-hooks \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
+            --set keda.enabled=true \
+            --set keda-add-ons-http.enabled=true \
             >/tmp/kedify-agent-from-oci-eks-defaults.yaml
 
           # In jobs mode, CRD/CR install resources must still render with --no-hooks.
@@ -924,9 +928,9 @@ jobs:
             exit 1
           fi
 
-          # EKS delivery should install HTTP add-on by default.
+          # EKS install profile should include HTTP add-on.
           if ! yq -e 'select(.kind == "Deployment" and .metadata.name == "keda-add-ons-http-interceptor") | .metadata.name' /tmp/kedify-agent-from-oci-eks-defaults.yaml >/dev/null; then
-            echo "Missing keda-add-ons-http interceptor Deployment in default OCI render." >&2
+            echo "Missing keda-add-ons-http interceptor Deployment in EKS install profile render." >&2
             exit 1
           fi
 
@@ -974,10 +978,9 @@ jobs:
 
           # Include:
           # - rendered images from the AWS validation render path (HTTP add-on disabled),
-          # - full mirrored image list (all addon images),
           # - required non-rendered runtime image(s) (kedify-proxy envoy).
           # Keep only fully-qualified tagged image URIs.
-          cat /tmp/marketplace-container-images.txt /tmp/dst-images.txt /tmp/extra-marketplace-images.txt \
+          cat /tmp/marketplace-container-images.txt /tmp/extra-marketplace-images.txt \
             | grep -vE '^(---)?$' \
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+:[^[:space:]]+$' \
             | grep -vE ':latest$' \
