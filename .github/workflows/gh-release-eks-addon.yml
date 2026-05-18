@@ -531,7 +531,24 @@ jobs:
             .["otel-add-on"].otelOperator.kubeRBACProxy.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/kube-rbac-proxy") |
             .["otel-add-on"].otelOperator.kubeRBACProxy.image.tag = strenv(OTEL_OPERATOR_KUBE_RBAC_PROXY_TAG) |
             .["otel-add-on"].otelOperator.testFramework.image.repository = (strenv(ECR_IMAGE_FULL_PREFIX) + "/busybox") |
-            .["otel-add-on"].otelOperator.testFramework.image.tag = strenv(OTEL_OPERATOR_BUSYBOX_TAG)
+            .["otel-add-on"].otelOperator.testFramework.image.tag = strenv(OTEL_OPERATOR_BUSYBOX_TAG) |
+            # Keep HTTP addon integration disabled in default Kedify config when HTTP add-on itself is disabled.
+            .agent.kedifyConfiguration.httpAddonHelm.enabled = false |
+            .agent.rbac.ingressAutoWire = false |
+            # Ensure KEDA metrics adapter can read kube-system extension auth configmap.
+            # Use cluster-scoped RBAC because EKS add-on install can skip cross-namespace RoleBindings.
+            .agent.extraObjects += [{
+              "apiVersion":"rbac.authorization.k8s.io/v1",
+              "kind":"ClusterRole",
+              "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+              "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get"]}]
+            },{
+              "apiVersion":"rbac.authorization.k8s.io/v1",
+              "kind":"ClusterRoleBinding",
+              "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+              "roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+              "subjects":[{"kind":"ServiceAccount","name":"keda-metrics-server","namespace":"keda"}]
+            }]
           ' "${CHART_DIR}/values.yaml"
 
           # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
@@ -654,7 +671,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.20"
+          marketplace_chart_version="0.0.21"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -670,6 +687,20 @@ jobs:
           # EKS install profile smoke tests below explicitly enable HTTP add-on.
           yq -i '.keda.enabled = true' "${tmp_chart_dir}/values.yaml"
           yq -i '.["keda-add-ons-http"].enabled = false' "${tmp_chart_dir}/values.yaml"
+          yq -i '.agent.kedifyConfiguration.httpAddonHelm.enabled = false' "${tmp_chart_dir}/values.yaml"
+          yq -i '.agent.rbac.ingressAutoWire = false' "${tmp_chart_dir}/values.yaml"
+          yq -i '.agent.extraObjects += [{
+            "apiVersion":"rbac.authorization.k8s.io/v1",
+            "kind":"ClusterRole",
+            "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+            "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get"]}]
+          },{
+            "apiVersion":"rbac.authorization.k8s.io/v1",
+            "kind":"ClusterRoleBinding",
+            "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+            "roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"keda-metrics-server-extension-apiserver-authentication-reader"},
+            "subjects":[{"kind":"ServiceAccount","name":"keda-metrics-server","namespace":"keda"}]
+          }]' "${tmp_chart_dir}/values.yaml"
           # AWS EKS add-on rendering uses `helm template --no-hooks`.
           # Switch to jobs mode so CRD/CR installation is rendered as regular manifests.
           yq -i '.hooks = "jobs"' "${tmp_chart_dir}/values.yaml"
