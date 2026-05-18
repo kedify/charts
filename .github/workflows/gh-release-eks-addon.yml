@@ -1053,7 +1053,9 @@ jobs:
           version_title="${{ env.MARKETPLACE_VERSION_TITLE }}"
           release_notes="${{ env.MARKETPLACE_RELEASE_NOTES }}"
           if [[ -z "${version_title}" ]]; then
-            version_title="${source_chart_version}"
+            # Marketplace requires unique DeliveryOptionTitle values across submissions.
+            # Use run metadata so retries/new submissions don't collide on title.
+            version_title="${source_chart_version}-run${GITHUB_RUN_ID}-a${GITHUB_RUN_ATTEMPT}"
           fi
           if [[ -z "${release_notes}" ]]; then
             release_notes="Automated release from GitHub Actions for chart ${source_chart_version}."
