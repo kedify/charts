@@ -7,16 +7,6 @@ metadata:
     {{- include "keda-http-add-on.labels" . | indent 4 }}
   name: {{ .Chart.Name }}-interceptor
 rules:
-{{- if .Values.interceptor.tls.allowCertsFromSecrets}}
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-{{- end}}
 - apiGroups:
   - discovery.k8s.io
   resources:
@@ -38,20 +28,6 @@ rules:
   resources:
   - httpscaledobjects
   - interceptorroutes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - '*'
-- apiGroups:
-  - inference.networking.k8s.io
-  resources:
-  - inferencepools
   verbs:
   - get
   - list
