@@ -541,7 +541,7 @@ jobs:
               "apiVersion":"rbac.authorization.k8s.io/v1",
               "kind":"ClusterRole",
               "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
-              "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get"]}]
+              "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get","list","watch"]}]
             },{
               "apiVersion":"rbac.authorization.k8s.io/v1",
               "kind":"ClusterRoleBinding",
@@ -671,7 +671,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="0.0.21"
+          marketplace_chart_version="${chart_version}"
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
@@ -693,7 +693,7 @@ jobs:
             "apiVersion":"rbac.authorization.k8s.io/v1",
             "kind":"ClusterRole",
             "metadata":{"name":"keda-metrics-server-extension-apiserver-authentication-reader"},
-            "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get"]}]
+            "rules":[{"apiGroups":[""],"resources":["configmaps"],"resourceNames":["extension-apiserver-authentication"],"verbs":["get","list","watch"]}]
           },{
             "apiVersion":"rbac.authorization.k8s.io/v1",
             "kind":"ClusterRoleBinding",
@@ -1094,7 +1094,7 @@ jobs:
                           MarketplaceServiceAccountName: "${AWSMP_SERVICE_ACCOUNT}",
                           Namespace: "keda",
                           Description: ("Helm delivery option for " + $version_title),
-                          UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
+                          UsageInstructions: ("Before install, contact Kedify (https://kedify.io/contact/) to obtain your API key and Organization ID.\n\n" +
                             "Create secret in namespace 'keda':\n" +
                             "kubectl -n keda create secret generic kedify-agent --from-literal=apikey=<YOUR_KEDIFY_API_KEY> --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>\n\n" +
                             "Install command:\n" +
@@ -1122,7 +1122,7 @@ jobs:
                             }
                           ],
                           Description: ("Amazon EKS add-on delivery option for " + $version_title),
-                          UsageInstructions: ("Before install, create an account at https://kedify.io and obtain your API key and Organization ID.\n\n" +
+                          UsageInstructions: ("Before install, contact Kedify (https://kedify.io/contact/) to obtain your API key and Organization ID.\n\n" +
                             "Create secret in namespace 'keda':\n" +
                             "kubectl -n keda create secret generic kedify-agent --from-literal=apikey=<YOUR_KEDIFY_API_KEY> --from-literal=org_id=<YOUR_KEDIFY_ORG_ID>\n\n" +
                             "Install command:\n" +
