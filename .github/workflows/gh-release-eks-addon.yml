@@ -671,7 +671,11 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="${chart_version}"
+          marketplace_chart_version="${chart_version#v}"
+          if [[ ! "${marketplace_chart_version}" =~ ^([0-9]+\.){2}[0-9]+$ ]]; then
+            echo "Marketplace chart version '${marketplace_chart_version}' must be strict semver (for example 0.5.6)." >&2
+            exit 1
+          fi
 
           tmp_chart_dir="/tmp/kedify-agent-marketplace"
           rm -rf "${tmp_chart_dir}"
