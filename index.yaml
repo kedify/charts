@@ -25,9 +25,9 @@ entries:
   keda:
   - apiVersion: v2
     appVersion: v2.20.0-1
-    created: "2026-06-01T20:51:47.505960702Z"
+    created: "2026-06-02T09:19:27.514986901Z"
     description: Event-based autoscaler for workloads on Kubernetes
-    digest: d8b451cb57296d36af13e5188d8b829e996ed10d35d8c20463c0665e405176be
+    digest: 971f22d7a9c733d3168a56a94df7530f5603c2e192a088f5b08bf111d379feda
     home: https://github.com/kedacore/keda
     icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
     kubeVersion: '>=v1.23.0-0'
