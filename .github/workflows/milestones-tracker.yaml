@@ -17,7 +17,7 @@ on:
         required: false
       AWS_GITHUB_ROLE_ARN:
         description: 'AWS role ARN used for EKS add-on publishing'
-        required: false
+        required: true
 
 permissions:
   contents: write
@@ -171,6 +171,9 @@ jobs:
   eks_addon_release:
     needs: [milestone_tracker, release, post_release]
     if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
+    permissions:
+       contents: write
+       id-token: write
     uses: ./.github/workflows/gh-release-eks-addon.yml
     with:
       source-ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
