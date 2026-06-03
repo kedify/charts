@@ -3,6 +3,7 @@
 .idea
 *.swp
 *.swo
+.codex
 
 # Mac
 .DS_Store
