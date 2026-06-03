@@ -15,6 +15,9 @@ on:
       PAT_TOKEN:
         description: 'PAT for gh CLI operations requiring elevated permissions'
         required: false
+      AWS_GITHUB_ROLE_ARN:
+        description: 'AWS role ARN used for EKS add-on publishing'
+        required: true
 
 permissions:
   contents: write
@@ -164,3 +167,16 @@ jobs:
           gh workflow run release.yaml \
             --repo kedify/kedify-agent-helm-operator \
             -f version="${operator_input_version}"
+
+  eks_addon_release:
+    needs: [milestone_tracker, release, post_release]
+    if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
+    permissions:
+       contents: write
+       id-token: write
+    uses: ./.github/workflows/gh-release-eks-addon.yml
+    with:
+      source-ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      AWS_GITHUB_ROLE_ARN: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
