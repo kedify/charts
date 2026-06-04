@@ -12,7 +12,7 @@ data:
   name: {{ printf "%s/%s" .Release.Namespace .Release.Name | quote }}
   namespace: {{ .Release.Namespace }}
   watchNamespace: {{ .Values.watchNamespace | default .Release.Namespace | quote }}
-  address: {{ .Values.kedify.multitenant.address | default (printf "%s.%s.svc.cluster.local:9666" .Values.operator.name .Release.Namespace) | quote }}
+  address: {{ .Values.kedify.multitenant.address | default (printf "%s.%s.svc.%s:9666" .Values.operator.name .Release.Namespace .Values.clusterDomain) | quote }}
   {{- if .Values.kedify.multitenant.authority }}
   authority: {{ .Values.kedify.multitenant.authority | quote }}
   {{- end }}

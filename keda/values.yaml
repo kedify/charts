@@ -68,8 +68,8 @@ kedify:
   multitenant:
     # -- Multitenant mode: "" (disabled), "default" or "tenant"
     # "": multitenancy disabled, standard KEDA deployment
-    # "default": deploys keda-operator + keda-metrics-server (and optionally keda-admission-webhooks), the keda-operator-metrics-server is configured to routes HPA metric requests to tenant keda-operators
-    # "tenant": deploys only keda-operator, should be used with metricsServer.enabled=false, crds.install=false, webhooks.enabled=false
+    # "default": deploys keda-operator + keda-operator-metrics-apiserver (and optionally keda-admission-webhooks); the metrics apiserver is configured to route HPA metric requests to the tenant keda-operators
+    # "tenant": deploys only keda-operator, should be used with metricsServer.enabled=false, crds.install=false, webhooks.enabled=false. Give each tenant a unique operator.name (and serviceAccount.operator.name, certificates.secretName) so its cluster RBAC does not collide with the default install or other tenants
     mode: ""
 
     # -- Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace
