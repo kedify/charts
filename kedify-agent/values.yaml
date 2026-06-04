@@ -130,6 +130,7 @@ agent:
     distributedScaledJobsEnabled: false
     scalingPoliciesEnabled: true
     recommendationsForLabeledNamespaces: true
+    multitenantKEDAEnabled: false
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
     # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period
@@ -244,6 +245,10 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
+  # configuration for KEDA multitenancy, must have features.multitenantKEDAEnabled set to true to take effect
+  # tenants are discovered dynamically via ConfigMaps with label kedify.io/tenant-registration=true
+  multitenant: {}
+
 # when set to: 'helm' (default), the installation will rely on helm hooks for CRD and CR installation and cleanup
 #              'jobs' - the helm hooks will be disabled for CRD & CR installation and k8s jobs will be used instead
 #              'argo' - everything will be installed as regular manifests and argocd annotations will be used

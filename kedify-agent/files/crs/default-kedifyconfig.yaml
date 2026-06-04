@@ -10,4 +10,7 @@ spec:
   {{- end }}
   kedaInstallations:
   - namespace: {{ .Release.Namespace }}
+    {{- if .Values.agent.features.multitenantKEDAEnabled }}
+    multitenancy: {}
+    {{- end }}
 {{ toYaml .Values.agent.kedifyConfiguration | indent 4 }}
