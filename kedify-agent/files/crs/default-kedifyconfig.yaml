@@ -9,7 +9,8 @@ spec:
   cloudAccountID: "{{ .Values.agent.cloudAccountID }}"
   {{- end }}
   kedaInstallations:
-  - namespace: {{ .Release.Namespace }}
+  - name: {{ .Release.Namespace }}
+    namespace: {{ .Release.Namespace }}
     {{- if .Values.agent.features.multitenantKEDAEnabled }}
     multitenancy: {}
     {{- end }}

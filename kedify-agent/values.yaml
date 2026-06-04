@@ -245,9 +245,9 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
-  # configuration for KEDA multitenancy, must have features.multitenantKEDAEnabled set to true to take effect
-  # tenants are discovered dynamically via ConfigMaps with label kedify.io/tenant-registration=true
-  multitenant: {}
+  # KEDA multitenancy is enabled with features.multitenantKEDAEnabled=true. Tenants are
+  # discovered dynamically by the agent from ConfigMaps labeled
+  # kedify.io/tenant-registration=true, so there is no static tenant list to configure here.
 
 # when set to: 'helm' (default), the installation will rely on helm hooks for CRD and CR installation and cleanup
 #              'jobs' - the helm hooks will be disabled for CRD & CR installation and k8s jobs will be used instead
