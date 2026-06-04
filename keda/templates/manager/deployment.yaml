@@ -81,6 +81,10 @@ spec:
           - "--leader-elect"
           {{- if .Values.operator.leaderElectionID }}
           - "--leader-election-id={{ .Values.operator.leaderElectionID }}"
+          {{- else if eq .Values.kedify.multitenant.mode "tenant" }}
+          {{- /* tenant operators may share a namespace with the default install or other tenants;
+                 derive a unique leader-election lock from the (unique) operator name */}}
+          - "--leader-election-id={{ .Values.operator.name }}.keda.sh"
           {{- end }}
           - "--disable-compression={{ .Values.operator.disableCompression}}"
           - "--zap-log-level={{ .Values.logging.operator.level }}"
