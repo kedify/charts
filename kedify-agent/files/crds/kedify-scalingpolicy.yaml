@@ -25,6 +25,10 @@ spec:
       jsonPath: .status.active
       name: Active
       type: boolean
+    - description: Indicates if the ScalingPolicy is paused
+      jsonPath: .status.conditions[?(.type=='Paused')].status
+      name: Paused
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
