@@ -5,5 +5,11 @@ kind: Secret
 metadata:
   name: {{ .Values.kedify.multitenant.configSecretName }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keda.labels" . | nindent 4 }}
+  {{- with .Values.additionalAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 type: Opaque
 {{- end }}

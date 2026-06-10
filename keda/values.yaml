@@ -75,7 +75,7 @@ kedify:
     # -- Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace
     configSecretName: kedify-multitenancy-config
 
-    # -- Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.cluster.local:9666)
+    # -- Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.<clusterDomain>:9666)
     address: ""
     # -- SNI authority override for gRPC connection to the tenant's keda-operator
     authority: ""
