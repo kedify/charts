@@ -53,6 +53,7 @@ config:
     connectTimeout: 2s
   # Additional top-level Envoy bootstrap config, merged verbatim into the envoy bootstrap section
   # Additive only: do not redefine keys Kedify already sets (node, admin, dynamic_resources, static_resources, stats_sinks, overload_manager).
+  # Changing this restarts all kedify-proxy instances
   bootstrap: {}
 
 pod:
