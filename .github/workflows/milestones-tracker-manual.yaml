@@ -11,6 +11,7 @@ on:
         - kedify-agent
         - keda
         - http-add-on
+        - kedify-proxy
       prNumber:
         description: "categorize PR through milestones tracking and run a release if correct labels and milestones are set"
         required: true
