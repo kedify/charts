@@ -1,4 +1,4 @@
-{{- if .Values.metricsServer.enabled }}
+{{- if and .Values.metricsServer.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
