@@ -51,6 +51,10 @@ config:
     keepaliveTimeout: 5s
     # -- timeout for initial connection to the Kedify control plane
     connectTimeout: 2s
+  # Additional top-level Envoy bootstrap config, merged verbatim into the envoy bootstrap section
+  # Additive only: do not redefine keys Kedify already sets (node, admin, dynamic_resources, static_resources, stats_sinks, overload_manager).
+  # Changing this restarts all kedify-proxy instances
+  bootstrap: {}
 
 pod:
   # -- custom annotations that should be added to the Kedify proxy pod
