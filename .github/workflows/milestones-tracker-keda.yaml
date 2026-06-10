@@ -21,3 +21,5 @@ jobs:
     with:
       chart: keda
       prNumber: ${{ github.event.pull_request.number }}
+    secrets:
+      AWS_GITHUB_ROLE_ARN: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
