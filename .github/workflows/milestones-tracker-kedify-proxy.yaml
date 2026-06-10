@@ -15,8 +15,11 @@ jobs:
       pull-requests: write
       issues: write
       packages: write
+      id-token: write
 
     uses: ./.github/workflows/milestones-tracker.yaml
     with:
       chart: kedify-proxy
       prNumber: ${{ github.event.pull_request.number }}
+    secrets:
+      AWS_GITHUB_ROLE_ARN: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
