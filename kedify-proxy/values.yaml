@@ -51,6 +51,21 @@ config:
     keepaliveTimeout: 5s
     # -- timeout for initial connection to the Kedify control plane
     connectTimeout: 2s
+  # Additional top-level Envoy bootstrap config, merged verbatim into the proxy
+  # bootstrap, for sections Kedify does not template. A common case is raising the
+  # RE2 regex program-size limit (default 100) so long `pathRegex` routes are
+  # accepted instead of the listener being rejected:
+  #   bootstrap:
+  #     layered_runtime:
+  #       layers:
+  #         - name: static_layer
+  #           static_layer:
+  #             re2.max_program_size.error_level: 1000
+  #             re2.max_program_size.warn_level: 1000
+  # Additive only: do not redefine keys Kedify already sets (node, admin,
+  # dynamic_resources, static_resources, stats_sinks, overload_manager).
+  # -- extra top-level Envoy bootstrap sections merged verbatim into the proxy bootstrap (additive only; e.g. `layered_runtime` to raise the RE2 program-size limit for long pathRegex routes). Changing this restarts all kedify-proxy instances.
+  bootstrap: {}
 
 pod:
   # -- custom annotations that should be added to the Kedify proxy pod
