@@ -34,7 +34,7 @@ agent:
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: /helm/kedify/kedify-proxy.tgz
-    chartVersion: v0.0.10
+    chartVersion: v0.0.11
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
     # it configures a template for Kedify proxy which can be installed by Kedify agent either clusterwide or to each
     # namespace.
@@ -244,13 +244,11 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
-
 # when set to: 'helm' (default), the installation will rely on helm hooks for CRD and CR installation and cleanup
 #              'jobs' - the helm hooks will be disabled for CRD & CR installation and k8s jobs will be used instead
 #              'argo' - everything will be installed as regular manifests and argocd annotations will be used
 #                       to make sure ArgoCD applies them in the right order
 hooks: helm
-
 # dependent helm charts
 keda:
   # for all available values, check: https://github.com/kedify/charts/blob/main/keda/values.yaml
