@@ -23,6 +23,9 @@
                 "watchNamespace": {
                     "$ref": "#/definitions/WatchNamespace"
                 },
+                "kedify": {
+                    "$ref": "#/definitions/Kedify"
+                },
                 "imagePullSecrets": {
                     "$ref": "#/definitions/ImagePullSecrets"
                 },
@@ -142,6 +145,7 @@
                 "clusterDomain",
                 "crds",
                 "watchNamespace",
+                "kedify",
                 "imagePullSecrets",
                 "networkPolicy",
                 "operator",
@@ -273,6 +277,60 @@
                 {
                     "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(,[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                 }
+            ]
+        },
+        "Kedify": {
+            "type": "object",
+            "properties": {
+                "multitenant": {
+                    "$ref": "#/definitions/KedifyMultitenant"
+                }
+            },
+            "required": [
+                "multitenant"
+            ]
+        },
+        "KedifyMultitenant": {
+            "type": "object",
+            "properties": {
+                "mode": {
+                    "type": "string",
+                    "description": "Multitenant mode: \"\" (disabled), \"default\" or \"tenant\"",
+                    "enum": [
+                        "",
+                        "default",
+                        "tenant"
+                    ],
+                    "default": ""
+                },
+                "configSecretName": {
+                    "type": "string",
+                    "default": "kedify-multitenancy-config"
+                },
+                "address": {
+                    "type": "string",
+                    "default": ""
+                },
+                "authority": {
+                    "type": "string",
+                    "default": ""
+                },
+                "agentNamespace": {
+                    "type": "string",
+                    "default": "keda"
+                },
+                "agentServiceAccount": {
+                    "type": "string",
+                    "default": "kedify-agent"
+                }
+            },
+            "required": [
+                "mode",
+                "configSecretName",
+                "address",
+                "authority",
+                "agentNamespace",
+                "agentServiceAccount"
             ]
         },
         "ImagePullSecrets": {

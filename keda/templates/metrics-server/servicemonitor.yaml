@@ -1,4 +1,4 @@
-{{- if and .Values.metricsServer.enabled .Values.prometheus.metricServer.enabled .Values.prometheus.metricServer.serviceMonitor.enabled }}
+{{- if and .Values.metricsServer.enabled .Values.prometheus.metricServer.enabled .Values.prometheus.metricServer.serviceMonitor.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

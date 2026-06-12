@@ -1,4 +1,4 @@
-{{- if .Values.metricsServer.enabled }}
+{{- if and .Values.metricsServer.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
