@@ -1,4 +1,4 @@
-{{- if and .Values.webhooks.enabled }}
+{{- if and .Values.webhooks.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
 {{- if or (or .Values.podDisruptionBudget.minAvailable .Values.podDisruptionBudget.maxUnavailable)  .Values.podDisruptionBudget.webhooks }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
