@@ -237,7 +237,10 @@ rules:
   - list
   - watch
 {{- if .Values.agent.features.multitenantKEDAEnabled }}
-# for tenant configuration and cert management in fleet installation
+# Discover tenant registration ConfigMaps cluster-wide. RBAC cannot filter
+# list/watch by label and tenants live in arbitrary namespaces, so this has to
+# be cluster-wide; only ConfigMaps labelled kedify.io/tenant-registration=true
+# are acted upon.
 - apiGroups:
   - ""
   resources:
@@ -246,16 +249,12 @@ rules:
   - get
   - list
   - watch
-# tenant TLS secrets are only read (synced into the multitenancy config secret)
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  resourceNames:
-  - kedaorg-certs
-# the multitenancy config secret is owned and written by the agent
+# Per-tenant TLS cert secrets are read through the namespaced, resourceName-scoped
+# Roles the keda chart creates in each tenant namespace
+# (kedify-agent-secret-rbac.yaml). Those bind this agent ServiceAccount and use
+# each tenant's own (configurable) certificates.secretName, so no cluster-wide
+# secret read is granted here.
+# The multitenancy config secret is owned and written by the agent.
 - apiGroups:
   - ""
   resources:
