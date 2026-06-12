@@ -25,7 +25,7 @@
           "type": "string"
         },
         "kedaInstallations": {
-          "description": "KEDAInstallations defines the KEDA installations options",
+          "description": "KEDAInstallations defines the KEDA installations options.\nNames must be unique across installations.",
           "items": {
             "description": "KEDAInstallation defines the desired state of a KEDA installation",
             "properties": {
@@ -111,12 +111,25 @@
                 ],
                 "type": "string"
               },
+              "multitenancy": {
+                "description": "Multitenancy defines if KEDA should be installed in multitenant mode, where metrics API is shared between multiple installations and how to route HPA requests to the right KEDA operator.\nMultitenancy is only supported with Helm management mode.",
+                "properties": {
+                  "multitenancyConfigRef": {
+                    "description": "ConfigRef is the reference to the secret for the multitenancy connections, if not provided defaults to \"kedify-multitenancy-config\" secret in the namespace of the default KEDA installation.\nThis is where the keda adapter gets all TLS certs to each tenant keda-operator and the routing configuration for the HPA requests.",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              },
               "name": {
                 "description": "Name of the KEDA installation",
+                "minLength": 1,
                 "type": "string"
               },
               "namespace": {
                 "description": "Namespace where KEDA should be installed",
+                "minLength": 1,
                 "type": "string"
               },
               "otelAddonHelm": {
@@ -239,16 +252,27 @@
                 },
                 "type": "object",
                 "additionalProperties": false
+              },
+              "watchNamespace": {
+                "description": "WatchNamespace is the namespace that this KEDA operator watches for ScaledObjects/ScaledJobs.\nIn per-namespace mode this equals Namespace and can be omitted.\nIn single-namespace mode (multiple operators in the same namespace), set this to the target namespace each operator watches.",
+                "type": "string"
               }
             },
             "required": [
               "agentAutoUpdate",
-              "mode"
+              "mode",
+              "name",
+              "namespace"
             ],
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "maxItems": 32,
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "type": "object",
@@ -336,6 +360,61 @@
               "observedHelmValues": {
                 "type": "string"
               },
+              "tenants": {
+                "additionalProperties": {
+                  "description": "TenantStatus defines the observed state of a non-default multitenant KEDA installation",
+                  "properties": {
+                    "configSynced": {
+                      "description": "KedifyConfigurationResourceStatus defines the observed state of a KedifyConfiguration owned resources",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    },
+                    "operator": {
+                      "description": "KedifyConfigurationResourceStatus defines the observed state of a KedifyConfiguration owned resources",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    },
+                    "tlsCertSecret": {
+                      "description": "KedifyConfigurationResourceStatus defines the observed state of a KedifyConfiguration owned resources",
+                      "properties": {
+                        "phase": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "configSynced",
+                    "operator",
+                    "tlsCertSecret"
+                  ],
+                  "type": "object",
+                  "additionalProperties": false
+                },
+                "description": "Tenants contains per-tenant status for non-default multitenant KEDA installations",
+                "type": "object"
+              },
               "version": {
                 "type": "string"
               }
@@ -349,6 +428,61 @@
         "configSHA256": {
           "description": "ConfigSHA256 calculated sha over all relevant field used for internal purposes",
           "type": "string"
+        },
+        "discoveredTenants": {
+          "description": "DiscoveredTenants contains the list of tenants discovered via registration ConfigMaps",
+          "items": {
+            "description": "DiscoveredTenant represents a tenant discovered via a registration ConfigMap, stored in KedifyConfiguration status.",
+            "properties": {
+              "address": {
+                "description": "Address is the gRPC address of the keda-operator",
+                "type": "string"
+              },
+              "configSynced": {
+                "description": "ConfigSynced indicates whether the tenant config has been synced to the multitenancy config secret",
+                "type": "boolean"
+              },
+              "isDefault": {
+                "description": "IsDefault indicates this is the default tenant",
+                "type": "boolean"
+              },
+              "message": {
+                "description": "Message contains additional information about the tenant status",
+                "type": "string"
+              },
+              "name": {
+                "description": "Name is the globally unique tenant identifier in \"namespace/release\" format",
+                "type": "string"
+              },
+              "namespace": {
+                "description": "Namespace where the KEDA operator runs",
+                "type": "string"
+              },
+              "operatorReady": {
+                "description": "OperatorReady indicates whether the keda-operator deployment is ready",
+                "type": "boolean"
+              },
+              "tlsCertReady": {
+                "description": "TLSCertReady indicates whether the TLS cert secret is found and populated",
+                "type": "boolean"
+              },
+              "watchNamespace": {
+                "description": "WatchNamespace is the namespace KEDA watches for ScaledObjects/ScaledJobs",
+                "type": "string"
+              }
+            },
+            "required": [
+              "address",
+              "configSynced",
+              "name",
+              "namespace",
+              "operatorReady",
+              "tlsCertReady"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
         },
         "multiClusterStatus": {
           "description": "MultiClusterStatus contains status information about multi-cluster deployments",
