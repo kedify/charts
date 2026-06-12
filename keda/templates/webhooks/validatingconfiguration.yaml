@@ -1,4 +1,4 @@
-{{- if and .Values.webhooks.enabled }}
+{{- if and .Values.webhooks.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:

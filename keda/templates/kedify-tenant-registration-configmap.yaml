@@ -1,0 +1,25 @@
+{{- if and .Values.kedify.multitenant .Values.kedify.multitenant.mode }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-kedify-tenant-registration
+  namespace: {{ .Release.Namespace }}
+  labels:
+    kedify.io/tenant-registration: "true"
+    {{- include "keda.labels" . | nindent 4 }}
+  {{- with .Values.additionalAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  name: {{ printf "%s/%s" .Release.Namespace .Release.Name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  watchNamespace: {{ .Values.watchNamespace | default .Release.Namespace | quote }}
+  address: {{ .Values.kedify.multitenant.address | default (printf "%s.%s.svc.%s:9666" .Values.operator.name .Release.Namespace .Values.clusterDomain) | quote }}
+  {{- if .Values.kedify.multitenant.authority }}
+  authority: {{ .Values.kedify.multitenant.authority | quote }}
+  {{- end }}
+  tlsSecretRef: {{ .Values.certificates.secretName | quote }}
+  isDefaultTenant: {{ eq .Values.kedify.multitenant.mode "default" | quote }}
+  operatorDeploymentName: {{ .Values.operator.name | quote }}
+{{- end }}
