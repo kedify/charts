@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}
+  name: {{ (include "keda.operator.name" .) }}
 rules:
 - apiGroups:
   - ""
@@ -169,7 +169,7 @@ metadata:
   labels:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
 rules:
 - apiGroups:
@@ -203,7 +203,7 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-view: "true"
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
 rules:
 - apiGroups:
@@ -238,9 +238,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ $.Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" $) }}
     {{- include "keda.labels" $ | indent 4 }}
-  name: {{ $.Values.operator.name }}-token-creator-{{ $r.name }}
+  name: {{ (include "keda.operator.name" $) }}-token-creator-{{ $r.name }}
   namespace: {{ $r.namespace }}
 rules:
 - apiGroups:
@@ -260,17 +260,17 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ $.Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" $) }}
     {{- include "keda.labels" $ | indent 4 }}
-  name: {{ $.Values.operator.name }}-token-creator-{{ $r.name }}
+  name: {{ (include "keda.operator.name" $) }}-token-creator-{{ $r.name }}
   namespace: {{ $r.namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ $.Values.operator.name }}-token-creator-{{ $r.name }}
+  name: {{ (include "keda.operator.name" $) }}-token-creator-{{ $r.name }}
 subjects:
 - kind: ServiceAccount
-  name: {{ $.Values.operator.name }}
+  name: {{ (include "keda.operator.name" $) }}
   namespace: {{ $.Release.Namespace }}
 {{- end }}
 {{- end }}

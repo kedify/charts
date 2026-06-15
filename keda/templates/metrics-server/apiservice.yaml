@@ -8,7 +8,7 @@ metadata:
     {{- if and (not .Values.certificates.certManager.generateCA) .Values.certificates.certManager.issuer.generate }}
     cert-manager.io/inject-ca-from-secret: {{ .Release.Namespace }}/{{ .Values.certificates.certManager.caSecretName }}
     {{- else }}
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Values.operator.name }}-tls-certificates
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ (include "keda.operator.name" .) }}-tls-certificates
     {{- end }}
     {{- end }}
     {{- if .Values.additionalAnnotations }}
@@ -21,7 +21,7 @@ metadata:
   name: v1beta1.external.metrics.k8s.io
 spec:
   service:
-    name: {{ .Values.operator.name }}-metrics-apiserver
+    name: {{ (include "keda.operator.name" .) }}-metrics-apiserver
     namespace: {{ .Release.Namespace }}
     port: {{ .Values.service.portHttps }}
   group: external.metrics.k8s.io
