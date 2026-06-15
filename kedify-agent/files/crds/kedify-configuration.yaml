@@ -198,12 +198,12 @@ spec:
                           type: string
                       type: object
                     name:
-                      description: Name of the KEDA installation
-                      minLength: 1
+                      description: |-
+                        Name of the KEDA installation. Optional and informational only (used in logs
+                        and the config change hash); the installation is keyed by Namespace.
                       type: string
                     namespace:
                       description: Namespace where KEDA should be installed
-                      minLength: 1
                       type: string
                     otelAddonHelm:
                       description: OTELAddonHelm defines the otel-addon Helm values
@@ -313,23 +313,11 @@ spec:
                               type: integer
                           type: object
                       type: object
-                    watchNamespace:
-                      description: |-
-                        WatchNamespace is the namespace that this KEDA operator watches for ScaledObjects/ScaledJobs.
-                        In per-namespace mode this equals Namespace and can be omitted.
-                        In single-namespace mode (multiple operators in the same namespace), set this to the target namespace each operator watches.
-                      type: string
                   required:
                   - agentAutoUpdate
                   - mode
-                  - name
-                  - namespace
                   type: object
-                maxItems: 32
                 type: array
-                x-kubernetes-list-map-keys:
-                - name
-                x-kubernetes-list-type: map
             type: object
           status:
             description: KedifyConfigurationStatus defines the observed state of KedifyConfiguration
