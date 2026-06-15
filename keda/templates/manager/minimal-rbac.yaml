@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-certs
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-certs
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-certs
+  name: {{ (include "keda.operator.name" .) }}-certs
   namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups:
@@ -32,7 +32,7 @@ rules:
   verbs:
   - get
   resourceNames:
-  - {{ .Values.certificates.secretName | quote }}
+  - {{ (include "keda.certificates.secretName" .) | quote }}
 {{- if .Values.permissions.operator.restrict.secret }}
 - apiGroups:
   - ""
@@ -50,7 +50,7 @@ rules:
   verbs:
   - get
   resourceNames:
-  - {{ .Values.certificates.secretName | quote }}
+  - {{ (include "keda.certificates.secretName" .) | quote }}
 - apiGroups:
   - ""
   resources:
@@ -73,17 +73,17 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-certs
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-certs
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-certs
+  name: {{ (include "keda.operator.name" .) }}-certs
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.operator.name }}-certs
+  name: {{ (include "keda.operator.name" .) }}-certs
 subjects:
 - kind: ServiceAccount
-  name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -94,9 +94,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-minimal-cluster-role
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-minimal-cluster-role
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-minimal-cluster-role
+  name: {{ (include "keda.operator.name" .) }}-minimal-cluster-role
 rules:
 - apiGroups:
   - keda.sh
@@ -153,15 +153,15 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-minimal
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-minimal
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-minimal
+  name: {{ (include "keda.operator.name" .) }}-minimal
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Values.operator.name }}-minimal-cluster-role
+  name: {{ (include "keda.operator.name" .) }}-minimal-cluster-role
 subjects:
 - kind: ServiceAccount
-  name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end }}

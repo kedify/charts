@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-metrics-server-kedify
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-metrics-server-kedify
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-metrics-server-kedify
+  name: {{ (include "keda.operator.name" .) }}-metrics-server-kedify
   namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups:
@@ -28,14 +28,14 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-metrics-server-kedify
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-metrics-server-kedify
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-metrics-server-kedify
+  name: {{ (include "keda.operator.name" .) }}-metrics-server-kedify
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.operator.name }}-metrics-server-kedify
+  name: {{ (include "keda.operator.name" .) }}-metrics-server-kedify
 subjects:
 - kind: ServiceAccount
   name: {{ (.Values.serviceAccount.metricServer).name | default .Values.serviceAccount.name }}

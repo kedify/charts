@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-system-auth-delegator
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-system-auth-delegator
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-system-auth-delegator
+  name: {{ (include "keda.operator.name" .) }}-system-auth-delegator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -28,9 +28,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-auth-reader
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-auth-reader
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-auth-reader
+  name: {{ (include "keda.operator.name" .) }}-auth-reader
   namespace: {{ .Values.rbac.controlPlaneServiceAccountsNamespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -49,13 +49,13 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-hpa-controller-external-metrics
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-hpa-controller-external-metrics
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-hpa-controller-external-metrics
+  name: {{ (include "keda.operator.name" .) }}-hpa-controller-external-metrics
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Values.operator.name }}-external-metrics-reader
+  name: {{ (include "keda.operator.name" .) }}-external-metrics-reader
 subjects:
 - kind: ServiceAccount
   name: horizontal-pod-autoscaler

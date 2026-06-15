@@ -8,7 +8,7 @@ metadata:
     {{- toYaml (merge .Values.crds.additionalAnnotations .Values.additionalAnnotations) | nindent 4 }}
     {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.crd-labels" . | indent 4 }}
   name: clustertriggerauthentications.keda.sh
 spec:

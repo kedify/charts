@@ -2,13 +2,13 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ .Values.operator.name }}-ca
+  name: {{ (include "keda.operator.name" .) }}-ca
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "keda.labels" . | indent 4 }}
 spec:
   isCA: true
-  commonName: {{ .Values.operator.name }}
+  commonName: {{ (include "keda.operator.name" .) }}
   secretName: {{ .Values.certificates.certManager.caSecretName }}
   secretTemplate:
     {{- toYaml .Values.certificates.certManager.secretTemplate | nindent 4 }}
@@ -18,7 +18,7 @@ spec:
   duration: 43800h0m0s     # 5 years
   renewBefore: 14600h0m0s  # 1.6 year, 1/3rd of the duration
   issuerRef:
-    name: {{ .Values.operator.name }}-selfsigned-issuer
+    name: {{ (include "keda.operator.name" .) }}-selfsigned-issuer
     kind: Issuer
     group: cert-manager.io
 {{- end }}
