@@ -2,21 +2,21 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Values.operator.name }}
+  name: {{ (include "keda.operator.name" .) }}
   namespace: {{ .Release.Namespace }}
   {{- with .Values.additionalAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app: {{ .Values.operator.name }}
-    name: {{ .Values.operator.name }}
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app: {{ (include "keda.operator.name" .) }}
+    name: {{ (include "keda.operator.name" .) }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
 spec:
   podSelector:
     matchLabels:
-      app: {{ .Values.operator.name }}
+      app: {{ (include "keda.operator.name" .) }}
   policyTypes:
     - Ingress
     - Egress

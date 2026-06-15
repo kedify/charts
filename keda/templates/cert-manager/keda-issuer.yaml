@@ -6,7 +6,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ .Values.operator.name }}-issuer
+  name: {{ (include "keda.operator.name" .) }}-issuer
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "keda.labels" . | indent 4 }}

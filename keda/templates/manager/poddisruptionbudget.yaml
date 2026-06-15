@@ -3,13 +3,13 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ .Values.operator.name }}
+  name: {{ (include "keda.operator.name" .) }}
   {{- with .Values.additionalAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
@@ -28,5 +28,5 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.operator.name }}
+      app: {{ (include "keda.operator.name" .) }}
 {{- end }}

@@ -2,23 +2,23 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ .Values.operator.name }}-tls-certificates
+  name: {{ (include "keda.operator.name" .) }}-tls-certificates
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "keda.labels" . | indent 4 }}
 spec:
-  commonName: {{ .Values.operator.name }}
+  commonName: {{ (include "keda.operator.name" .) }}
   dnsNames:
-  - {{ .Values.operator.name }}.{{ .Release.Namespace }}
-  - {{ .Values.operator.name }}.{{ .Release.Namespace }}.svc
-  - {{ .Values.operator.name }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
-  - {{ .Values.operator.name }}-metrics-apiserver.{{ .Release.Namespace }}
-  - {{ .Values.operator.name }}-metrics-apiserver.{{ .Release.Namespace }}.svc
-  - {{ .Values.operator.name }}-metrics-apiserver.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
+  - {{ (include "keda.operator.name" .) }}.{{ .Release.Namespace }}
+  - {{ (include "keda.operator.name" .) }}.{{ .Release.Namespace }}.svc
+  - {{ (include "keda.operator.name" .) }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
+  - {{ (include "keda.operator.name" .) }}-metrics-apiserver.{{ .Release.Namespace }}
+  - {{ (include "keda.operator.name" .) }}-metrics-apiserver.{{ .Release.Namespace }}.svc
+  - {{ (include "keda.operator.name" .) }}-metrics-apiserver.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
   - {{ .Values.webhooks.name }}.{{ .Release.Namespace }}
   - {{ .Values.webhooks.name }}.{{ .Release.Namespace }}.svc
   - {{ .Values.webhooks.name }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
-  secretName: {{ .Values.certificates.secretName }}
+  secretName: {{ (include "keda.certificates.secretName" .) }}
   secretTemplate:
     {{- toYaml .Values.certificates.certManager.secretTemplate | nindent 4 }}
   usages:
@@ -31,7 +31,7 @@ spec:
   renewBefore: {{ .Values.certificates.certManager.renewBefore }}
   issuerRef:
     {{- if .Values.certificates.certManager.issuer.generate }}
-    name: {{ .Values.operator.name }}-issuer
+    name: {{ (include "keda.operator.name" .) }}-issuer
     kind: Issuer
     group: cert-manager.io
     {{- else }}
