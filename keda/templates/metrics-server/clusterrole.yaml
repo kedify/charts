@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-external-metrics-reader
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-external-metrics-reader
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-external-metrics-reader
+  name: {{ (include "keda.operator.name" .) }}-external-metrics-reader
 rules:
 - apiGroups:
   - external.metrics.k8s.io

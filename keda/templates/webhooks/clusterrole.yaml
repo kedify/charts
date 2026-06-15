@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-webhook
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-webhook
     {{- include "keda.labels" . | indent 4 }}
-  name: {{ .Values.operator.name }}-webhook
+  name: {{ (include "keda.operator.name" .) }}-webhook
 rules:
 - apiGroups:
   - autoscaling

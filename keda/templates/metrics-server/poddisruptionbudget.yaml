@@ -3,13 +3,13 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ .Values.operator.name }}-metrics-apiserver
+  name: {{ (include "keda.operator.name" .) }}-metrics-apiserver
   {{- with .Values.additionalAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}-metrics-apiserver
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-metrics-apiserver
     {{- include "keda.labels" . | indent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
@@ -28,6 +28,6 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.operator.name }}-metrics-apiserver
+      app: {{ (include "keda.operator.name" .) }}-metrics-apiserver
 {{- end }}
 

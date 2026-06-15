@@ -2,13 +2,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ .Values.operator.name }}-metrics-apiserver
+  name: {{ (include "keda.operator.name" .) }}-metrics-apiserver
   {{- with .Values.additionalAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: {{ .Values.operator.name }}
+    app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}
     {{- include "keda.labels" . | indent 4 }}
     {{- range $key, $value := .Values.prometheus.metricServer.serviceMonitor.additionalLabels }}
     {{ $key }}: {{ $value | quote }}
@@ -65,5 +65,5 @@ spec:
     - {{ .Release.Namespace }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ .Values.operator.name }}-metrics-apiserver
+      app.kubernetes.io/name: {{ (include "keda.operator.name" .) }}-metrics-apiserver
 {{- end }}

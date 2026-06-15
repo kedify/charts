@@ -7,9 +7,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: "kedify-{{ .Values.operator.name }}-scalinggroups-admin"
+    app.kubernetes.io/name: "kedify-{{ (include "keda.operator.name" .) }}-scalinggroups-admin"
     {{- include "keda.labels" . | indent 4 }}
-  name: kedify-{{ .Values.operator.name }}-scalinggroups-admin
+  name: kedify-{{ (include "keda.operator.name" .) }}-scalinggroups-admin
 rules:
 - apiGroups: ["keda.kedify.io"]
   resources: ["scalinggroups", "scalinggroups/status"]
@@ -23,9 +23,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: "kedify-{{ .Values.operator.name }}-http-admin"
+    app.kubernetes.io/name: "kedify-{{ (include "keda.operator.name" .) }}-http-admin"
     {{- include "keda.labels" . | indent 4 }}
-  name: kedify-{{ .Values.operator.name }}-http-admin
+  name: kedify-{{ (include "keda.operator.name" .) }}-http-admin
 rules:
 - apiGroups: ["http.keda.sh"]
   resources: ["httpscaledobjects"]
@@ -40,16 +40,16 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: kedify-{{ .Values.operator.name }}-scalinggroups-admin
+    app.kubernetes.io/name: kedify-{{ (include "keda.operator.name" .) }}-scalinggroups-admin
     {{- include "keda.labels" . | indent 4 }}
-  name: "kedify-{{ .Values.operator.name }}-scalinggroups-admin"
+  name: "kedify-{{ (include "keda.operator.name" .) }}-scalinggroups-admin"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kedify-{{ .Values.operator.name }}-scalinggroups-admin"
+  name: "kedify-{{ (include "keda.operator.name" .) }}-scalinggroups-admin"
 subjects:
 - kind: ServiceAccount
-  name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -60,16 +60,16 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: kedify-{{ .Values.operator.name }}-http-admin
+    app.kubernetes.io/name: kedify-{{ (include "keda.operator.name" .) }}-http-admin
     {{- include "keda.labels" . | indent 4 }}
-  name: "kedify-{{ .Values.operator.name }}-http-admin"
+  name: "kedify-{{ (include "keda.operator.name" .) }}-http-admin"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kedify-{{ .Values.operator.name }}-http-admin"
+  name: "kedify-{{ (include "keda.operator.name" .) }}-http-admin"
 subjects:
 - kind: ServiceAccount
-  name: {{ (.Values.serviceAccount.operator).name | default .Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- else }}
   {{- range ( split "," .Values.watchNamespace ) }}
@@ -82,17 +82,17 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: "kedify-{{ $.Values.operator.name }}-scalinggroups-admin"
+    app.kubernetes.io/name: "kedify-{{ (include "keda.operator.name" $) }}-scalinggroups-admin"
     {{- include "keda.labels" $ | indent 4 }}
-  name: "kedify-{{ $.Values.operator.name }}-scalinggroups-admin"
+  name: "kedify-{{ (include "keda.operator.name" $) }}-scalinggroups-admin"
   namespace: {{ . | trim }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kedify-{{ $.Values.operator.name }}-scalinggroups-admin"
+  name: "kedify-{{ (include "keda.operator.name" $) }}-scalinggroups-admin"
 subjects:
 - kind: ServiceAccount
-  name: {{ ($.Values.serviceAccount.operator).name | default $.Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" $ }}
   namespace: {{ $.Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -103,17 +103,17 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    app.kubernetes.io/name: "kedify-{{ $.Values.operator.name }}-http-admin"
+    app.kubernetes.io/name: "kedify-{{ (include "keda.operator.name" $) }}-http-admin"
     {{- include "keda.labels" $ | indent 4 }}
-  name: "kedify-{{ $.Values.operator.name }}-http-admin"
+  name: "kedify-{{ (include "keda.operator.name" $) }}-http-admin"
   namespace: {{ . | trim }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kedify-{{ $.Values.operator.name }}-http-admin"
+  name: "kedify-{{ (include "keda.operator.name" $) }}-http-admin"
 subjects:
 - kind: ServiceAccount
-  name: {{ ($.Values.serviceAccount.operator).name | default $.Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" $ }}
   namespace: {{ $.Release.Namespace }}
 ---
   {{- end }}

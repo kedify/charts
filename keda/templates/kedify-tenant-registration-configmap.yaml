@@ -15,11 +15,11 @@ data:
   name: {{ printf "%s/%s" .Release.Namespace .Release.Name | quote }}
   namespace: {{ .Release.Namespace | quote }}
   watchNamespace: {{ .Values.watchNamespace | default .Release.Namespace | quote }}
-  address: {{ .Values.kedify.multitenant.address | default (printf "%s.%s.svc.%s:9666" .Values.operator.name .Release.Namespace .Values.clusterDomain) | quote }}
+  address: {{ .Values.kedify.multitenant.address | default (printf "%s.%s.svc.%s:9666" (include "keda.operator.name" .) .Release.Namespace .Values.clusterDomain) | quote }}
   {{- if .Values.kedify.multitenant.authority }}
   authority: {{ .Values.kedify.multitenant.authority | quote }}
   {{- end }}
-  tlsSecretRef: {{ .Values.certificates.secretName | quote }}
+  tlsSecretRef: {{ (include "keda.certificates.secretName" .) | quote }}
   isDefaultTenant: {{ eq .Values.kedify.multitenant.mode "default" | quote }}
-  operatorDeploymentName: {{ .Values.operator.name | quote }}
+  operatorDeploymentName: {{ (include "keda.operator.name" .) | quote }}
 {{- end }}
