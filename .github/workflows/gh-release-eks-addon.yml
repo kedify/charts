@@ -43,6 +43,21 @@ on:
         required: false
         default: ""
         type: string
+      billing-reporter:
+        description: "Billing reporter for the EKS add-on agent"
+        required: false
+        default: "aws-irsa"
+        type: string
+      billing-aws-product-code:
+        description: "AWS Marketplace product code used for usage billing"
+        required: false
+        default: "bo0ogx63o611elavsbl4s20mw"
+        type: string
+      billing-aws-service-account-name:
+        description: "Service account name reported to AWS Marketplace metering"
+        required: false
+        default: "kedify-agent"
+        type: string
   workflow_call:
     inputs:
       source-ref:
@@ -85,6 +100,21 @@ on:
         required: false
         default: ""
         type: string
+      billing-reporter:
+        description: "Billing reporter for the EKS add-on agent"
+        required: false
+        default: "aws-irsa"
+        type: string
+      billing-aws-product-code:
+        description: "AWS Marketplace product code used for usage billing"
+        required: false
+        default: "bo0ogx63o611elavsbl4s20mw"
+        type: string
+      billing-aws-service-account-name:
+        description: "Service account name reported to AWS Marketplace metering"
+        required: false
+        default: "kedify-agent"
+        type: string
     secrets:
       AWS_GITHUB_ROLE_ARN:
         required: true
@@ -103,6 +133,9 @@ env:
   MARKETPLACE_PRODUCT_ID: ${{ inputs['marketplace-product-id'] || 'prod-m2zll7yol7iog' }}
   MARKETPLACE_VERSION_TITLE: ${{ inputs['marketplace-version-title'] || '' }}
   MARKETPLACE_RELEASE_NOTES: ${{ inputs['marketplace-release-notes'] || '' }}
+  KEDIFY_BILLING_REPORTER: ${{ inputs['billing-reporter'] || 'aws-irsa' }}
+  KEDIFY_BILLING_AWS_PRODUCT_CODE: ${{ inputs['billing-aws-product-code'] || 'bo0ogx63o611elavsbl4s20mw' }}
+  KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME: ${{ inputs['billing-aws-service-account-name'] || 'kedify-agent' }}
 
 jobs:
   test:
@@ -713,6 +746,34 @@ jobs:
             "roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"keda-metrics-server-extension-apiserver-authentication-reader"},
             "subjects":[{"kind":"ServiceAccount","name":"keda-metrics-server","namespace":"keda"}]
           }]' "${tmp_chart_dir}/values.yaml"
+          if [[ -n "${KEDIFY_BILLING_REPORTER}" ]]; then
+            template_file="${tmp_chart_dir}/templates/agent-deployment.yaml"
+            tmp_template_file="$(mktemp)"
+            awk '
+              {
+                print
+                if (!inserted && $0 == "              value: {{ .Values.agent.autowire.ingressCooldownPeriod | quote }}") {
+                  print "            - name: KEDIFY_BILLING_REPORTER"
+                  print "              value: \"{{ env \\\"KEDIFY_BILLING_REPORTER\\\" }}\""
+                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}"
+                  print "            - name: KEDIFY_BILLING_AWS_PRODUCT_CODE"
+                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}\""
+                  print "            {{- end }}"
+                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}"
+                  print "            - name: KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME"
+                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}\""
+                  print "            {{- end }}"
+                  inserted = 1
+                }
+              }
+              END {
+                if (!inserted) {
+                  exit 1
+                }
+              }
+            ' "${template_file}" > "${tmp_template_file}"
+            mv "${tmp_template_file}" "${template_file}"
+          fi
           # AWS EKS add-on rendering uses `helm template --no-hooks`.
           # Switch to jobs mode so CRD/CR installation is rendered as regular manifests.
           yq -i '.hooks = "jobs"' "${tmp_chart_dir}/values.yaml"
