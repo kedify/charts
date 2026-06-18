@@ -433,6 +433,43 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - gateway.solo.io
+  resources:
+  - routetables
+  - virtualservices
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gloo.solo.io
+  resources:
+  - upstreams
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.gloo.solo.io
+  resources:
+  - routetables
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.gloo.solo.io
+  resources:
+  - virtualdestinations
+  verbs:
+  - get
+  - list
+  - watch
 {{- if .Values.agent.rbac.readServices }}
 - apiGroups:
   - ""
