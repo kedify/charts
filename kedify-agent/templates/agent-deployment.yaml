@@ -145,6 +145,10 @@ spec:
               value: {{ .Values.agent.autowire.ingressCooldownPeriod | quote }}
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /healthz

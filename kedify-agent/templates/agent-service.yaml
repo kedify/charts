@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    control-plane: kedify-agent
+    {{- include "kedify-agent.labels" . | nindent 4 }}
+  name: kedify-agent-metrics
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    control-plane: kedify-agent
