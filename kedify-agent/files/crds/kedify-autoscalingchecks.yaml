@@ -291,6 +291,31 @@ spec:
                 default: 5m
                 description: Interval controls how often the controller repeats validation.
                 type: string
+              reliability:
+                description: Reliability configures bounded reliability windows and
+                  missed-run accounting.
+                properties:
+                  countMissedRunsAsFailures:
+                    default: true
+                    description: CountMissedRunsAsFailures controls whether missed
+                      scheduled runs reduce reliability.
+                    type: boolean
+                  windows:
+                    default:
+                    - 1h
+                    - 24h
+                    - 168h
+                    - 720h
+                    description: |-
+                      Windows controls the bounded duration windows reported in status and metrics.
+                      Defaults to 1h, 24h, 7d, and 30d.
+                    items:
+                      type: string
+                    maxItems: 8
+                    minItems: 1
+                    type: array
+                    uniqueItems: true
+                type: object
               reporting:
                 description: Reporting carries bounded user metadata for metrics and
                   dashboards.
@@ -452,6 +477,11 @@ spec:
                   - type
                   type: object
                 type: array
+              consecutiveFailures:
+                description: ConsecutiveFailures is the number of consecutive reliability-counted
+                  failures.
+                format: int64
+                type: integer
               lastFailure:
                 description: LastFailure stores the most recent classified failure.
                 properties:
@@ -513,6 +543,11 @@ spec:
               lastRun:
                 description: LastRun describes the most recent validation attempt.
                 properties:
+                  count:
+                    description: Count is the number of runs represented by this entry.
+                      Empty means one run.
+                    format: int64
+                    type: integer
                   duration:
                     description: Duration is the total validation duration.
                     type: string
@@ -523,6 +558,10 @@ spec:
                   message:
                     description: Message summarizes the last run result.
                     type: string
+                  missed:
+                    description: Missed marks a compact entry representing missed
+                      scheduled runs.
+                    type: boolean
                   reason:
                     description: Reason is a bounded reason for the last run result.
                     type: string
@@ -533,6 +572,11 @@ spec:
                   scaleUpLatency:
                     description: ScaleUpLatency is observed when ready replicas become
                       available.
+                    type: string
+                  scheduledAt:
+                    description: ScheduledAt is the scheduled time represented by
+                      this status entry.
+                    format: date-time
                     type: string
                   startedAt:
                     description: StartedAt is when the run began.
@@ -551,6 +595,107 @@ spec:
                   the controller.
                 format: int64
                 type: integer
+              reliability:
+                description: Reliability summarizes successful and failed runs across
+                  configured windows.
+                items:
+                  description: AutoscalingCheckReliabilityWindowStatus summarizes
+                    reliability for one window.
+                  properties:
+                    complete:
+                      description: Complete indicates whether retained status history
+                        covers the full window.
+                      type: boolean
+                    countedRuns:
+                      description: CountedRuns is the number of runs included in the
+                        reliability denominator.
+                      format: int64
+                      type: integer
+                    expectedRuns:
+                      description: ExpectedRuns is the number of non-suspended scheduled
+                        runs observed in the window.
+                      format: int64
+                      type: integer
+                    failedRuns:
+                      description: FailedRuns is the number of failed runs included
+                        in the reliability denominator.
+                      format: int64
+                      type: integer
+                    missedRuns:
+                      description: MissedRuns is the number of scheduled runs missed
+                        in the window.
+                      format: int64
+                      type: integer
+                    retainedSince:
+                      description: RetainedSince is the oldest retained run timestamp
+                        used for this summary.
+                      format: date-time
+                      type: string
+                    successfulRuns:
+                      description: SuccessfulRuns is the number of successful runs
+                        included in the window.
+                      format: int64
+                      type: integer
+                    window:
+                      description: Window is the duration covered by this summary.
+                      type: string
+                  required:
+                  - window
+                  type: object
+                maxItems: 8
+                type: array
+              runHistory:
+                description: RunHistory stores a bounded recent run history used for
+                  reliability calculations.
+                items:
+                  description: AutoscalingCheckRunStatus describes one validation
+                    run.
+                  properties:
+                    count:
+                      description: Count is the number of runs represented by this
+                        entry. Empty means one run.
+                      format: int64
+                      type: integer
+                    duration:
+                      description: Duration is the total validation duration.
+                      type: string
+                    finishedAt:
+                      description: FinishedAt is when the run completed.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message summarizes the last run result.
+                      type: string
+                    missed:
+                      description: Missed marks a compact entry representing missed
+                        scheduled runs.
+                      type: boolean
+                    reason:
+                      description: Reason is a bounded reason for the last run result.
+                      type: string
+                    scaleDownLatency:
+                      description: ScaleDownLatency is observed when replicas return
+                        to the idle target.
+                      type: string
+                    scaleUpLatency:
+                      description: ScaleUpLatency is observed when ready replicas
+                        become available.
+                      type: string
+                    scheduledAt:
+                      description: ScheduledAt is the scheduled time represented by
+                        this status entry.
+                      format: date-time
+                      type: string
+                    startedAt:
+                      description: StartedAt is when the run began.
+                      format: date-time
+                      type: string
+                    status:
+                      description: Status is Success, Failure, or Skipped.
+                      type: string
+                  type: object
+                maxItems: 200
+                type: array
             type: object
         type: object
     served: true
