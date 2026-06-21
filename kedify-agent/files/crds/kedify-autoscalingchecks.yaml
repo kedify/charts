@@ -360,7 +360,6 @@ spec:
                     maxItems: 8
                     minItems: 1
                     type: array
-                    uniqueItems: true
                 type: object
               reporting:
                 description: Reporting carries bounded user metadata for metrics and
