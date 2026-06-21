@@ -230,7 +230,7 @@ spec:
                     type: string
                 type: object
               http:
-                description: HTTP configures the phase 1 HTTP validator.
+                description: HTTP configures the HTTP validator.
                 properties:
                   host:
                     description: Host overrides the generated canary host used by
@@ -291,6 +291,52 @@ spec:
                 default: 5m
                 description: Interval controls how often the controller repeats validation.
                 type: string
+              prometheus:
+                description: Prometheus configures the Prometheus validator.
+                properties:
+                  activationThreshold:
+                    default: "0"
+                    description: ActivationThreshold is the value above which the
+                      check expects scale-up.
+                    type: string
+                  customHeaders:
+                    additionalProperties:
+                      type: string
+                    description: CustomHeaders are sent with the validation query
+                      and passed to KEDA as plaintext key=value pairs.
+                    type: object
+                  ignoreNullValues:
+                    default: false
+                    description: IgnoreNullValues is passed to the KEDA Prometheus
+                      trigger. The default is false so invalid empty results remain
+                      visible.
+                    type: boolean
+                  namespace:
+                    description: Namespace is passed to KEDA and the validation query
+                      when set.
+                    type: string
+                  query:
+                    description: Query is the PromQL instant query used by KEDA and
+                      validation.
+                    type: string
+                  queryParameters:
+                    additionalProperties:
+                      type: string
+                    description: QueryParameters are appended to the validation query
+                      and passed to KEDA as key=value pairs.
+                    type: object
+                  serverAddress:
+                    description: ServerAddress is the base URL of the Prometheus server.
+                    type: string
+                  threshold:
+                    description: Threshold is the KEDA target value for the Prometheus
+                      trigger.
+                    type: string
+                  unsafeSsl:
+                    description: UnsafeSsl disables TLS certificate verification for
+                      Prometheus queries and the KEDA trigger.
+                    type: boolean
+                type: object
               reliability:
                 description: Reliability configures bounded reliability windows and
                   missed-run accounting.
@@ -324,7 +370,7 @@ spec:
                     additionalProperties:
                       type: string
                     description: Labels are copied into status for dashboard grouping.
-                      They are not used as metric labels in phase 1.
+                      They are not used as metric labels.
                     type: object
                 type: object
               safety:
@@ -333,7 +379,7 @@ spec:
                   allowProductionResourceMutation:
                     description: |-
                       AllowProductionResourceMutation is reserved for future compatibility.
-                      Phase 1 ignores true values and never mutates production resources.
+                      AutoscalingCheck never mutates production resources.
                     type: boolean
                   maxCanaryReplicas:
                     default: 5
@@ -363,7 +409,7 @@ spec:
                 type: string
               type:
                 default: HTTP
-                description: Type selects the validator. Phase 1 implements HTTP.
+                description: Type selects the validator.
                 enum:
                 - HTTP
                 - Prometheus
@@ -494,6 +540,7 @@ spec:
                     - keda_metrics_apiserver
                     - external_metrics_api
                     - http_trigger
+                    - prometheus
                     - proxy
                     - interceptor
                     - hpa
