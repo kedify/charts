@@ -108,6 +108,7 @@ rules:
   - get
   resourceNames:
   - kedifyconfigurations.install.kedify.io
+  - autoscalingchecks.keda.kedify.io
   - scalingpolicies.keda.kedify.io
   - podresourceprofiles.keda.kedify.io
   - podresourceautoscalers.keda.kedify.io

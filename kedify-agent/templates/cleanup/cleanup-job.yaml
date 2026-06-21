@@ -67,6 +67,7 @@ spec:
           # delete kedify CRDs (ignore if not found)
           kubectl delete crd \
             kedifyconfigurations.install.kedify.io \
+            autoscalingchecks.keda.kedify.io \
             scalingpolicies.keda.kedify.io \
             podresourceprofiles.keda.kedify.io \
             podresourceautoscalers.keda.kedify.io \

@@ -1,0 +1,559 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: autoscalingchecks.keda.kedify.io
+spec:
+  group: keda.kedify.io
+  names:
+    kind: AutoscalingCheck
+    listKind: AutoscalingCheckList
+    plural: autoscalingchecks
+    shortNames:
+    - asc
+    singular: autoscalingcheck
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Overall autoscaling health
+      jsonPath: .status.conditions[?(.type=='Ready')].status
+      name: Ready
+      type: string
+    - description: Last validation result
+      jsonPath: .status.conditions[?(.type=='Validated')].status
+      name: Validated
+      type: string
+    - description: Validator type
+      jsonPath: .spec.type
+      name: Type
+      type: string
+    - description: Next scheduled run
+      jsonPath: .status.nextRunTime
+      name: Next Run
+      type: date
+    - description: Age
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AutoscalingCheck is the Schema for autoscaling health checks.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AutoscalingCheckSpec defines periodic autoscaling health
+              checks for one namespace.
+            properties:
+              canary:
+                description: Canary controls Kedify-owned resources created in this
+                  namespace.
+                properties:
+                  cleanupPolicy:
+                    default: RetainBetweenRuns
+                    description: CleanupPolicy controls canary retention.
+                    enum:
+                    - DeleteAfterRun
+                    - RetainBetweenRuns
+                    - DeleteOnCheckDeletion
+                    type: string
+                  image:
+                    default: ghcr.io/kedify/sample-http-server:latest
+                    description: Image is the HTTP server image used by the canary
+                      Deployment.
+                    type: string
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels are copied to canary resources in addition
+                      to fixed Kedify labels.
+                    type: object
+                  naming:
+                    description: Naming controls generated object names.
+                    properties:
+                      prefix:
+                        default: kedify-autoscaling-check
+                        description: Prefix is prepended to generated canary resource
+                          names.
+                        maxLength: 45
+                        type: string
+                    type: object
+                  port:
+                    default: 8080
+                    description: Port is the canary container port.
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                  resources:
+                    description: Resources are applied to the canary HTTP server container.
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This field depends on the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                  scaling:
+                    description: Scaling controls HPA bounds for the canary.
+                    properties:
+                      idleReplicaCount:
+                        default: 0
+                        description: IdleReplicaCount is the expected idle replica
+                          count.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      maxReplicaCount:
+                        default: 3
+                        description: MaxReplicaCount is the canary maximum replica
+                          count.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      minReplicaCount:
+                        default: 0
+                        description: MinReplicaCount is the canary minimum replica
+                          count.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
+                  servicePort:
+                    default: 80
+                    description: ServicePort is the in-cluster Service port used by
+                      synthetic traffic and the Kedify HTTP trigger.
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                type: object
+              componentHealth:
+                description: ComponentHealth controls dependency checks before end-to-end
+                  validation.
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled controls component checks.
+                    type: boolean
+                  timeout:
+                    default: 30s
+                    description: Timeout bounds individual component checks.
+                    type: string
+                type: object
+              expectations:
+                description: Expectations defines success timing thresholds.
+                properties:
+                  activateWithin:
+                    default: 90s
+                    description: ActivateWithin bounds KEDA activation.
+                    type: string
+                  readyReplicasWithin:
+                    default: 120s
+                    description: ReadyReplicasWithin bounds canary pod readiness.
+                    type: string
+                  scaleDownToZeroWithin:
+                    default: 7m
+                    description: ScaleDownToZeroWithin bounds scale-down observation.
+                    type: string
+                  signalVisibleWithin:
+                    default: 20s
+                    description: SignalVisibleWithin bounds synthetic signal visibility.
+                    type: string
+                type: object
+              http:
+                description: HTTP configures the phase 1 HTTP validator.
+                properties:
+                  host:
+                    description: Host overrides the generated canary host used by
+                      the kedify-http trigger.
+                    type: string
+                  load:
+                    description: Load controls bounded synthetic HTTP requests.
+                    properties:
+                      duration:
+                        default: 60s
+                        description: Duration is the synthetic load duration.
+                        type: string
+                      requestsPerSecond:
+                        default: 10
+                        description: RequestsPerSecond is the synthetic request rate.
+                        format: int32
+                        maximum: 1000
+                        minimum: 1
+                        type: integer
+                    type: object
+                  path:
+                    default: /kedify-autoscaling-check
+                    description: Path is used for the kedify-http trigger routing
+                      and synthetic requests.
+                    type: string
+                  routeMode:
+                    default: InClusterService
+                    description: RouteMode selects the HTTP canary routing strategy.
+                    enum:
+                    - InClusterService
+                    type: string
+                  scaling:
+                    description: Scaling controls the HTTP add-on scaler target.
+                    properties:
+                      granularity:
+                        default: 1s
+                        description: Granularity configures request-rate sampling.
+                        type: string
+                      metric:
+                        default: requestRate
+                        description: Metric is the HTTP add-on metric mode.
+                        enum:
+                        - requestRate
+                        - concurrency
+                        type: string
+                      targetValue:
+                        default: "5"
+                        description: TargetValue is the target used by the HTTP add-on
+                          scaler.
+                        type: string
+                      window:
+                        default: 1m
+                        description: Window configures request-rate averaging.
+                        type: string
+                    type: object
+                type: object
+              interval:
+                default: 5m
+                description: Interval controls how often the controller repeats validation.
+                type: string
+              reporting:
+                description: Reporting carries bounded user metadata for metrics and
+                  dashboards.
+                properties:
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels are copied into status for dashboard grouping.
+                      They are not used as metric labels in phase 1.
+                    type: object
+                type: object
+              safety:
+                description: Safety bounds synthetic load and canary resource usage.
+                properties:
+                  allowProductionResourceMutation:
+                    description: |-
+                      AllowProductionResourceMutation is reserved for future compatibility.
+                      Phase 1 ignores true values and never mutates production resources.
+                    type: boolean
+                  maxCanaryReplicas:
+                    default: 5
+                    description: MaxCanaryReplicas caps configured canary replicas.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  maxSyntheticLoadDuration:
+                    default: 2m
+                    description: MaxSyntheticLoadDuration caps HTTP load duration.
+                    type: string
+                  maxSyntheticRequestsPerSecond:
+                    default: 20
+                    description: MaxSyntheticRequestsPerSecond caps request rate.
+                    format: int32
+                    maximum: 1000
+                    minimum: 1
+                    type: integer
+                type: object
+              suspend:
+                description: Suspend disables validation while preserving status and
+                  owned resources.
+                type: boolean
+              timeout:
+                default: 10m
+                description: Timeout bounds one validation reconciliation.
+                type: string
+              type:
+                default: HTTP
+                description: Type selects the validator. Phase 1 implements HTTP.
+                enum:
+                - HTTP
+                - Prometheus
+                - OTel
+                type: string
+            required:
+            - type
+            type: object
+          status:
+            description: AutoscalingCheckStatus defines the observed state of AutoscalingCheck.
+            properties:
+              canary:
+                description: Canary summarizes managed canary resources.
+                properties:
+                  deploymentName:
+                    type: string
+                  desiredReplicas:
+                    format: int32
+                    type: integer
+                  fallbackServiceName:
+                    type: string
+                  host:
+                    type: string
+                  hpaName:
+                    type: string
+                  readyReplicas:
+                    format: int32
+                    type: integer
+                  scaledObjectName:
+                    type: string
+                  serviceName:
+                    type: string
+                  url:
+                    type: string
+                type: object
+              componentHealth:
+                description: ComponentHealth records dependency checks.
+                items:
+                  description: AutoscalingCheckComponentStatus records one dependency
+                    check.
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    name:
+                      type: string
+                    reason:
+                      type: string
+                    status:
+                      type: string
+                  required:
+                  - name
+                  - status
+                  type: object
+                type: array
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              lastFailure:
+                description: LastFailure stores the most recent classified failure.
+                properties:
+                  category:
+                    description: AutoscalingCheckFailureCategory is a bounded failure
+                      classification.
+                    enum:
+                    - kedify_agent
+                    - keda_operator
+                    - keda_metrics_apiserver
+                    - external_metrics_api
+                    - http_trigger
+                    - proxy
+                    - interceptor
+                    - hpa
+                    - scaledobject
+                    - quota
+                    - limitrange
+                    - canary_scheduling
+                    - canary_readiness
+                    - scale_up_timeout
+                    - scale_down_timeout
+                    - timeout
+                    - unsupported
+                    - unknown
+                    type: string
+                  confidence:
+                    description: AutoscalingCheckFailureConfidence describes classification
+                      confidence.
+                    enum:
+                    - Low
+                    - Medium
+                    - High
+                    type: string
+                  evidence:
+                    items:
+                      description: AutoscalingCheckEvidence points at diagnostic evidence
+                        without unbounded labels.
+                      properties:
+                        condition:
+                          type: string
+                        kind:
+                          type: string
+                        message:
+                          type: string
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        reason:
+                          type: string
+                      type: object
+                    type: array
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                type: object
+              lastRun:
+                description: LastRun describes the most recent validation attempt.
+                properties:
+                  duration:
+                    description: Duration is the total validation duration.
+                    type: string
+                  finishedAt:
+                    description: FinishedAt is when the run completed.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message summarizes the last run result.
+                    type: string
+                  reason:
+                    description: Reason is a bounded reason for the last run result.
+                    type: string
+                  scaleDownLatency:
+                    description: ScaleDownLatency is observed when replicas return
+                      to the idle target.
+                    type: string
+                  scaleUpLatency:
+                    description: ScaleUpLatency is observed when ready replicas become
+                      available.
+                    type: string
+                  startedAt:
+                    description: StartedAt is when the run began.
+                    format: date-time
+                    type: string
+                  status:
+                    description: Status is Success, Failure, or Skipped.
+                    type: string
+                type: object
+              nextRunTime:
+                description: NextRunTime is when the controller intends to run again.
+                format: date-time
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the last generation processed by
+                  the controller.
+                format: int64
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -236,6 +236,113 @@ rules:
   - get
   - list
   - watch
+# AutoscalingCheck controller canary resources and diagnostics.
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - resourcequotas
+  - limitranges
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - keda.kedify.io
+  resources:
+  - autoscalingchecks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - keda.kedify.io
+  resources:
+  - autoscalingchecks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - keda.kedify.io
+  resources:
+  - autoscalingchecks/status
+  verbs:
+  - get
+  - patch
+  - update
 {{- if .Values.agent.features.multitenantKEDAEnabled }}
 # Discover tenant registration ConfigMaps cluster-wide. RBAC cannot filter
 # list/watch by label and tenants live in arbitrary namespaces, so this has to
@@ -382,6 +489,7 @@ rules:
   - update
   resourceNames:
   - kedifyconfigurations.install.kedify.io
+  - autoscalingchecks.keda.kedify.io
   - scalingpolicies.keda.kedify.io
   - clustertriggerauthentications.keda.sh
   - cloudeventsources.eventing.keda.sh
