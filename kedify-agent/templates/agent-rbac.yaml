@@ -421,7 +421,7 @@ rules:
 {{- end }}
 
 {{- if .Values.agent.rbac.ingressAutoWire }}
-# required by Kedify agent to be able to do the auto-wiring of communication from {VirtualService, Service, HttpRoute, Ingress, Route}'s original workload to Interceptor
+# required by Kedify agent to be able to do the auto-wiring of communication from {Istio VirtualService, Gloo VirtualService/RouteTable/Upstream, Service, HTTPRoute, Ingress, OpenShift Route}'s original workload to Interceptor
 # Interceptor then forwards the traffic to the original workload (used for activation phase when there is no replicas)
 - apiGroups:
   - networking.istio.io
