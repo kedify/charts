@@ -1,0 +1,190 @@
+
+{{- if or .Values.optionalResources.all.enabled (or .Values.optionalResources.scaledObjects.enabled .Values.optionalResources.scaledJobs.enabled) }}
+{{- range $i := until (.Values.optionalResources.scaledObjectsAndJobsCommon.namespaceCount | int) }}
+
+{{- $ns := printf "%s-%d" ($.Values.optionalResources.scaledObjectsAndJobsCommon.namespacePrefix | default $.Release.Name) $i }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $ns }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedify-sample-minute-metrics
+  namespace: {{ $ns }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kedify-sample-minute-metrics
+  template:
+    metadata:
+      labels:
+        app: kedify-sample-minute-metrics
+    spec:
+      containers:
+      - name: kedify-sample-minute-metrics
+        image: ghcr.io/kedify/sample-minute-metrics:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SCHEDULE
+          {{- if $.Values.optionalResources.scaledObjectsAndJobsCommon.randomMinuteMetricsSchedule }}
+          value: {{ include "kedify-observability.randomMinuteMetricsSchedule" $ | quote }}
+          {{- else }}
+          value: {{ $.Values.optionalResources.scaledObjectsAndJobsCommon.minuteMetricsSchedule | quote }}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kedify-sample-minute-metrics
+  namespace: {{ $ns }}
+spec:
+  selector:
+    app: kedify-sample-minute-metrics
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+{{- if or $.Values.optionalResources.all.enabled $.Values.optionalResources.scaledObjects.enabled }}
+{{- range $i := until ($.Values.optionalResources.scaledObjects.unpausedPerNamespace | int) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedify-sample-app-{{ $i }}
+  namespace: {{ $ns }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kedify-sample-app-{{ $i }}
+  template:
+    metadata:
+      labels:
+        app: kedify-sample-app-{{ $i }}
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kedify-sample-so-{{ $i }}
+  namespace: {{ $ns }}
+spec:
+  scaleTargetRef:
+    name: kedify-sample-app-{{ $i }}
+  pollingInterval: {{ add 10 $i }}
+  minReplicaCount: {{ mod $i 5 }}
+  maxReplicaCount: {{ add 3 (mod $i 5) }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 15
+  triggers:
+  - type: metrics-api
+    metadata:
+      url: "http://kedify-sample-minute-metrics.{{ $ns }}.svc.cluster.local/api/v1/minutemetrics"
+      valueLocation: "value"
+      targetValue: '{{ add $i 1 }}'
+{{- end }}
+{{- range $i := until ($.Values.optionalResources.scaledObjects.pausedPerNamespace | int) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedify-sample-app-paused-{{ $i }}
+  namespace: {{ $ns }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kedify-sample-app-paused-{{ $i }}
+  template:
+    metadata:
+      labels:
+        app: kedify-sample-app-paused-{{ $i }}
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kedify-sample-so-paused-{{ $i }}
+  namespace: {{ $ns }}
+  annotations:
+    autoscaling.keda.sh/paused: "true"
+spec:
+  scaleTargetRef:
+    name: kedify-sample-app-paused-{{ $i }}
+  pollingInterval: {{ add 10 $i }}
+  minReplicaCount: {{ mod $i 5 }}
+  maxReplicaCount: {{ add 3 (mod $i 5) }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 15
+  triggers:
+  - type: metrics-api
+    metadata:
+      url: "http://kedify-sample-minute-metrics.{{ $ns }}.svc.cluster.local/api/v1/minutemetrics"
+      valueLocation: "value"
+      targetValue: '{{ add $i 1 }}'
+---
+{{- end }}
+{{- end }}
+{{- if or $.Values.optionalResources.all.enabled $.Values.optionalResources.scaledJobs.enabled }}
+{{- range $i := until ($.Values.optionalResources.scaledJobs.unpausedPerNamespace | int) }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: kedify-sample-sj-{{ $i }}
+  namespace: {{ $ns }}
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: busybox-worker
+          image: busybox
+          args:
+          - /bin/sh
+          - -c
+          - sleep {{ $.Values.optionalResources.scaledJobs.sleepSeconds }}
+          imagePullPolicy: IfNotPresent
+        restartPolicy: Never
+  pollingInterval: {{ add 30 $i }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  maxReplicaCount: {{ add 10 (mod $i 5) }}
+  triggers:
+  - type: metrics-api
+    metadata:
+      url: "http://kedify-sample-minute-metrics.{{ $ns }}.svc.cluster.local/api/v1/minutemetrics"
+      valueLocation: "value"
+      targetValue: '{{ add 12 (mul $i 2) }}'
+{{- end }}
+{{- end }}
+
+{{- end }}
+{{- end }}
