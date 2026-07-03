@@ -34,7 +34,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "Minimum health across selected Kedify components. 1 means every selected component reports healthy.",
+      "description": "Health of Kedify components, as reported by the Kedify agent.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -104,9 +104,9 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "min(kedify_agent_component_up{kedify_agent_id=~\"$agent\",name=~\"$component\"})",
+          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\"}",
           "instant": false,
-          "legendFormat": "component health",
+          "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
         }
@@ -791,7 +791,104 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 6
+      },
+      "id": 43,
+      "panels": [],
+      "title": "Logs",
+      "type": "row"
+    },
+{
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 44,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "showControls": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"manager\"} |= ``",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Kedify Agent",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 45,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "showControls": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"keda-operator\"} |= ``",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "KEDA Operator",
+      "type": "logs"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
       },
       "id": 13,
       "panels": [],
@@ -811,31 +908,146 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "__name__"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 186
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "job"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 220
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Paused"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "light-green",
+                        "index": 0,
+                        "text": "No"
+                      },
+                      "1": {
+                        "color": "light-red",
+                        "index": 1,
+                        "text": "Yes"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 72
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Kind"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 107
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min Replicas"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 117
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max Replicas"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 102
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
         "w": 10,
         "x": 0,
-        "y": 14
+        "y": 29
       },
       "id": 14,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
+        "frameIndex": 0,
         "showHeader": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -843,10 +1055,12 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kube_keda_scaledobject_info{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}",
+          "exemplar": false,
+          "expr": "label_join(label_replace(\n  keda_scaled_object_paused, \"scaledobject\", \"$1\", \"scaledObject\", \"(.+)\"\n) * on(namespace, scaledobject) group_left(scale_target_name)\nkube_keda_scaledobject_info{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}, \"join_key\", \"/\", \"namespace\", \"scaledobject\")\n\n",
           "format": "table",
+          "hide": false,
           "instant": true,
-          "legendFormat": "target",
+          "legendFormat": "paused",
           "range": false,
           "refId": "A"
         },
@@ -856,10 +1070,11 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kube_keda_scaledobject_spec_min_replicas{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}",
+          "expr": "label_join(kube_keda_scaledobject_spec_min_replicas{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}\n* on(namespace, scaledobject) group_left(scale_target_name)\nkube_keda_scaledobject_info{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}, \"join_key\", \"/\", \"namespace\", \"scaledobject\")",
           "format": "table",
           "hide": false,
           "instant": true,
+          "interval": "",
           "legendFormat": "min replicas",
           "range": false,
           "refId": "B"
@@ -870,7 +1085,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kube_keda_scaledobject_spec_max_replicas{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}",
+          "exemplar": false,
+          "expr": "label_join(kube_keda_scaledobject_spec_max_replicas{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}\n* on(namespace, scaledobject) group_left(scale_target_name)\nkube_keda_scaledobject_info{namespace=~\"$namespace\",scaledobject=~\"$scaledobject\"}, \"join_key\", \"/\", \"namespace\", \"scaledobject\")",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -879,7 +1095,89 @@
           "refId": "C"
         }
       ],
-      "title": "ScaledObject Target Map",
+      "title": "Scaled Objects",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "join_key",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "customresource_group 1": true,
+              "customresource_group 2": true,
+              "customresource_kind 2": true,
+              "customresource_version 1": true,
+              "customresource_version 2": true,
+              "instance 1": true,
+              "instance 2": true,
+              "instance 3": true,
+              "job 1": true,
+              "job 2": true,
+              "job 3": true,
+              "join_key": true,
+              "namespace 2": true,
+              "namespace 3": true,
+              "scale_target_name 2": true,
+              "scale_target_name 3": true,
+              "scaledobject 1": true,
+              "scaledobject 2": true,
+              "scaledobject 3": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time 1": 2,
+              "Time 2": 10,
+              "Time 3": 19,
+              "Value #A": 9,
+              "Value #B": 18,
+              "Value #C": 28,
+              "customresource_group 1": 11,
+              "customresource_group 2": 20,
+              "customresource_kind 1": 0,
+              "customresource_kind 2": 21,
+              "customresource_version 1": 12,
+              "customresource_version 2": 22,
+              "instance 1": 3,
+              "instance 2": 13,
+              "instance 3": 23,
+              "job 1": 4,
+              "job 2": 14,
+              "job 3": 24,
+              "join_key": 1,
+              "namespace 1": 5,
+              "namespace 2": 15,
+              "namespace 3": 25,
+              "scale_target_name 1": 6,
+              "scale_target_name 2": 16,
+              "scale_target_name 3": 26,
+              "scaledObject": 7,
+              "scaledobject 1": 8,
+              "scaledobject 2": 17,
+              "scaledobject 3": 27
+            },
+            "renameByName": {
+              "Time 3": "",
+              "Value #A": "Paused",
+              "Value #B": "Min Replicas",
+              "Value #C": "Max Replicas",
+              "customresource_kind 1": "Kind",
+              "instance 2": "",
+              "namespace 1": "Namespace",
+              "scale_target_name 1": "Scale Target Name",
+              "scaledObject": "Name",
+              "scaledobject 1": ""
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1772,7 +2070,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace, name, result) (rate(kedify_agent_prp_reconcile_count{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\",name=~\"$prp\"}[$__rate_interval]))",
+          "expr": "sum by (namespace, name, result) (rate(kedify_agent_prp_reconcile_count{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\",name=~\"$prp\"}[$__rate_interval])) or vector(0)",
           "legendFormat": "{{namespace}}/{{name}} {{result}}",
           "range": true,
           "refId": "A"
@@ -1830,7 +2128,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kedify_agent_prp_error_total{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\"}",
+          "expr": "kedify_agent_prp_error_total{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\"} or vector(0)",
           "legendFormat": "{{namespace}} {{reason}}",
           "range": true,
           "refId": "A"
@@ -1981,13 +2279,13 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace, name, resource, side, direction) (rate(kedify_agent_pra_scale_decisions_total{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\",name=~\"$pra\"}[$__rate_interval]))",
+          "expr": "sum by (namespace, name, resource, side, direction) (rate(kedify_agent_pra_scale_decisions_total{kedify_agent_id=~\"$agent\",namespace=~\"$namespace\",name=~\"$pra\"}[$__rate_interval])) or vector(0)",
           "legendFormat": "{{namespace}}/{{name}} {{resource}} {{side}} {{direction}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "PRA Scale Decisions",
+      "title": "PRA Scale Decisions Rate",
       "type": "timeseries"
     },
     {
@@ -2265,7 +2563,7 @@
           "refId": "A"
         }
       ],
-      "title": "Bridge Sessions",
+      "title": "gRPC Bridge Sessions",
       "type": "stat"
     },
     {
@@ -2403,7 +2701,7 @@
           "refId": "B"
         }
       ],
-      "title": "KEDA Controller Runtime",
+      "title": "Controller Runtime (KEDA operator)",
       "type": "timeseries"
     }
   ],
