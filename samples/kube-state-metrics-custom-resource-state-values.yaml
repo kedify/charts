@@ -1,0 +1,997 @@
+# Values for prometheus-community/kube-state-metrics.
+#
+# Usage:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics \
+#     --namespace monitoring --create-namespace \
+#     -f samples/kube-state-metrics-custom-resource-state-values.yaml
+#
+# For kube-prometheus-stack, put this file under the `kube-state-metrics:` values key.
+#
+# CRDs covered from this repository:
+# - keda/templates/crds
+# - http-add-on/templates/crds
+# - kedify-agent/files/crds
+
+rbac:
+  extraRules:
+    - apiGroups: ["apiextensions.k8s.io"]
+      resources: ["customresourcedefinitions"]
+      verbs: ["list", "watch"]
+    - apiGroups: ["keda.sh"]
+      resources:
+        - scaledjobs
+        - scaledobjects
+        - triggerauthentications
+        - clustertriggerauthentications
+      verbs: ["list", "watch"]
+    - apiGroups: ["eventing.keda.sh"]
+      resources:
+        - cloudeventsources
+        - clustercloudeventsources
+      verbs: ["list", "watch"]
+    - apiGroups: ["keda.kedify.io"]
+      resources:
+        - distributedscaledjobs
+        - distributedscaledobjects
+        - podresourceautoscalers
+        - podresourceprofiles
+        - scalinggroups
+        - scalingpolicies
+      verbs: ["list", "watch"]
+    - apiGroups: ["http.keda.sh"]
+      resources:
+        - httpscaledobjects
+        - interceptorroutes
+      verbs: ["list", "watch"]
+    - apiGroups: ["install.kedify.io"]
+      resources:
+        - kedifyconfigurations
+      verbs: ["list", "watch"]
+
+customResourceState:
+  enabled: true
+  config:
+    kind: CustomResourceStateMetrics
+    spec:
+      resources:
+        - groupVersionKind:
+            group: keda.sh
+            version: v1alpha1
+            kind: ScaledObject
+          metricNamePrefix: kube_keda_scaledobject
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            scaledobject: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA ScaledObject.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scale_target_name: [spec, scaleTargetRef, name]
+            - name: created
+              help: Unix creation timestamp of the KEDA ScaledObject.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_min_replicas
+              help: Minimum replica count configured on the KEDA ScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, minReplicaCount]
+            - name: spec_max_replicas
+              help: Maximum replica count configured on the KEDA ScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, maxReplicaCount]
+            - name: status_condition
+              help: KEDA ScaledObject status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA ScaledObject status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+            - name: status_last_active_time
+              help: Unix timestamp of the last time the KEDA ScaledObject was active.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, lastActiveTime]
+            - name: status_original_replica_count
+              help: Original replica count recorded by the KEDA ScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, originalReplicaCount]
+            - name: status_paused_replica_count
+              help: Paused replica count recorded by the KEDA ScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, pausedReplicaCount]
+
+        - groupVersionKind:
+            group: keda.sh
+            version: v1alpha1
+            kind: ScaledJob
+          metricNamePrefix: kube_keda_scaledjob
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            scaledjob: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA ScaledJob.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the KEDA ScaledJob.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_min_replicas
+              help: Minimum replica count configured on the KEDA ScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, minReplicaCount]
+            - name: spec_max_replicas
+              help: Maximum replica count configured on the KEDA ScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, maxReplicaCount]
+            - name: status_condition
+              help: KEDA ScaledJob status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA ScaledJob status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+            - name: status_last_active_time
+              help: Unix timestamp of the last time the KEDA ScaledJob was active.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, lastActiveTime]
+            - name: status_paused
+              help: Whether the KEDA ScaledJob is paused.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, Paused]
+
+        - groupVersionKind:
+            group: keda.sh
+            version: v1alpha1
+            kind: TriggerAuthentication
+          metricNamePrefix: kube_keda_triggerauthentication
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            triggerauthentication: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA TriggerAuthentication.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the KEDA TriggerAuthentication.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_scaledobjects_info
+              help: ScaledObjects using the KEDA TriggerAuthentication.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scaledobjects: [status, scaledobjects]
+            - name: status_scaledjobs_info
+              help: ScaledJobs using the KEDA TriggerAuthentication.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scaledjobs: [status, scaledjobs]
+
+        - groupVersionKind:
+            group: keda.sh
+            version: v1alpha1
+            kind: ClusterTriggerAuthentication
+          metricNamePrefix: kube_keda_clustertriggerauthentication
+          labelsFromPath:
+            clustertriggerauthentication: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA ClusterTriggerAuthentication.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the KEDA ClusterTriggerAuthentication.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_scaledobjects_info
+              help: ScaledObjects using the KEDA ClusterTriggerAuthentication.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scaledobjects: [status, scaledobjects]
+            - name: status_scaledjobs_info
+              help: ScaledJobs using the KEDA ClusterTriggerAuthentication.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scaledjobs: [status, scaledjobs]
+
+        - groupVersionKind:
+            group: eventing.keda.sh
+            version: v1alpha1
+            kind: CloudEventSource
+          metricNamePrefix: kube_keda_cloudeventsource
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            cloudeventsource: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA CloudEventSource.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the KEDA CloudEventSource.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_condition
+              help: KEDA CloudEventSource status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA CloudEventSource status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: eventing.keda.sh
+            version: v1alpha1
+            kind: ClusterCloudEventSource
+          metricNamePrefix: kube_keda_clustercloudeventsource
+          labelsFromPath:
+            clustercloudeventsource: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA ClusterCloudEventSource.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the KEDA ClusterCloudEventSource.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_condition
+              help: KEDA ClusterCloudEventSource status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA ClusterCloudEventSource status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: ScalingGroup
+          metricNamePrefix: kube_kedify_scalinggroup
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            scalinggroup: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify ScalingGroup.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the Kedify ScalingGroup.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_capacity
+              help: Capacity configured on the Kedify ScalingGroup.
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, capacity]
+            - name: status_residual_capacity
+              help: Residual capacity reported by the Kedify ScalingGroup.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, residualCapacity]
+            - name: status_member_count
+              help: Member count reported by the Kedify ScalingGroup.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, memberCount]
+            - name: status_condition
+              help: Kedify ScalingGroup status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify ScalingGroup status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: http.keda.sh
+            version: v1alpha1
+            kind: HTTPScaledObject
+          metricNamePrefix: kube_keda_http_scaledobject
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            httpscaledobject: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA HTTPScaledObject.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    scale_target_service: [spec, scaleTargetRef, service]
+            - name: created
+              help: Unix creation timestamp of the KEDA HTTPScaledObject.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_min_replicas
+              help: Minimum replica count configured on the KEDA HTTPScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, replicas, min]
+            - name: spec_max_replicas
+              help: Maximum replica count configured on the KEDA HTTPScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, replicas, max]
+            - name: status_condition
+              help: KEDA HTTPScaledObject status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA HTTPScaledObject status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+            - name: status_target_info
+              help: Target workload and service reported by the KEDA HTTPScaledObject.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    target_service: [status, targetService]
+                    target_workload: [status, targetWorkload]
+
+        - groupVersionKind:
+            group: http.keda.sh
+            version: v1beta1
+            kind: InterceptorRoute
+          metricNamePrefix: kube_keda_http_interceptorroute
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            interceptorroute: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KEDA InterceptorRoute.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    target_service: [spec, target, service]
+            - name: created
+              help: Unix creation timestamp of the KEDA InterceptorRoute.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_condition
+              help: KEDA InterceptorRoute status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: KEDA InterceptorRoute status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: install.kedify.io
+            version: v1alpha1
+            kind: KedifyConfiguration
+          metricNamePrefix: kube_kedify_configuration
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            kedifyconfiguration: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a KedifyConfiguration.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster_name: [spec, clusterName]
+            - name: created
+              help: Unix creation timestamp of the KedifyConfiguration.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: agent
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, agent, phase]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: keda_operator
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, components, keda, deployments, keda-operator, phase]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: api_service
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, apiService, phase]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: keda_metrics_apiserver
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, components, keda, deployments, keda-operator-metrics-apiserver, phase]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: keda_admission_webhooks
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, components, keda, deployments, keda-admission-webhooks, phase]
+            - name: component_phase_info
+              help: Phase reported for a Kedify component.
+              commonLabels:
+                component: http_addon_interceptor
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    phase: [status, components, httpAddon, deployments, keda-add-ons-http-interceptor, phase]
+            - name: component_version_info
+              help: Version reported for a Kedify managed component.
+              commonLabels:
+                component: keda
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version: [status, components, keda, version]
+            - name: component_version_info
+              help: Version reported for a Kedify managed component.
+              commonLabels:
+                component: http_addon
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version: [status, components, httpAddon, version]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: DistributedScaledJob
+          metricNamePrefix: kube_kedify_distributedscaledjob
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            distributedscaledjob: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify DistributedScaledJob.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the Kedify DistributedScaledJob.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_total_target_replicas
+              help: Total target replicas configured on the Kedify DistributedScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, totalTargetReplicas]
+            - name: status_desired_jobs
+              help: Desired jobs reported by the Kedify DistributedScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, desiredJobs]
+            - name: status_pending_jobs
+              help: Pending jobs reported by the Kedify DistributedScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, pendingJobs]
+            - name: status_running_jobs
+              help: Running jobs reported by the Kedify DistributedScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, runningJobs]
+            - name: status_scalers_target_average_value
+              help: Scalers target average value reported by the Kedify DistributedScaledJob.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, scalersTargetAverageValue]
+            - name: status_condition
+              help: Kedify DistributedScaledJob status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify DistributedScaledJob status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: DistributedScaledObject
+          metricNamePrefix: kube_kedify_distributedscaledobject
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            distributedscaledobject: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify DistributedScaledObject.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the Kedify DistributedScaledObject.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_total_target_replicas
+              help: Total target replicas configured on the Kedify DistributedScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, totalTargetReplicas]
+            - name: status_total_current_replicas
+              help: Total current replicas reported by the Kedify DistributedScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, totalCurrentReplicas]
+            - name: status_members_healthy_count
+              help: Healthy member count reported by the Kedify DistributedScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, membersHealthyCount]
+            - name: status_members_total_count
+              help: Total member count reported by the Kedify DistributedScaledObject.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, membersTotalCount]
+            - name: status_condition
+              help: Kedify DistributedScaledObject status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify DistributedScaledObject status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: PodResourceAutoscaler
+          metricNamePrefix: kube_kedify_podresourceautoscaler
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            podresourceautoscaler: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify PodResourceAutoscaler.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    container: [spec, containerName]
+            - name: created
+              help: Unix creation timestamp of the Kedify PodResourceAutoscaler.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_paused
+              help: Whether the Kedify PodResourceAutoscaler is paused in spec.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, paused]
+            - name: status_observed_generation
+              help: Observed generation reported by the Kedify PodResourceAutoscaler.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, observedGeneration]
+            - name: status_scaling
+              help: Whether the Kedify PodResourceAutoscaler is currently scaling.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, scaling]
+            - name: status_last_scale_time
+              help: Unix timestamp of the last Kedify PodResourceAutoscaler scale action.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, lastScaleTime]
+            - name: status_condition
+              help: Kedify PodResourceAutoscaler status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify PodResourceAutoscaler status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: PodResourceProfile
+          metricNamePrefix: kube_kedify_podresourceprofile
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            podresourceprofile: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify PodResourceProfile.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    container: [spec, containerName]
+            - name: created
+              help: Unix creation timestamp of the Kedify PodResourceProfile.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: spec_paused
+              help: Whether the Kedify PodResourceProfile is paused in spec.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [spec, paused]
+            - name: status_observed_generation
+              help: Observed generation reported by the Kedify PodResourceProfile.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, observedGeneration]
+            - name: status_triggered
+              help: Whether the Kedify PodResourceProfile is triggered.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, triggered]
+            - name: status_triggered_at
+              help: Unix timestamp of the Kedify PodResourceProfile trigger time.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, triggeredAt]
+            - name: status_last_resource_update
+              help: Unix timestamp of the last Kedify PodResourceProfile resource update.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, lastResourceUpdate]
+            - name: status_condition
+              help: Kedify PodResourceProfile status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify PodResourceProfile status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+
+        - groupVersionKind:
+            group: keda.kedify.io
+            version: v1alpha1
+            kind: ScalingPolicy
+          metricNamePrefix: kube_kedify_scalingpolicy
+          labelsFromPath:
+            namespace: [metadata, namespace]
+            scalingpolicy: [metadata, name]
+          metrics:
+            - name: info
+              help: Information about a Kedify ScalingPolicy.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    uid: [metadata, uid]
+            - name: created
+              help: Unix creation timestamp of the Kedify ScalingPolicy.
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, creationTimestamp]
+            - name: status_active
+              help: Whether the Kedify ScalingPolicy is active.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, active]
+            - name: status_validated_generation
+              help: Validated generation reported by the Kedify ScalingPolicy.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, validatedGeneration]
+            - name: status_condition
+              help: Kedify ScalingPolicy status condition; True maps to 1 and False or Unknown maps to 0.
+              errorLogV: 10
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                  valueFrom: [status]
+            - name: status_condition_info
+              help: Kedify ScalingPolicy status condition label state.
+              errorLogV: 10
+              each:
+                type: Info
+                info:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
