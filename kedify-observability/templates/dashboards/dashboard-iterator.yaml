@@ -1,0 +1,19 @@
+{{- if .Values.dashboards.enabled }}
+{{ $currentScope := . }}
+
+  {{- range $path, $_ := .Files.Glob "files/dashboards-json/*.json" }}
+    {{- with $currentScope }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ $path | base | trimSuffix ".json" }}
+  namespace: {{ .Values.grafana.namespaceOverride | quote }}
+  labels:
+    grafana_dashboard: "true"
+data:
+  {{ $path | base }}: |
+{{.Files.Get $path | indent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

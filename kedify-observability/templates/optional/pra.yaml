@@ -1,0 +1,126 @@
+
+{{- if or .Values.optionalResources.all.enabled .Values.optionalResources.pra.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-heavy-pra
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-heavy-pra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-heavy-pra
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-heavy-pra
+      annotations:
+        pra.kedify.io/reconcile: enabled
+    spec:
+      containers:
+        - name: main
+          image: ghcr.io/kedify/sample-load-generator:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: BASELINE_CPU_MILLICORES
+              value: "100"
+            - name: BASELINE_MEMORY_MIB
+              value: "96"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 96Mi
+            limits:
+              cpu: 300m
+              memory: 600Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-heavy-pra
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-heavy-pra
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+  selector:
+    app: {{ .Release.Name }}-heavy-pra
+---
+apiVersion: keda.kedify.io/v1alpha1
+kind: PodResourceAutoscaler
+metadata:
+  name: {{ .Release.Name }}-heavy-pra
+  namespace: {{ .Release.Namespace }}
+spec:
+  target:
+    kind: deployment
+    name: {{ .Release.Name }}-heavy-pra
+  containerName: main
+  policy:
+    pollInterval: 5s
+    consecutiveSamples: 2
+    cooldown: 30s
+    after: containerReady
+    delay: 5s
+    cpu:
+      requests:
+        scaleUpThreshold: 75
+        scaleDownThreshold: 45
+        targetUtilization: 60
+      limits:
+        scaleUpThreshold: 85
+        scaleDownThreshold: 60
+        targetUtilization: 70
+    memory:
+      requests:
+        scaleUpThreshold: 75
+        scaleDownThreshold: 50
+        targetUtilization: 60
+      limits:
+        scaleUpThreshold: 85
+        scaleDownThreshold: 60
+        targetUtilization: 70
+  bounds:
+    cpu:
+      requests:
+        min: 100m
+        max: "2"
+        step: 200m
+        stepPercent: 50
+      limits:
+        min: 300m
+        max: "3"
+        step: 300m
+        stepPercent: 50
+    memory:
+      requests:
+        min: 96Mi
+        max: 1Gi
+        step: 128Mi
+        stepPercent: 50
+      limits:
+        min: 600Mi
+        max: 1Gi
+        step: 256Mi
+        stepPercent: 50
+{{- end }}
