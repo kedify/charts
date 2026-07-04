@@ -1,0 +1,46 @@
+
+{{- if or .Values.optionalResources.all.enabled .Values.optionalResources.prp.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-nginx-prp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-nginx-prp
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-nginx-prp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-nginx-prp
+    spec:
+      containers:
+      - name: main
+        image: nginx
+        resources:
+          requests:
+            memory: {{ .Values.optionalResources.prp.initialMemoryRequest }}
+            cpu: 50m
+          limits:
+            memory: 500M
+            cpu: 200m
+---
+apiVersion: keda.kedify.io/v1alpha1
+kind: PodResourceProfile
+metadata:
+  name: {{ .Release.Name }}-nginx-prp
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-nginx-prp
+  containerName: main
+  trigger:
+    after: containerReady
+    delay: {{ .Values.optionalResources.prp.delay }}
+  newResources:
+    requests:
+      memory: {{ .Values.optionalResources.prp.updateMemoryRequest }}
+{{- end }}

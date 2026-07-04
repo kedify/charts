@@ -1,0 +1,139 @@
+{{- if or .Values.optionalResources.all.enabled .Values.optionalResources.triggerAuthentications.enabled }}
+# ConfigMap for TriggerAuthentication
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-configmap
+data:
+  someKey: "randomValue12345"
+---
+# Secret for TriggerAuthentication
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  someKey: cmFuZG9tVmFsdWU2Nzg5  # Base64 encoded "randomValue6789"
+---
+# TriggerAuthentication with AWS Pod Identity
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-aws-pod-identity
+spec:
+  podIdentity:
+    provider: aws
+---
+# TriggerAuthentication with GCP Pod Identity
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-gcp-pod-identity
+spec:
+  podIdentity:
+    provider: gcp
+---
+# TriggerAuthentication with Azure Workload Pod Identity
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-azure-workload-pod-identity
+spec:
+  podIdentity:
+    provider: azure-workload
+---
+# TriggerAuthentication with ConfigMap
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-configmap
+spec:
+  configMapTargetRef:
+  - parameter: someParameter
+    name: example-configmap
+    key: someKey
+spec:
+  configMapTargetRef:
+  - parameter: someParameter
+    name: example-configmap-keda
+    key: someKey
+---
+# TriggerAuthentication with Secret
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-secret
+spec:
+  secretTargetRef:
+  - parameter: someParameter
+    name: example-secret
+    key: someKey
+---
+# Combined TriggerAuthentication
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-combined
+spec:
+  podIdentity:
+    provider: aws
+  secretTargetRef:
+  - parameter: secretParameter
+    name: example-secret
+    key: someKey
+---
+# Combined TriggerAuthentication
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-combined2
+spec:
+  podIdentity:
+    provider: aws
+  configMapTargetRef:
+  - parameter: configMapParameter
+    name: example-configmap
+    key: someKey
+  secretTargetRef:
+  - parameter: secretParameter
+    name: example-secret
+    key: someKey
+---
+# All TriggerAuthentication
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: trigger-auth-all
+spec:
+  podIdentity:
+    provider: aws
+  secretTargetRef:
+  - parameter: secretParameter
+    name: example-secret-keda
+    key: someKey
+  env:
+    - parameter: example-param
+      name: EXAMPLE_ENV_VAR
+      containerName: example-container
+  hashiCorpVault:
+    address: "http://vault-example:8200"
+    authentication: token
+    secrets:
+      - parameter: example-param
+        key: secret/data/example
+        path: example-secret-path
+  azureKeyVault:
+    vaultUri: "https://example-vault.vault.azure.net"
+    credentials:
+      clientId: example-client-id
+      clientSecret:
+        valueFrom:
+          secretKeyRef:
+            name: example-azure-secret
+            key: client-secret
+      tenantId: example-tenant-id
+    secrets:
+      - parameter: example-param
+        name: example-secret-name
+{{- end }}

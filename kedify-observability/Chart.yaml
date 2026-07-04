@@ -1,0 +1,35 @@
+apiVersion: v2
+name: kedify-observability
+description: Kedify observability - Opinionated observability stack for Kedify
+kubeVersion: ">=v1.23.0-0"
+type: application
+version: "0.0.1"
+appVersion: "v0.0.1"
+icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+dependencies:
+  - name: grafana
+    repository: oci://ghcr.io/grafana/helm-charts
+    version: 10.5.15
+    condition: grafana.enabled
+  - name: prometheus
+    repository: oci://ghcr.io/prometheus-community/charts
+    version: 29.13.1
+    condition: prometheus.enabled
+  # - name: kube-state-metrics
+  #   repository: oci://ghcr.io/prometheus-community/charts
+  #   version: 29.13.1
+  #   alias: ksm
+  #   condition: kube-state-metrics.enabled,ksm.enabled
+  - name: loki
+    repository: oci://ghcr.io/grafana-community/helm-charts
+    version: 18.3.0
+    condition: loki.enabled
+  - name: opentelemetry-collector
+    repository: oci://ghcr.io/open-telemetry/opentelemetry-helm-charts
+    version: 0.159.2
+    alias: collector
+    condition: collector.enabled,opentelemetry-collector.enabled
+home: https://github.com/kedify/charts
+sources:
+  - https://github.com/kedify/examples
+  - https://github.com/kedify/charts
