@@ -176,7 +176,7 @@ spec:
   pollingInterval: {{ add 30 $i }}
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
-  maxReplicaCount: {{ add 10 (mod $i 5) }}
+  maxReplicaCount: {{ add 3 (mod $i 5) }}
   triggers:
   - type: metrics-api
     metadata:
