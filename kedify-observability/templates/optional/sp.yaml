@@ -43,7 +43,7 @@ spec:
   pollingInterval: 30
   cooldownPeriod: 5
   minReplicaCount: 0
-  maxReplicaCount: 7
+  maxReplicaCount: 4
   triggers:
     - type: kubernetes-resource
       metadata:
@@ -75,7 +75,7 @@ spec:
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
   minReplicaCount: 0
-  maxReplicaCount: 7
+  maxReplicaCount: 4
   triggers:
     - type: kubernetes-resource
       metadata:
@@ -109,8 +109,8 @@ spec:
           timezone: "Europe/Prague"
       adjustment:
         pollingInterval: 10
-        minReplicaCount: 5
-        maxReplicaCount: 7
+        minReplicaCount: 2
+        maxReplicaCount: 4
     - name: off-hours
       priority: 1
       trigger:
@@ -131,6 +131,6 @@ spec:
           timezone: "Europe/Prague"
       adjustment:
         pollingInterval: 5
-        minReplicaCount: 7
-        maxReplicaCount: 7
+        minReplicaCount: 2
+        maxReplicaCount: 4
 {{- end }}

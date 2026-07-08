@@ -223,19 +223,56 @@ collector:
       prometheus: null
       zipkin: null
       otlp: null
-      filelog/kedify:
+      file_log/kedify_others:
         include:
           - /var/log/pods/keda_*/*/*.log
-          - /var/log/pods/kedify_*/*/*.log
           - /var/log/pods/*_kedify-proxy-*_*/*/*.log
         exclude:
           - /var/log/pods/*/opentelemetry-collector/*.log
-        start_at: end
+          - /var/log/pods/keda_kedify-agent-*_*/*/*.log
         include_file_path: true
         include_file_name: false
+        attributes:
+          component: keda_operator
         operators:
           - type: container
             id: container-parser
+      file_log/kedify_agent:
+        include:
+          - /var/log/pods/keda_kedify-agent-*_*/*/*.log
+        include_file_path: true
+        include_file_name: false
+        attributes:
+          component: kedify_agent
+        operators:
+          - type: container
+            id: container-parser
+          - type: regex_parser
+            regex: '^(?P<time>\d{2}-\d{2} \d{2}:\d{2}:\d{2})\t[^A-Z]+(?P<sev>[A-Z0-9()-]+)[^A-Z]+\t(?P<msg>.*)$'
+            timestamp:
+              parse_from: attributes.time
+              layout: '%m-%d %H:%M:%S'
+            severity:
+              parse_from: attributes.sev
+              overwrite_text: true
+              mapping:
+                fatal: FATAL
+                error: ERROR
+                info: INFO
+                warn: WARN
+                trace:
+                  - DEBUG
+                  - LEVEL(-1)
+                  - LEVEL(-2)
+                  - LEVEL(-3)
+                  - LEVEL(-4)
+                  - LEVEL(-5)
+                  - LEVEL(-6)
+                  - LEVEL(-7)
+                  - LEVEL(-8)
+                  - LEVEL(-9)
+                  - LEVEL(-10)
+
     processors:
       memory_limiter:
         check_interval: 5s
@@ -243,18 +280,17 @@ collector:
         spike_limit_percentage: 25
       batch: {}
     exporters:
-      debug:
-        sending_queue:
-          enabled: false
       otlphttp/loki:
         endpoint: http://loki-gateway.obs.svc.cluster.local/otlp
     service:
+      extensions: [health_check]
       pipelines:
         traces: null
         metrics: null
         logs:
           receivers:
-            - filelog/kedify
+            - file_log/kedify_others
+            - file_log/kedify_agent
           processors:
             - memory_limiter
             - batch
