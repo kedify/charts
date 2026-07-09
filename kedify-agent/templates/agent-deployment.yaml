@@ -143,6 +143,8 @@ spec:
               value: {{ .Values.agent.autowire.serviceSyncPeriod | quote }}
             - name: KEDIFY_AUTOWIRE_INGRESS_COOLDOWN_PERIOD
               value: {{ .Values.agent.autowire.ingressCooldownPeriod | quote }}
+            - name: KEDIFY_PROXY_CONFIGMAP_WATCHER_ENABLED
+              value: {{ .Values.agent.kedifyProxy.proxyConfigmapWatcherEnabled | quote }}
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
           ports:
