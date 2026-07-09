@@ -1,6 +1,6 @@
 # kedify-agent
 
-![Version: v0.6.3](https://img.shields.io/badge/Version-v0.6.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.6.3](https://img.shields.io/badge/AppVersion-v0.6.3-informational?style=flat-square)
+![Version: v0.6.4](https://img.shields.io/badge/Version-v0.6.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.6.4](https://img.shields.io/badge/AppVersion-v0.6.4-informational?style=flat-square)
 
 Kedify agent - Helm Chart
 
