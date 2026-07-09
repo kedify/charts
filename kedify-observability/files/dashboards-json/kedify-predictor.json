@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 3,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -105,7 +105,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\", name=\"predictorAddon\"}",
+          "expr": "kedify_agent_component_up{name=\"predictorAddon\"}",
           "instant": false,
           "legendFormat": "{{name}}",
           "range": true,
@@ -321,16 +321,537 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How many MetricPredictor resources are being paused",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "light-red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 13,
+        "y": 0
+      },
+      "id": 54,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(kube_kedify_metricpredictor_paused) or vector(0)",
+          "legendFormat": "paused scaled objects",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Paused MPs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Per model aggregated operation counts (how many times certain APIs were called)",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_organization_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 316
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_agent_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 299
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 107
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "operation"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 193
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 68
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 667
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 138
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 4
+      },
+      "id": 53,
+      "options": {
+        "cellHeight": "sm",
+        "maxRowHeight": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "operation"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_predictor_model_operation_count",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Operations by Model",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": false,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true,
+              "status": false,
+              "version": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 7,
+              "__name__": 1,
+              "instance": 2,
+              "job": 3,
+              "model": 4,
+              "operation": 5,
+              "status": 6
+            },
+            "renameByName": {
+              "Value": "Status"
+            }
+          }
+        },
+        {
+          "id": "groupToNestedTable",
+          "options": {
+            "fields": {
+              "Time": {
+                "aggregations": []
+              },
+              "model": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            },
+            "showSubframeHeaders": true
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_organization_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 316
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_agent_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 299
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 107
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "operation"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 193
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 68
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 667
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 138
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 4
+      },
+      "id": 55,
+      "options": {
+        "cellHeight": "sm",
+        "maxRowHeight": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "operation"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kube_kedify_metricpredictor_status_condition",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "MP conditions",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": false,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true,
+              "status": false,
+              "version": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 7,
+              "__name__": 1,
+              "instance": 2,
+              "job": 3,
+              "model": 4,
+              "operation": 5,
+              "status": 6
+            },
+            "renameByName": {
+              "Value": "Status"
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 13,
+        "x": 0,
+        "y": 12
+      },
+      "id": 52,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Predictor REST Api\n\n```bash\nkubectl port-forward -nkeda svc/kedify-predictor 8000\n```\n\nSome selected endpoints:\n- http://localhost:8000 (Scagger docs w/ all the REST endpoints)\n- http://localhost:8000/redoc (ReDoc docs)\n- http://localhost:8000/models (List all models)\n- http://localhost:8000/models/mm-in-ten (Get model info for 'mm-in-ten' model)\n- http://localhost:8000/models/mm-in-ten/graph (Matplotlib graph of trained predictive model)\n- http://localhost:8000/models/mm-in-ten/graphComponents (Predictive model decomposed to its seasonal components)",
+        "mode": "markdown"
+      },
+      "pluginVersion": "12.3.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 20
       },
       "id": 7,
       "panels": [],
-      "title": "Kedify Installation",
+      "title": "Installation",
       "type": "row"
     },
     {
@@ -339,6 +860,539 @@
         "uid": "${DS_PROMETHEUS}"
       },
       "description": "Per-component health and version reported by kedify_agent_component_up.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_organization_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 316
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_agent_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 299
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 107
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 7,
+        "x": 0,
+        "y": 21
+      },
+      "id": 51,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "version"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_agent_component_up{name=~\"predictorAddon\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Kedify Installation Info",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true,
+              "version": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 1,
+              "Value": 8,
+              "__name__": 2,
+              "instance": 3,
+              "job": 4,
+              "kedify_agent_id": 5,
+              "kedify_organization_id": 6,
+              "name": 0,
+              "version": 7
+            },
+            "renameByName": {
+              "Value": "Status"
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Per-component health and version reported by kedify_agent_component_up.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_organization_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 316
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedify_agent_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 299
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 81
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 25
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_agent_component_up{name=~\"predictorAddon\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Component Status",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "kedify_agent_id": true,
+              "kedify_organization_id": true,
+              "name": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 1,
+              "Value": 8,
+              "__name__": 2,
+              "instance": 3,
+              "job": 4,
+              "kedify_agent_id": 5,
+              "kedify_organization_id": 6,
+              "name": 0,
+              "version": 7
+            },
+            "renameByName": {
+              "Value": "Status"
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "arch"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 57
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "db"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fullReconcileInterval"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 152
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gitSha"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 56
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kedaProphetAddr"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 139
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "os"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "otlpEnabled"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 93
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "otlpPort"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 67
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "retrainUsingJobs"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 63
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 15,
+        "x": 3,
+        "y": 25
+      },
+      "id": 50,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_predictor_runtime_info",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Agent runtime",
+          "range": false,
+          "refId": "B"
+        }
+      ],
+      "title": "Runtime Info",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "job": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {}
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -385,12 +1439,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 10,
         "x": 0,
-        "y": 5
+        "y": 29
       },
-      "id": 8,
+      "id": 49,
       "options": {
         "cellHeight": "sm",
         "showHeader": true
@@ -411,16 +1465,19 @@
           "refId": "A"
         }
       ],
-      "title": "Component Status",
+      "title": "Installation details",
       "transformations": [
         {
           "id": "organize",
           "options": {
             "excludeByName": {
               "Time": true,
+              "Value": true,
               "__name__": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "name": true,
+              "version": true
             },
             "includeByName": {},
             "indexByName": {
@@ -434,7 +1491,14 @@
               "name": 0,
               "version": 7
             },
+            "orderByMode": "manual",
             "renameByName": {}
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": "1"
           }
         }
       ],
@@ -507,7 +1571,7 @@
         "h": 8,
         "w": 6,
         "x": 10,
-        "y": 5
+        "y": 29
       },
       "id": 9,
       "options": {
@@ -559,123 +1623,6 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "DOWN"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 10,
-        "x": 0,
-        "y": 13
-      },
-      "id": 49,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\",name=~\"$component\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "{{name}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Installation details",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true,
-              "__name__": true,
-              "instance": true,
-              "job": true,
-              "name": true,
-              "version": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time": 1,
-              "Value": 8,
-              "__name__": 2,
-              "instance": 3,
-              "job": 4,
-              "kedify_agent_id": 5,
-              "kedify_organization_id": 6,
-              "name": 0,
-              "version": 7
-            },
-            "orderByMode": "manual",
-            "renameByName": {}
-          }
-        },
-        {
-          "id": "limit",
-          "options": {
-            "limitField": "1"
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -703,7 +1650,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 13
+        "y": 37
       },
       "id": 10,
       "options": {
@@ -772,7 +1719,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 13
+        "y": 37
       },
       "id": 11,
       "options": {
@@ -810,77 +1757,12 @@
       "type": "stat"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 17
-      },
-      "id": 50,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "kedify_predictor_runtime_info",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "Agent runtime",
-          "range": false,
-          "refId": "B"
-        }
-      ],
-      "title": "Kedify Runtime Info",
-      "transparent": true,
-      "type": "table"
-    },
-    {
       "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 41
       },
       "id": 43,
       "panels": [
@@ -897,7 +1779,7 @@
             "h": 21,
             "w": 12,
             "x": 0,
-            "y": 22
+            "y": 58
           },
           "id": 44,
           "options": {
@@ -942,7 +1824,7 @@
             "h": 21,
             "w": 12,
             "x": 12,
-            "y": 22
+            "y": 58
           },
           "id": 45,
           "options": {
@@ -986,7 +1868,7 @@
             "h": 20,
             "w": 24,
             "x": 0,
-            "y": 43
+            "y": 79
           },
           "id": 46,
           "options": {
@@ -1026,7 +1908,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 42
       },
       "id": 13,
       "panels": [
@@ -1177,7 +2059,7 @@
             "h": 15,
             "w": 12,
             "x": 0,
-            "y": 221
+            "y": 257
           },
           "id": 14,
           "options": {
@@ -1402,7 +2284,7 @@
             "h": 15,
             "w": 9,
             "x": 12,
-            "y": 221
+            "y": 257
           },
           "id": 16,
           "options": {
@@ -1504,7 +2386,7 @@
             "h": 9,
             "w": 7,
             "x": 0,
-            "y": 236
+            "y": 272
           },
           "id": 15,
           "options": {
@@ -1606,7 +2488,7 @@
             "h": 9,
             "w": 7,
             "x": 7,
-            "y": 236
+            "y": 272
           },
           "id": 18,
           "options": {
@@ -1719,7 +2601,7 @@
             "h": 9,
             "w": 7,
             "x": 14,
-            "y": 236
+            "y": 272
           },
           "id": 19,
           "options": {
@@ -1820,7 +2702,7 @@
             "h": 8,
             "w": 7,
             "x": 0,
-            "y": 245
+            "y": 281
           },
           "id": 17,
           "options": {
@@ -1922,7 +2804,7 @@
             "h": 8,
             "w": 8,
             "x": 7,
-            "y": 245
+            "y": 281
           },
           "id": 23,
           "options": {

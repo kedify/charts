@@ -361,7 +361,7 @@ prometheus:
     kube-state-metrics-crds:
       metric_relabel_configs:
       - action: keep
-        regex: kube_keda_.*|kube_deployment_status_replicas.*
+        regex: kube_keda_.*|kube_kedify_.*|kube_deployment_status_replicas.*
         source_labels:
         - __name__
       metrics_path: /metrics
@@ -874,7 +874,7 @@ prometheus:
                   each:
                     type: Gauge
                     gauge:
-                      path: [metadata, annotations, keda.kedify.io/paused]
+                      path: [metadata, annotations, kedify.io/paused]
 
             - groupVersionKind:
                 group: http.keda.sh
