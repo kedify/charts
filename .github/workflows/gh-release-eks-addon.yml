@@ -1,6 +1,9 @@
 name: EKS Add-on Release
 
 on:
+  push:
+    branches:
+      - '*'
   workflow_dispatch:
     inputs:
       source-ref:
@@ -749,20 +752,29 @@ jobs:
           if [[ -n "${KEDIFY_BILLING_REPORTER}" ]]; then
             template_file="${tmp_chart_dir}/templates/agent-deployment.yaml"
             tmp_template_file="$(mktemp)"
-            awk '
+            awk \
+              -v billing_reporter="${KEDIFY_BILLING_REPORTER}" \
+              -v billing_product_code="${KEDIFY_BILLING_AWS_PRODUCT_CODE:-}" \
+              -v billing_service_account_name="${KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME:-}" '
+              function yaml_quote(value, escaped) {
+                escaped = value
+                gsub(/\\/, "\\\\", escaped)
+                gsub(/"/, "\\\"", escaped)
+                return "\"" escaped "\""
+              }
               {
                 print
                 if (!inserted && $0 == "              value: {{ .Values.agent.autowire.ingressCooldownPeriod | quote }}") {
                   print "            - name: KEDIFY_BILLING_REPORTER"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_REPORTER\\\" }}\""
-                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}"
-                  print "            - name: KEDIFY_BILLING_AWS_PRODUCT_CODE"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}\""
-                  print "            {{- end }}"
-                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}"
-                  print "            - name: KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}\""
-                  print "            {{- end }}"
+                  print "              value: " yaml_quote(billing_reporter)
+                  if (billing_product_code != "") {
+                    print "            - name: KEDIFY_BILLING_AWS_PRODUCT_CODE"
+                    print "              value: " yaml_quote(billing_product_code)
+                  }
+                  if (billing_service_account_name != "") {
+                    print "            - name: KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME"
+                    print "              value: " yaml_quote(billing_service_account_name)
+                  }
                   inserted = 1
                 }
               }
