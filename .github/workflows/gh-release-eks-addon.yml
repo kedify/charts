@@ -712,7 +712,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           chart_version="$(yq -r '.version' kedify-agent/Chart.yaml)"
-          marketplace_chart_version="${chart_version#v}"
+          # marketplace_chart_version="${chart_version#v}"
           if [[ ! "${marketplace_chart_version}" =~ ^([0-9]+\.){2}[0-9]+$ ]]; then
             echo "Marketplace chart version '${marketplace_chart_version}' must be strict semver (for example 0.5.6)." >&2
             exit 1
@@ -749,20 +749,29 @@ jobs:
           if [[ -n "${KEDIFY_BILLING_REPORTER}" ]]; then
             template_file="${tmp_chart_dir}/templates/agent-deployment.yaml"
             tmp_template_file="$(mktemp)"
-            awk '
+            awk \
+              -v billing_reporter="${KEDIFY_BILLING_REPORTER}" \
+              -v billing_product_code="${KEDIFY_BILLING_AWS_PRODUCT_CODE:-}" \
+              -v billing_service_account_name="${KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME:-}" '
+              function yaml_quote(value, escaped) {
+                escaped = value
+                gsub(/\\/, "\\\\", escaped)
+                gsub(/"/, "\\\"", escaped)
+                return "\"" escaped "\""
+              }
               {
                 print
                 if (!inserted && $0 == "              value: {{ .Values.agent.autowire.ingressCooldownPeriod | quote }}") {
                   print "            - name: KEDIFY_BILLING_REPORTER"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_REPORTER\\\" }}\""
-                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}"
-                  print "            - name: KEDIFY_BILLING_AWS_PRODUCT_CODE"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_PRODUCT_CODE\\\" }}\""
-                  print "            {{- end }}"
-                  print "            {{- if env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}"
-                  print "            - name: KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME"
-                  print "              value: \"{{ env \\\"KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME\\\" }}\""
-                  print "            {{- end }}"
+                  print "              value: " yaml_quote(billing_reporter)
+                  if (billing_product_code != "") {
+                    print "            - name: KEDIFY_BILLING_AWS_PRODUCT_CODE"
+                    print "              value: " yaml_quote(billing_product_code)
+                  }
+                  if (billing_service_account_name != "") {
+                    print "            - name: KEDIFY_BILLING_AWS_SERVICE_ACCOUNT_NAME"
+                    print "              value: " yaml_quote(billing_service_account_name)
+                  }
                   inserted = 1
                 }
               }
@@ -864,7 +873,12 @@ jobs:
             exit 1
           fi
           sed -i "s/^version:.*/version: ${marketplace_chart_version}/" "${tmp_chart_dir}/Chart.yaml"
-          helm package "${tmp_chart_dir}" --destination dist
+          packaged_chart="$(helm package "${tmp_chart_dir}" --destination dist | awk -F': ' '/Successfully packaged chart and saved it to:/ {print $2}')"
+          if [[ -z "${packaged_chart}" || ! -f "${packaged_chart}" ]]; then
+            echo "Failed to determine packaged chart path." >&2
+            exit 1
+          fi
+          helm lint "${packaged_chart}"
           echo "MARKETPLACE_CHART_VERSION=${marketplace_chart_version}" >> "${GITHUB_ENV}"
 
       - name: Configure AWS credentials (OIDC)
@@ -976,6 +990,7 @@ jobs:
           done < /tmp/image-map.tsv
 
       - name: Push Marketplace chart as OCI
+        id: push_marketplace_chart
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
@@ -993,11 +1008,28 @@ jobs:
             --region "${{ env.AWS_REGION }}" \
             --image-ids imageTag="${chart_version}" >/dev/null 2>&1; then
             echo "Chart tag already exists, skipping helm push: ${chart_version}"
+            echo "chart_ref=dist/$(basename "${repository_name}")-${chart_version}.tgz" >> "${GITHUB_OUTPUT}"
+            echo "chart_already_exists=true" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
           chart_name="$(basename "${repository_name}")"
           helm push "dist/${chart_name}-${chart_version}.tgz" "oci://${{ env.ECR_REGISTRY }}/${push_repo_parent}"
+          echo "chart_ref=oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" >> "${GITHUB_OUTPUT}"
+          echo "chart_already_exists=false" >> "${GITHUB_OUTPUT}"
+
+      - name: Stop if Marketplace OCI tag already exists
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.push_marketplace_chart.outputs.chart_already_exists }}" != "true" ]]; then
+            exit 0
+          fi
+
+          chart_version="${MARKETPLACE_CHART_VERSION}"
+          echo "Marketplace chart tag ${chart_version} already exists in ECR." >&2
+          echo "The freshly built local package may be valid, but AWS Marketplace will fetch the existing OCI artifact referenced by HelmChartUri." >&2
+          echo "Bump kedify-agent/Chart.yaml version or remove the existing ECR tag before retrying Marketplace publication." >&2
+          exit 1
 
       - name: Prepare Marketplace delivery metadata
         run: |
@@ -1010,9 +1042,14 @@ jobs:
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
+          chart_ref="${{ steps.push_marketplace_chart.outputs.chart_ref }}"
+          chart_version_args=()
+          if [[ "${chart_ref}" == oci://* ]]; then
+            chart_version_args=(--version "${chart_version}")
+          fi
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
-            --version "${chart_version}" \
+            "${chart_ref}" \
+            "${chart_version_args[@]}" \
             --include-crds \
             --no-hooks \
             --set agent.createApiKeySecret=false \
@@ -1042,9 +1079,14 @@ jobs:
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
+          chart_ref="${{ steps.push_marketplace_chart.outputs.chart_ref }}"
+          chart_version_args=()
+          if [[ "${chart_ref}" == oci://* ]]; then
+            chart_version_args=(--version "${chart_version}")
+          fi
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
-            --version "${chart_version}" \
+            "${chart_ref}" \
+            "${chart_version_args[@]}" \
             --include-crds \
             --no-hooks \
             --set agent.createApiKeySecret=false \
