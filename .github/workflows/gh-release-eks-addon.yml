@@ -988,6 +988,7 @@ jobs:
           done < /tmp/image-map.tsv
 
       - name: Push Marketplace chart as OCI
+        id: push_marketplace_chart
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
@@ -1005,11 +1006,13 @@ jobs:
             --region "${{ env.AWS_REGION }}" \
             --image-ids imageTag="${chart_version}" >/dev/null 2>&1; then
             echo "Chart tag already exists, skipping helm push: ${chart_version}"
+            echo "chart_ref=dist/$(basename "${repository_name}")-${chart_version}.tgz" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
           chart_name="$(basename "${repository_name}")"
           helm push "dist/${chart_name}-${chart_version}.tgz" "oci://${{ env.ECR_REGISTRY }}/${push_repo_parent}"
+          echo "chart_ref=oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" >> "${GITHUB_OUTPUT}"
 
       - name: Prepare Marketplace delivery metadata
         run: |
@@ -1022,9 +1025,14 @@ jobs:
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
+          chart_ref="${{ steps.push_marketplace_chart.outputs.chart_ref }}"
+          chart_version_args=()
+          if [[ "${chart_ref}" == oci://* ]]; then
+            chart_version_args=(--version "${chart_version}")
+          fi
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
-            --version "${chart_version}" \
+            "${chart_ref}" \
+            "${chart_version_args[@]}" \
             --include-crds \
             --no-hooks \
             --set agent.createApiKeySecret=false \
@@ -1054,9 +1062,14 @@ jobs:
         run: |
           set -euo pipefail
           chart_version="${MARKETPLACE_CHART_VERSION}"
+          chart_ref="${{ steps.push_marketplace_chart.outputs.chart_ref }}"
+          chart_version_args=()
+          if [[ "${chart_ref}" == oci://* ]]; then
+            chart_version_args=(--version "${chart_version}")
+          fi
           helm template test \
-            "oci://${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PREFIX }}" \
-            --version "${chart_version}" \
+            "${chart_ref}" \
+            "${chart_version_args[@]}" \
             --include-crds \
             --no-hooks \
             --set agent.createApiKeySecret=false \
