@@ -105,7 +105,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\"}",
+          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\",version!~\"\"}",
           "instant": false,
           "legendFormat": "{{name}}",
           "range": true,
@@ -536,7 +536,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\",name=~\"$component\"}",
+          "expr": "kedify_agent_component_up{kedify_agent_id=~\"$agent\",name=~\"$component\",version!~\"\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "{{name}}",
