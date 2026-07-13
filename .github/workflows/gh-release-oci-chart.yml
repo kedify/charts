@@ -37,6 +37,9 @@ jobs:
           fetch-depth: 0
       - name: Smoke test helm chart 'renderability'
         run: |
+          helm dependency update ./${{ inputs.chart }}
+          helm dependency build ./${{ inputs.chart }}
+          helm lint ./${{ inputs.chart }}
           helm template ./${{ inputs.chart }}
 
   publish:
