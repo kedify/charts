@@ -33,11 +33,11 @@ spec:
               value: "96"
           resources:
             requests:
-              cpu: 100m
+              cpu: 50m
               memory: 96Mi
             limits:
               cpu: 300m
-              memory: 600Mi
+              memory: 300Mi
           readinessProbe:
             httpGet:
               path: /healthz
@@ -103,24 +103,24 @@ spec:
   bounds:
     cpu:
       requests:
-        min: 100m
-        max: "2"
-        step: 200m
+        min: 50m
+        max: "500m"
+        step: 100m
         stepPercent: 50
       limits:
-        min: 300m
-        max: "3"
-        step: 300m
+        min: 100m
+        max: "500m"
+        step: 100m
         stepPercent: 50
     memory:
       requests:
         min: 96Mi
-        max: 1Gi
+        max: 512Mi
         step: 128Mi
         stepPercent: 50
       limits:
-        min: 600Mi
-        max: 1Gi
-        step: 256Mi
+        min: 300Mi
+        max: 512Mi
+        step: 128Mi
         stepPercent: 50
 {{- end }}
