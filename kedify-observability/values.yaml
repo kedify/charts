@@ -332,7 +332,7 @@ prometheus:
         source_labels:
         - __name__
       metrics_path: /
-      scrape_interval: 15s
+      scrape_interval: 30s
       static_configs:
       - targets:
         - keda-add-ons-http-interceptor-metrics.keda.svc.cluster.local:2223
@@ -343,7 +343,7 @@ prometheus:
         source_labels:
         - __name__
       metrics_path: /metrics
-      scrape_interval: 15s
+      scrape_interval: 30s
       static_configs:
       - targets:
         - keda-operator.keda.svc.cluster.local:8080
@@ -354,14 +354,14 @@ prometheus:
         source_labels:
         - __name__
       metrics_path: /metrics
-      scrape_interval: 15s
+      scrape_interval: 30s
       static_configs:
       - targets:
         - kedify-agent-metrics.keda.svc.cluster.local:8080
     kube-state-metrics-crds:
       metric_relabel_configs:
       - action: keep
-        regex: kube_keda_scaledobject_.*|kube_deployment_status_replicas.*|kube_horizontalpodautoscaler_.*
+        regex: kube_keda_.*|kube_kedify_.*|kube_deployment_status_replicas.*
         source_labels:
         - __name__
       metrics_path: /metrics
@@ -369,6 +369,17 @@ prometheus:
       static_configs:
       - targets:
         - kube-state-metrics.obs.svc.cluster.local:8080
+    kedify-predictor:
+      metric_relabel_configs:
+      - action: keep
+        regex: rest_client_requests_total|kedify_.*|keda_internal_metricsservice_.*
+        source_labels:
+        - __name__
+      metrics_path: /metrics
+      scrape_interval: 30s
+      static_configs:
+      - targets:
+        - kedify-predictor.keda.svc.cluster.local:8080
     kubernetes-api-servers:
       enabled: false
     kubernetes-nodes:
@@ -419,6 +430,7 @@ prometheus:
           resources:
             - distributedscaledjobs
             - distributedscaledobjects
+            - metricpredictors
             - podresourceautoscalers
             - podresourceprofiles
             - scalinggroups
@@ -813,6 +825,56 @@ prometheus:
                       labelsFromPath:
                         condition: [type]
                         status: [status]
+
+            - groupVersionKind:
+                group: keda.kedify.io
+                version: v1alpha1
+                kind: MetricPredictor
+              metricNamePrefix: kube_kedify_metricpredictor
+              labelsFromPath:
+                namespace: [metadata, namespace]
+                metricpredictor: [metadata, name]
+              metrics:
+                - name: info
+                  help: Information about a Kedify MetricPredictor CR.
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        uid: [metadata, uid]
+                - name: created
+                  help: Unix creation timestamp of the Kedify MetricPredictor.
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [metadata, creationTimestamp]
+                - name: status_condition
+                  help: Kedify MetricPredictor status condition; True maps to 1 and False or Unknown maps to 0.
+                  errorLogV: 10
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [status, conditions]
+                      labelsFromPath:
+                        condition: [type]
+                      valueFrom: [status]
+                - name: status_condition_info
+                  help: Kedify MetricPredictor status condition label state.
+                  errorLogV: 10
+                  each:
+                    type: Info
+                    info:
+                      path: [status, conditions]
+                      labelsFromPath:
+                        condition: [type]
+                        status: [status]
+                - name: paused
+                  help: Whether the Kedify MetricPredictor is paused.
+                  errorLogV: 10
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [metadata, annotations, kedify.io/paused]
 
             - groupVersionKind:
                 group: http.keda.sh
