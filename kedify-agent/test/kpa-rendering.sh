@@ -6,7 +6,8 @@ chart_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 default_render="$(mktemp)"
 enabled_render="$(mktemp)"
 restricted_render="$(mktemp)"
-trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}"' EXIT
+deployment_rbac_disabled_render="$(mktemp)"
+trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}" "${deployment_rbac_disabled_render}"' EXIT
 
 helm template test "${chart_dir}" \
   --namespace keda \
@@ -30,6 +31,12 @@ helm template test "${chart_dir}" \
   --show-only templates/agent-deployment.yaml \
   --show-only templates/agent-rbac.yaml >"${restricted_render}"
 
+helm template test "${chart_dir}" \
+  --namespace keda \
+  --values "${chart_dir}/test/test-values.yaml" \
+  --set agent.rbac.readDeploymentsClusterwide=false \
+  --show-only templates/agent-rbac.yaml >"${deployment_rbac_disabled_render}"
+
 if grep -q 'autoscaling.kedify.io' "${default_render}"; then
   echo "KPA RBAC must not be rendered by default" >&2
   exit 1
@@ -39,6 +46,31 @@ if ! grep -A1 -F 'name: RBAC_READ_KPAS' "${default_render}" | grep -q 'value: "f
   echo "RBAC_READ_KPAS must be false by default" >&2
   exit 1
 fi
+
+ruby -ryaml - "${default_render}" "${deployment_rbac_disabled_render}" <<'RUBY'
+def deployment_rules(path)
+  YAML.load_stream(File.read(path)).compact.each_with_object([]) do |document, matches|
+    if document['kind'] == 'ClusterRole'
+      matches.concat(document.fetch('rules', []).select do |rule|
+        api_groups = rule.fetch('apiGroups', [])
+        resources = rule.fetch('resources', [])
+        (api_groups.include?('apps') || api_groups.include?('*')) &&
+          (resources.include?('deployments') || resources.include?('*'))
+      end)
+    end
+  end
+end
+
+enabled_rules = deployment_rules(ARGV[0])
+unless enabled_rules.length == 1 &&
+       enabled_rules[0]['apiGroups'] == ['apps'] &&
+       enabled_rules[0]['resources'] == ['deployments'] &&
+       enabled_rules[0].fetch('verbs', []).sort == %w[get list watch]
+  abort 'Cluster-wide Deployment discovery must render exactly one apps/deployments rule with only get/list/watch'
+end
+
+abort 'Cluster-wide Deployment RBAC must not be rendered when disabled' unless deployment_rules(ARGV[1]).empty?
+RUBY
 
 if ! grep -A1 -F 'name: RBAC_READ_KPAS' "${enabled_render}" | grep -q 'value: "true"'; then
   echo "RBAC_READ_KPAS must be true when KPA support is enabled" >&2
