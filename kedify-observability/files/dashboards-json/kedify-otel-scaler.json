@@ -1199,13 +1199,13 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "count(kube_opentelemetry_collector_info{namespace=~\"$namespace\",release=~\"$release\"}) or vector(0)",
+          "expr": "count(kube_opentelemetry_collector_info{release=~\"$release\"}) or vector(0)",
           "legendFormat": "CRs",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "OTel Collector CRs",
+      "title": "OTel Collector CRs (Total)",
       "type": "stat"
     },
     {
