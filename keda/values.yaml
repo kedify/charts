@@ -63,6 +63,10 @@ crds:
 watchNamespace: ""
 
 kedify:
+  kpa:
+    # -- Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling.
+    enabled: false
+
   # -- For keda installed in multitenant environment
   # Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior
   multitenant:
@@ -664,6 +668,8 @@ extraArgs:
   keda: {}
   # -- Additional Metrics Adapter container arguments
   metricsAdapter: {}
+  # -- Additional KEDA Admission Webhooks container arguments
+  webhooks: {}
 
 # -- Additional environment variables that will be passed onto all KEDA components
 env: []

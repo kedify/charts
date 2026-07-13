@@ -282,12 +282,28 @@
         "Kedify": {
             "type": "object",
             "properties": {
+                "kpa": {
+                    "$ref": "#/definitions/KedifyKPA"
+                },
                 "multitenant": {
                     "$ref": "#/definitions/KedifyMultitenant"
                 }
             },
             "required": [
+                "kpa",
                 "multitenant"
+            ]
+        },
+        "KedifyKPA": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "required": [
+                "enabled"
             ]
         },
         "KedifyMultitenant": {
@@ -1267,11 +1283,17 @@
                     "type": "object",
                     "properties": {},
                     "required": []
+                },
+                "webhooks": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
                 }
             },
             "required": [
                 "keda",
-                "metricsAdapter"
+                "metricsAdapter",
+                "webhooks"
             ]
         },
         "Env": {

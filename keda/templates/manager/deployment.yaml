@@ -106,6 +106,9 @@ spec:
           - "--k8s-cluster-name={{ tpl .Values.clusterName . }}"
           - "--k8s-cluster-domain={{ .Values.clusterDomain }}"
           - "--enable-prometheus-metrics={{ .Values.prometheus.operator.enabled }}"
+          {{- if .Values.kedify.kpa.enabled }}
+          - --enable-kpa
+          {{- end }}
           {{- if .Values.prometheus.operator.enabled }}
           - "--metrics-bind-address=:{{ .Values.prometheus.operator.port }}"
           {{- end }}

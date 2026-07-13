@@ -118,6 +118,20 @@ rules:
   - patch
   - update
   - watch
+{{- if .Values.kedify.kpa.enabled }}
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - kedifypodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+{{- end }}
 - apiGroups:
   - batch
   resources:

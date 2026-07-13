@@ -79,6 +79,9 @@ spec:
           - "--zap-log-level={{ .Values.logging.webhooks.level }}"
           - "--zap-encoder={{ .Values.logging.webhooks.format }}"
           - "--zap-time-encoding={{ .Values.logging.webhooks.timeEncoding }}"
+          {{- if .Values.kedify.kpa.enabled }}
+          - --enable-kpa
+          {{- end }}
           - "--cert-dir={{ .Values.certificates.mountPath }}"
           - "--health-probe-bind-address=:{{ .Values.webhooks.healthProbePort }}"
           {{- if .Values.webhooks.port }}
