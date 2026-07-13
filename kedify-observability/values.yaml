@@ -358,10 +358,24 @@ prometheus:
       static_configs:
       - targets:
         - kedify-agent-metrics.keda.svc.cluster.local:8080
+    keda-otel-scaler:
+      metric_relabel_configs:
+      - action: keep
+        regex: keda_otel_scaler_.*
+        source_labels:
+        - __name__
+      metrics_path: /metrics
+      scrape_interval: 15s
+      static_configs:
+      - labels:
+          kubernetes_namespace: keda
+          release: keda-otel-scaler
+        targets:
+        - keda-otel-scaler.keda.svc.cluster.local:8080
     kube-state-metrics-crds:
       metric_relabel_configs:
       - action: keep
-        regex: kube_keda_.*|kube_kedify_.*|kube_deployment_status_replicas.*
+        regex: kube_keda_.*|kube_kedify_.*|kube_opentelemetry_.*|kube_deployment_(labels|status_replicas.*)|kube_daemonset_(labels|status_desired_number_scheduled|status_number_ready)|kube_statefulset_(labels|replicas|status_replicas_ready)
         source_labels:
         - __name__
       metrics_path: /metrics
@@ -409,6 +423,10 @@ prometheus:
     enabled: true
     fullnameOverride: kube-state-metrics
     namespaceOverride: obs
+    metricLabelsAllowlist:
+      - deployments=[app.kubernetes.io/instance,app.kubernetes.io/name,app.kubernetes.io/component,app.kubernetes.io/managed-by,component]
+      - daemonsets=[app.kubernetes.io/instance,app.kubernetes.io/name,app.kubernetes.io/component,app.kubernetes.io/managed-by,component]
+      - statefulsets=[app.kubernetes.io/instance,app.kubernetes.io/name,app.kubernetes.io/component,app.kubernetes.io/managed-by,component]
     rbac:
       extraRules:
         - apiGroups: ["apiextensions.k8s.io"]
@@ -444,6 +462,10 @@ prometheus:
         - apiGroups: ["install.kedify.io"]
           resources:
             - kedifyconfigurations
+          verbs: ["list", "watch"]
+        - apiGroups: ["opentelemetry.io"]
+          resources:
+            - opentelemetrycollectors
           verbs: ["list", "watch"]
 
     customResourceState:
@@ -1442,3 +1464,53 @@ prometheus:
                       labelsFromPath:
                         condition: [type]
                         status: [status]
+
+            - groupVersionKind:
+                group: opentelemetry.io
+                version: v1beta1
+                kind: OpenTelemetryCollector
+              metricNamePrefix: kube_opentelemetry_collector
+              labelsFromPath:
+                namespace: [metadata, namespace]
+                opentelemetrycollector: [metadata, name]
+                release: [metadata, labels, "meta.helm.sh/release-name"]
+              metrics:
+                - name: info
+                  help: Information about an OpenTelemetryCollector custom resource.
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        mode: [spec, mode]
+                        management_state: [spec, managementState]
+                        upgrade_strategy: [spec, upgradeStrategy]
+                - name: created
+                  help: Unix creation timestamp of the OpenTelemetryCollector custom resource.
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [metadata, creationTimestamp]
+                - name: spec_replicas
+                  help: Replica count requested by the OpenTelemetryCollector custom resource.
+                  errorLogV: 10
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [spec, replicas]
+                - name: status_replicas
+                  help: Replica count reported by the OpenTelemetryCollector custom resource.
+                  errorLogV: 10
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [status, scale, replicas]
+                - name: status_info
+                  help: Runtime status reported by the OpenTelemetryCollector custom resource.
+                  errorLogV: 10
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        image: [status, image]
+                        ready: [status, scale, statusReplicas]
+                        version: [status, version]
