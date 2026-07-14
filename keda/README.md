@@ -96,6 +96,7 @@ their default values.
 | `image.pullPolicy` | string | `"Always"` | Image pullPolicy for all KEDA components |
 | `imagePullSecrets` | list | `[]` | Name of secret to use to pull images to use to pull Docker images |
 | `kedify.kpa.enabled` | bool | `false` | Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling. |
+| `kedify.kpa.defaultClass` | string | `"hpa"` | Default autoscaling class used consistently by the KEDA operator and admission webhook. Supported values are `hpa` and `kpa`; `kpa` requires `kedify.kpa.enabled=true`. |
 | `kedify.multitenant` | object | `{"address":"","agentNamespace":"keda","agentServiceAccount":"kedify-agent","authority":"","configSecretName":"kedify-multitenancy-config","mode":""}` | For keda installed in multitenant environment Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior |
 | `kedify.multitenant.address` | string | `""` | Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.<clusterDomain>:9666) |
 | `kedify.multitenant.agentNamespace` | string | `"keda"` | Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret) |

@@ -300,10 +300,19 @@
                 "enabled": {
                     "type": "boolean",
                     "default": false
+                },
+                "defaultClass": {
+                    "type": "string",
+                    "enum": [
+                        "hpa",
+                        "kpa"
+                    ],
+                    "default": "hpa"
                 }
             },
             "required": [
-                "enabled"
+                "enabled",
+                "defaultClass"
             ]
         },
         "KedifyMultitenant": {
