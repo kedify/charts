@@ -230,6 +230,7 @@ collector:
         exclude:
           - /var/log/pods/*/opentelemetry-collector/*.log
           - /var/log/pods/keda_kedify-agent-*_*/*/*.log
+          - /var/log/pods/keda_keda-otel-scaler-*_*/*/*.log
         include_file_path: true
         include_file_name: false
         attributes:
@@ -272,6 +273,41 @@ collector:
                   - LEVEL(-8)
                   - LEVEL(-9)
                   - LEVEL(-10)
+      file_log/kedify_otel_scaler:
+        include:
+          - /var/log/pods/keda_keda-otel-scaler-*_*/*/*.log
+        include_file_path: true
+        include_file_name: false
+        attributes:
+          component: kedify_otel_scaler
+        operators:
+          - type: container
+            id: container-parser
+          - type: regex_parser
+            regex: '^(?P<time>\d{2}-\d{2} \d{2}:\d{2}:\d{2})\t(?:\x1b\[[0-9;]*m)?(?P<sev>[A-Z0-9()-]+)(?:\x1b\[[0-9;]*m)?\t(?P<msg>.*)$'
+            timestamp:
+              parse_from: attributes.time
+              layout: '%m-%d %H:%M:%S'
+            severity:
+              parse_from: attributes.sev
+              overwrite_text: true
+              mapping:
+                fatal: FATAL
+                error: ERROR
+                info: INFO
+                warn: WARN
+                trace:
+                  - DEBUG
+                  - LEVEL(-1)
+                  - LEVEL(-2)
+                  - LEVEL(-3)
+                  - LEVEL(-4)
+                  - LEVEL(-5)
+                  - LEVEL(-6)
+                  - LEVEL(-7)
+                  - LEVEL(-8)
+                  - LEVEL(-9)
+                  - LEVEL(-10)
 
     processors:
       memory_limiter:
@@ -291,6 +327,7 @@ collector:
           receivers:
             - file_log/kedify_others
             - file_log/kedify_agent
+            - file_log/kedify_otel_scaler
           processors:
             - memory_limiter
             - batch
