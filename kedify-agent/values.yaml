@@ -281,3 +281,7 @@ kedify-predictor:
   # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   fullnameOverride: kedify-predictor
+autoscaling-checks:
+  # for all available values:
+  # helm show values oci://ghcr.io/kedify/charts/autoscaling-checks
+  enabled: false
