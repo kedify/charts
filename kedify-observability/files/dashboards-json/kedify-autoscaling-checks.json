@@ -1,0 +1,2739 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Synthetic autoscaling control-plane SLOs, latency, target response distribution, inventory, and logs.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": 9,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "PASS requires every selected check to expose a current successful result. No data is shown as ATTENTION.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "ATTENTION"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "PASS"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "(count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) > bool 0) * (count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) == bool count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",result=\"success\"}))",
+          "legendFormat": "Result",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Check Result",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Number of selected autoscaling-check runners currently publishing metadata.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": 0
+              },
+              {
+                "color": "semi-dark-purple",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count(kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "Checks",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Active Check Types",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How often within the currently selected time range the SLO was broken (0 - good)\nOverall SLO captures the whole check",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) > $scale_down_slo)[$__range:]) / $__range or vector(0)",
+          "legendFormat": "Budget",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Overall SLO Breach",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How often within the currently selected time range the SLO was broken (0 - good)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_up\"}) > $scale_up_slo)[$__range:]) / $__range or vector(0)",
+          "legendFormat": "Budget",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Scale UUp SLO Breach",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How often within the currently selected time range the SLO was broken (0 - good)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_down\"}) > $scale_down_slo)[$__range:]) / $__range or vector(0)",
+          "legendFormat": "Budget",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Scale Down SLO Breach",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "PASS requires every selected check to expose a current successful result. No data is shown as ATTENTION.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "hidden",
+            "fillOpacity": 56,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "ATTENTION"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "PASS"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 4
+      },
+      "id": 27,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": false,
+        "rowHeight": 1,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "(count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) > bool 0) * (count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) == bool count(kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",result=\"success\"}))",
+          "format": "time_series",
+          "instant": false,
+          "legendFormat": "Status",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Check Result over Time",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Age of the oldest last-run timestamp among selected checks.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 450
+              },
+              {
+                "color": "red",
+                "value": 900
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 4
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "time() - min(kedify_autoscaling_check_last_run_timestamp_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "Age",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Stalest Check",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Worst current selected check duration as a percentage of the selected overall SLO. Values above 100% breach the SLO.\n\nOverall SLO captures the whole check",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 4
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) > $overall_slo)[$__range:]) / ($__range * (1 - $slo_p)) or vector(0)",
+          "instant": true,
+          "legendFormat": "Budget",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Overall SLO Budget Depleted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How much budget for SLO is gone (100 - bad, 0 - good)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 4
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_up\"}) > $scale_up_slo)[$__range:]) / ($__range * (1 - $slo_p)) or vector(0)",
+          "legendFormat": "Budget",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Scale Up SLO Budget Depleted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How much budget for SLO is gone (100 - bad, 0 - good)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 4
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time((max(kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_down\"}) > $scale_down_slo)[$__range:]) / ($__range * (1 - $slo_p)) or vector(0)",
+          "legendFormat": "Budget",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Scale Down SLO Budget Depleted",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 7,
+      "panels": [],
+      "title": "SLO Health",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Percentage of scraped latest-run gauge samples within each selected SLO over the dashboard range. Runners use a fixed interval, so this approximates run-level compliance.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 99
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 8,
+      "options": {
+        "displayMode": "basic",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "text": {},
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "100 * avg_over_time((max by (check) (kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}) <= bool $overall_slo)[$__range:])",
+          "legendFormat": "{{check}} overall",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "100 * avg_over_time((max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_up\"}) <= bool $scale_up_slo)[$__range:])",
+          "legendFormat": "{{check}} scale up",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "100 * avg_over_time((max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_down\"}) <= bool $scale_down_slo)[$__range:])",
+          "legendFormat": "{{check}} scale down",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Sampled SLO Compliance",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Worst selected-check p95 and p99 of sampled latest-run gauges over the selected time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.5, (max by (check) (kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}))[$__range:]))",
+          "hide": false,
+          "legendFormat": "Overall p50 (median)",
+          "range": true,
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.95, (max by (check) (kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}))[$__range:]))",
+          "legendFormat": "Overall p95",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.5, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_up\"}))[$__range:]))",
+          "legendFormat": "Scale up p50 (median)",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.95, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_up\"}))[$__range:]))",
+          "legendFormat": "Scale up p99",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.5, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_down\"}))[$__range:]))",
+          "legendFormat": "Scale down p50 (median)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.95, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"scale_down\"}))[$__range:]))",
+          "legendFormat": "Scale down p95",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.5, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"source_metric\"}))[$__range:]))",
+          "hide": false,
+          "legendFormat": "Source metric p50 (median)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(quantile_over_time(0.95, (max by (check) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\",step=\"source_metric\"}))[$__range:]))",
+          "hide": false,
+          "legendFormat": "Source metric p95",
+          "range": true,
+          "refId": "H"
+        }
+      ],
+      "title": "Historical Latency Quantiles",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Latest bounded result and step status labels emitted by each selected runner.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "minWidth": 80,
+            "wrapHeaderText": true,
+            "wrapText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Check"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Result Details",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "exported_check": true,
+              "instance": true,
+              "job": true,
+              "kubernetes_namespace": true,
+              "release": true,
+              "role": true,
+              "service": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Value": 9,
+              "check": 0,
+              "hpa_active": 6,
+              "hpa_metric": 5,
+              "keda_metric": 4,
+              "result": 1,
+              "scale_down": 8,
+              "scale_up": 7,
+              "signal": 2,
+              "source_metric": 3
+            },
+            "renameByName": {
+              "Value": "Duration",
+              "check": "Check",
+              "hpa_active": "HPA Active",
+              "hpa_metric": "HPA Metric",
+              "keda_metric": "KEDA Metric",
+              "result": "Result",
+              "scale_down": "Scale Down",
+              "scale_up": "Scale Up",
+              "signal": "Signal",
+              "source_metric": "Source Metric"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Check Timing",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "End-to-end duration of the latest completed synthetic autoscaling check, with the selected SLO threshold.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Overall SLO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by (check) (kedify_autoscaling_check_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "{{check}} duration",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "vector($overall_slo)",
+          "hide": false,
+          "legendFormat": "Overall SLO",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Check Duration vs Overall SLO",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Latency contribution of each check step. Scale-up and scale-down are the primary reaction-time indicators.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Scale up deadline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    5,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Scale down deadline"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    5,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by (check, step) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "{{check}} / {{step}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "vector($scale_up_slo)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Scale up deadline",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "vector($scale_down_slo)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Scale down deadline",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Step Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Current duration of every emitted check step.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 14,
+      "maxPerRow": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "repeat": "check",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}",
+          "legendFormat": "{{check}} / {{step}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Step Breakdown - $check",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Deployment replica counts observed after scale-up and scale-down.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 45
+      },
+      "id": 16,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "text": {},
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by (check, phase) (kedify_autoscaling_check_observed_replicas{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "{{check}} / {{phase}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Observed Target Replicas",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Current duration of every emitted check step.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 52
+      },
+      "id": 26,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "text": {},
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by (check, step) (kedify_autoscaling_check_step_duration_seconds{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "{{check}} / {{step}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Step Breakdown",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 60
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Target Response Latency",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Rate-based heatmap of response_delay_seconds histogram observations from selected target services.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 14,
+        "x": 0,
+        "y": 61
+      },
+      "id": 18,
+      "options": {
+        "calculate": true,
+        "cellGap": 1,
+        "cellValues": {},
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Oranges",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": true,
+          "yHistogram": true
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[30s]))",
+          "format": "heatmap",
+          "instant": false,
+          "legendFormat": "{{le}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Response Delay Distribution",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "p50, p95, p99, and average response delay derived from the target histogram, compared with the selected response SLO.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Response SLO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 14,
+        "y": 61
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+          "legendFormat": "{{check}} p50",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+          "legendFormat": "{{check}} p95",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+          "legendFormat": "{{check}} p99",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (check) (rate(response_delay_seconds_sum{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])) / sum by (check) (rate(response_delay_seconds_count{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval]))",
+          "legendFormat": "{{check}} average",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "vector($response_slo)",
+          "legendFormat": "Response SLO",
+          "range": true,
+          "refId": "E"
+        }
+      ],
+      "title": "Response Latency Percentiles",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 70
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Installation",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Static labels from kedify_autoscaling_check_info for every selected runner.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "minWidth": 80,
+            "wrapHeaderText": true,
+            "wrapText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Interval"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 71
+      },
+      "id": 21,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Check"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Runner Metadata",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "exported_check": true,
+              "instance": true,
+              "job": true,
+              "role": true,
+              "service": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "check": 2,
+              "interval_seconds": 4,
+              "kubernetes_namespace": 0,
+              "primary_metric": 5,
+              "release": 1,
+              "runner_namespace": 3
+            },
+            "renameByName": {
+              "check": "Check",
+              "interval_seconds": "Interval",
+              "kubernetes_namespace": "Namespace",
+              "primary_metric": "Primary Metric",
+              "release": "Release",
+              "runner_namespace": "Runner Namespace"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Deployment inventory built from kube-state-metrics and the chart check/role labels.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "minWidth": 80,
+            "wrapHeaderText": true,
+            "wrapText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ready"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 71
+      },
+      "id": 22,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Check"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by (namespace, deployment, label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) (kube_deployment_status_replicas_ready{namespace=~\"$namespace\"} * on (namespace, deployment) group_left(label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) kube_deployment_labels{namespace=~\"$namespace\",label_app_kubernetes_io_name=\"autoscaling-checks\",label_app_kubernetes_io_instance=~\"$release\",label_autoscaling_checks_kedify_io_check=~\"$check\"})",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Runner and Target Workloads",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Value": 5,
+              "deployment": 4,
+              "label_app_kubernetes_io_instance": 1,
+              "label_autoscaling_checks_kedify_io_check": 2,
+              "label_autoscaling_checks_kedify_io_role": 3,
+              "namespace": 0
+            },
+            "renameByName": {
+              "Value": "Ready",
+              "deployment": "Deployment",
+              "label_app_kubernetes_io_instance": "Release",
+              "label_autoscaling_checks_kedify_io_check": "Check",
+              "label_autoscaling_checks_kedify_io_role": "Role",
+              "namespace": "Namespace"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 78
+      },
+      "id": 23,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "description": "Logs from selected autoscaling-check runner pods.",
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 90
+          },
+          "id": 24,
+          "options": {
+            "dedupStrategy": "numbers",
+            "detailsMode": "sidebar",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "showControls": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "syntaxHighlighting": true,
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{k8s_namespace_name=~\"$namespace\",k8s_pod_name=~\"${release:regex}-check-${check:regex}-runner-.*\"} |= ``",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Check Runners",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "description": "Logs from selected autoscaling-check target pods.",
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 90
+          },
+          "id": 25,
+          "options": {
+            "dedupStrategy": "numbers",
+            "detailsMode": "sidebar",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "showControls": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "syntaxHighlighting": true,
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{k8s_namespace_name=~\"$namespace\",k8s_pod_name=~\"${release:regex}-check-${check:regex}-target-.*\"} |= ``",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Check Targets",
+          "type": "logs"
+        }
+      ],
+      "title": "Logs",
+      "type": "row"
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": [
+    "kedify",
+    "keda",
+    "autoscaling",
+    "slo"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "label": "Prometheus",
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "keda"
+          ],
+          "value": [
+            "keda"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(kedify_autoscaling_check_info, kubernetes_namespace)",
+        "includeAll": true,
+        "label": "Namespace",
+        "multi": true,
+        "name": "namespace",
+        "options": [],
+        "query": {
+          "query": "label_values(kedify_autoscaling_check_info, kubernetes_namespace)",
+          "refId": "PrometheusVariableQueryEditor-Namespace"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "autoscaling-checks"
+          ],
+          "value": [
+            "autoscaling-checks"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\"}, release)",
+        "includeAll": true,
+        "label": "Release",
+        "multi": true,
+        "name": "release",
+        "options": [],
+        "query": {
+          "query": "label_values(kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\"}, release)",
+          "refId": "PrometheusVariableQueryEditor-Release"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\"}, check)",
+        "includeAll": true,
+        "label": "Check",
+        "multi": true,
+        "name": "check",
+        "options": [],
+        "query": {
+          "query": "label_values(kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\"}, check)",
+          "refId": "PrometheusVariableQueryEditor-Check"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "300",
+          "value": "300"
+        },
+        "includeAll": false,
+        "label": "Overall SLO",
+        "name": "overall_slo",
+        "options": [
+          {
+            "selected": false,
+            "text": "30 s",
+            "value": "30"
+          },
+          {
+            "selected": false,
+            "text": "1 min",
+            "value": "60"
+          },
+          {
+            "selected": false,
+            "text": "2 min",
+            "value": "120"
+          },
+          {
+            "selected": true,
+            "text": "5 min",
+            "value": "300"
+          },
+          {
+            "selected": false,
+            "text": "12 min",
+            "value": "720"
+          }
+        ],
+        "query": "30 s : 30, 1 min : 60, 2 min : 120, 5 min : 300, 12 min : 720",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "60",
+          "value": "60"
+        },
+        "includeAll": false,
+        "label": "Scale Up SLO",
+        "name": "scale_up_slo",
+        "options": [
+          {
+            "selected": false,
+            "text": "10 s",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "30 s",
+            "value": "30"
+          },
+          {
+            "selected": true,
+            "text": "1 min",
+            "value": "60"
+          },
+          {
+            "selected": false,
+            "text": "3 min",
+            "value": "180"
+          }
+        ],
+        "query": "10 s : 10, 30 s : 30, 1 min : 60, 3 min : 180",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "60",
+          "value": "60"
+        },
+        "includeAll": false,
+        "label": "Scale Down SLO",
+        "name": "scale_down_slo",
+        "options": [
+          {
+            "selected": false,
+            "text": "30 s",
+            "value": "30"
+          },
+          {
+            "selected": true,
+            "text": "1 min",
+            "value": "60"
+          },
+          {
+            "selected": false,
+            "text": "2 min",
+            "value": "120"
+          },
+          {
+            "selected": false,
+            "text": "5 min",
+            "value": "300"
+          }
+        ],
+        "query": "30 s : 30, 1 min : 60, 2 min : 120, 5 min : 300",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "0.99",
+          "value": "0.99"
+        },
+        "description": "How often (for selected time range in grafana) the SLO must hold",
+        "includeAll": false,
+        "label": "SLO Percent",
+        "name": "slo_p",
+        "options": [
+          {
+            "selected": false,
+            "text": "99.99%",
+            "value": "0.9999"
+          },
+          {
+            "selected": false,
+            "text": "99.9%",
+            "value": "0.999"
+          },
+          {
+            "selected": true,
+            "text": "99%",
+            "value": "0.99"
+          },
+          {
+            "selected": false,
+            "text": "98%",
+            "value": "0.98"
+          },
+          {
+            "selected": false,
+            "text": "95%",
+            "value": "0.95"
+          },
+          {
+            "selected": false,
+            "text": "90%",
+            "value": "0.90"
+          },
+          {
+            "selected": false,
+            "text": "80%",
+            "value": "0.80"
+          },
+          {
+            "selected": false,
+            "text": "50%",
+            "value": "0.50"
+          }
+        ],
+        "query": "99.99% : 0.9999, 99.9% : 0.999, 99% : 0.99, 98% : 0.98, 95% : 0.95, 90% : 0.90, 80% : 0.80, 50% : 0.50",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "1",
+          "value": "1"
+        },
+        "includeAll": false,
+        "label": "Response SLO",
+        "name": "response_slo",
+        "options": [
+          {
+            "selected": false,
+            "text": "500 ms",
+            "value": "0.5"
+          },
+          {
+            "selected": true,
+            "text": "1 s",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "2 s",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "5 s",
+            "value": "5"
+          }
+        ],
+        "query": "500 ms : 0.5, 1 s : 1, 2 s : 2, 5 s : 5",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Kedify / Autoscaling Checks",
+  "uid": "kedify-autoscaling-checks",
+  "version": 1
+}
