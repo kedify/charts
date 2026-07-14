@@ -3,8 +3,8 @@ name: kedify-observability
 description: Kedify observability - Opinionated observability stack for Kedify
 kubeVersion: ">=v1.23.0-0"
 type: application
-version: "0.0.2"
-appVersion: "v0.0.2"
+version: "0.0.3"
+appVersion: "v0.0.3"
 icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
 dependencies:
   - name: grafana
