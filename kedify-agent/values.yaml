@@ -282,6 +282,10 @@ kedify-predictor:
   enabled: false
   fullnameOverride: kedify-predictor
 autoscaling-checks:
+  # Optionally install set of small check runner apps that validate KEDA/Kedify autoscaling end to end
+  # each check is a small web service that can be scaled up and down by KEDA/Kedify based on the configured triggers
+  # To enable, set this to true and configure the checks you want to run. The checks will be installed in the same namespace as the Kedify agent.
+  
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/autoscaling-checks
   enabled: false
@@ -295,4 +299,3 @@ autoscaling-checks:
     enabled: true
   memory:
     enabled: false
-
