@@ -23,6 +23,10 @@ dependencies:
     repository: oci://ghcr.io/kedify/charts
     version: 0.1.4
     condition: kedifyPredictor.enabled,kedify-predictor.enabled
+  - name: autoscaling-checks
+    repository: oci://ghcr.io/kedify/charts
+    version: 0.0.2
+    condition: autoscalingChecks.enabled,autoscaling-checks.enabled
 home: https://github.com/kedify/charts
 sources:
   - https://github.com/kedify/agent
