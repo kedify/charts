@@ -1,4 +1,5 @@
 {{- if and .Values.webhooks.enabled (ne .Values.kedify.multitenant.mode "tenant") }}
+{{- $kedifyKpaDefaultClass := include "keda.kedifyKpaDefaultClass" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -79,6 +80,10 @@ spec:
           - "--zap-log-level={{ .Values.logging.webhooks.level }}"
           - "--zap-encoder={{ .Values.logging.webhooks.format }}"
           - "--zap-time-encoding={{ .Values.logging.webhooks.timeEncoding }}"
+          {{- if .Values.kedify.kpa.enabled }}
+          - --enable-kpa
+          - --autoscaling-default-class={{ $kedifyKpaDefaultClass }}
+          {{- end }}
           - "--cert-dir={{ .Values.certificates.mountPath }}"
           - "--health-probe-bind-address=:{{ .Values.webhooks.healthProbePort }}"
           {{- if .Values.webhooks.port }}
@@ -89,7 +94,9 @@ spec:
           - "--profiling-bind-address=:{{ .Values.profiling.webhooks.port }}"
           {{- end }}
           {{- range $key, $value := .Values.extraArgs.webhooks }}
+          {{- if ne $key "autoscaling-default-class" }}
           - --{{ $key }}={{ $value }}
+          {{- end }}
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           livenessProbe:

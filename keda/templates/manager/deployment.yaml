@@ -1,3 +1,4 @@
+{{- $kedifyKpaDefaultClass := include "keda.kedifyKpaDefaultClass" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -106,6 +107,10 @@ spec:
           - "--k8s-cluster-name={{ tpl .Values.clusterName . }}"
           - "--k8s-cluster-domain={{ .Values.clusterDomain }}"
           - "--enable-prometheus-metrics={{ .Values.prometheus.operator.enabled }}"
+          {{- if .Values.kedify.kpa.enabled }}
+          - --enable-kpa
+          - --autoscaling-default-class={{ $kedifyKpaDefaultClass }}
+          {{- end }}
           {{- if .Values.prometheus.operator.enabled }}
           - "--metrics-bind-address=:{{ .Values.prometheus.operator.port }}"
           {{- end }}
@@ -121,7 +126,9 @@ spec:
           {{- end }}
           {{- end }}
           {{- range $key, $value := .Values.extraArgs.keda }}
+          {{- if ne $key "autoscaling-default-class" }}
           - "--{{ $key }}={{ $value }}"
+          {{- end }}
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           livenessProbe:
