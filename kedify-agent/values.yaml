@@ -264,23 +264,27 @@ keda:
       enabled: true
     webhooks:
       enabled: true
+
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
   interceptor:
     scaledObject:
       waitForCrd: true
+
 otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false
   fullnameOverride: kedify-otel-scaler
   otelOperator:
     enabled: true
+
 kedify-predictor:
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   fullnameOverride: kedify-predictor
+
 autoscaling-checks:
   # Optionally install set of small check runner apps that validate KEDA/Kedify autoscaling end to end
   # each check is a small web service that can be scaled up and down by KEDA/Kedify based on the configured triggers
@@ -299,3 +303,9 @@ autoscaling-checks:
     enabled: true
   memory:
     enabled: false
+
+kedify-observability:
+  # Optionally install the opinionated observability stack for Kedify.
+  # For all available values, check https://github.com/kedify/charts/blob/main/kedify-observability/values.yaml
+  enabled: false
+
