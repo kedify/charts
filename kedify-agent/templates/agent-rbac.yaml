@@ -275,7 +275,6 @@ rules:
   verbs:
   - get
   - list
-  - watch
 {{- end }}
 {{- if .Values.agent.rbac.readPods }}
 - apiGroups:
