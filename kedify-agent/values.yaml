@@ -133,6 +133,9 @@ agent:
     scalingPoliciesEnabled: true
     recommendationsForLabeledNamespaces: true
     multitenantKEDAEnabled: false
+    # -- Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA).
+    # KPA can be installed separately; leave disabled when its CRD/controller is not present
+    kedifyPodAutoscalerEnabled: false
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
     # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period

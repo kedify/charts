@@ -44,3 +44,38 @@ so tenants sharing a namespace do not overwrite each other's certificates.
 {{- .Values.certificates.secretName -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return one validated autoscaling default for every KEDA process. The legacy
+extraArgs form remains accepted only when operator and webhook values match;
+this prevents admission and reconciliation from silently choosing different
+classes. New installations should use kedify.kpa.defaultClass.
+*/}}
+{{- define "keda.kedifyKpaDefaultClass" -}}
+{{- $configured := default "hpa" .Values.kedify.kpa.defaultClass -}}
+{{- $operatorArgs := default (dict) .Values.extraArgs.keda -}}
+{{- $webhookArgs := default (dict) .Values.extraArgs.webhooks -}}
+{{- $operatorHasLegacy := hasKey $operatorArgs "autoscaling-default-class" -}}
+{{- $webhookHasLegacy := hasKey $webhookArgs "autoscaling-default-class" -}}
+{{- if or $operatorHasLegacy $webhookHasLegacy -}}
+  {{- if not (and $operatorHasLegacy $webhookHasLegacy) -}}
+    {{- fail "extraArgs.keda and extraArgs.webhooks must set autoscaling-default-class together; prefer kedify.kpa.defaultClass" -}}
+  {{- end -}}
+  {{- $operatorLegacy := toString (index $operatorArgs "autoscaling-default-class") -}}
+  {{- $webhookLegacy := toString (index $webhookArgs "autoscaling-default-class") -}}
+  {{- if ne $operatorLegacy $webhookLegacy -}}
+    {{- fail "extraArgs.keda and extraArgs.webhooks autoscaling-default-class values must match; prefer kedify.kpa.defaultClass" -}}
+  {{- end -}}
+  {{- if and (ne $configured "hpa") (ne $configured $operatorLegacy) -}}
+    {{- fail "kedify.kpa.defaultClass conflicts with the legacy autoscaling-default-class extraArgs" -}}
+  {{- end -}}
+  {{- $configured = $operatorLegacy -}}
+{{- end -}}
+{{- if not (has $configured (list "hpa" "kpa")) -}}
+  {{- fail "kedify.kpa.defaultClass must be hpa or kpa" -}}
+{{- end -}}
+{{- if and (eq $configured "kpa") (not .Values.kedify.kpa.enabled) -}}
+  {{- fail "kedify.kpa.defaultClass=kpa requires kedify.kpa.enabled=true" -}}
+{{- end -}}
+{{- $configured -}}
+{{- end -}}

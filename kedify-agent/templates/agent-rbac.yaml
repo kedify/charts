@@ -275,7 +275,6 @@ rules:
   verbs:
   - get
   - list
-  - watch
 {{- end }}
 {{- if .Values.agent.rbac.readPods }}
 - apiGroups:
@@ -347,12 +346,23 @@ rules:
   verbs:
   - get
   - list
+  - watch
 {{- end }}
 {{- if .Values.agent.rbac.readHpas }}
 - apiGroups:
   - autoscaling
   resources:
   - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+{{- end }}
+{{- if .Values.agent.features.kedifyPodAutoscalerEnabled }}
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - kedifypodautoscalers
   verbs:
   - get
   - list
@@ -532,6 +542,16 @@ rules:
   - patch
   - update
   - watch
+{{- end }}
+
+{{- if and .Values.agent.features.kedifyPodAutoscalerEnabled (not (and .Values.agent.rbac.ingressAutoWire .Values.agent.rbac.readServices)) }}
+# KPA metrics endpoint discovery only lists Services with the KPA discovery label.
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - list
 {{- end }}
 
 {{- if or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon }}

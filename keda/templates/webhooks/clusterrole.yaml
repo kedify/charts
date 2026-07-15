@@ -18,6 +18,16 @@ rules:
   verbs:
   - list
   - watch
+{{- if .Values.kedify.kpa.enabled }}
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - kedifypodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+{{- end }}
 - apiGroups:
   - keda.sh
   resources:

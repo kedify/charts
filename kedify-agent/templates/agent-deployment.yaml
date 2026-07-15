@@ -127,6 +127,8 @@ spec:
               value: {{ .Values.agent.rbac.readServices | quote }}
             - name: RBAC_READ_HPAS
               value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readHpas) | quote }}
+            - name: RBAC_READ_KPAS
+              value: {{ .Values.agent.features.kedifyPodAutoscalerEnabled | quote }}
             - name: RBAC_READ_STATEFUL_SETS
               value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readStatefulSets) | quote }}
             - name: RBAC_MANAGE_KUBE_RESOURCES
