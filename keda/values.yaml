@@ -66,7 +66,7 @@ kedify:
   kpa:
     # -- Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling.
     enabled: false
-    # -- Default autoscaling class used by both the KEDA operator and admission webhook. Set to "kpa" only when KPA support is enabled.
+    # -- Default autoscaling class used by both the KEDA operator and admission webhook. Set to "kpa" only when KPA support is enabled. Changing this to "kpa" replaces HPA with KPA for every existing ScaledObject that has no explicit autoscaling.kedify.io/class annotation; canary explicit KPA selections before changing the installation default.
     defaultClass: hpa
 
   # -- For keda installed in multitenant environment
