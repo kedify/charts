@@ -34,6 +34,9 @@ jobs:
     - name: Lint 'KEDA' Helm chart
       run: helm lint keda
 
+    - name: Verify KPA RBAC and arguments
+      run: ./keda/test/kpa-rendering.sh
+
   deploy-helm-3-x:
     name: Deploy to Kubernetes ${{ matrix.kubernetesVersion }} in '${{matrix.namespace}}' namespace (${{ (matrix.enableAzureWorkloadIdentity == true && 'With Azure Workload Identity') || 'Without Azure Workload Identity' }} | ${{ (matrix.enableCertManager == true && 'With cert-manager') || 'Without cert-manager' }})
     needs: lint-helm-3-x

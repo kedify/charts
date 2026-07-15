@@ -17,7 +17,7 @@ We are a Cloud Native Computing Foundation (CNCF) graduated project.
 ## TL;DR
 
 ```console
-helm repo add kedacore https://kedacore.github.io/charts
+helm repo add kedify https://kedify.github.io/charts
 helm repo update
 
 kubectl create namespace keda
@@ -99,6 +99,15 @@ their default values.
 | `http.tlsCipherList` | string | `""` | The list of cipher suites to use when making HTTP over TLS connections. When left empty or unset, the TLS implementation will provide a default list of cipher suites which are believed to be secure. |
 | `image.pullPolicy` | string | `"Always"` | Image pullPolicy for all KEDA components |
 | `imagePullSecrets` | list | `[]` | Name of secret to use to pull images to use to pull Docker images |
+| `kedify.kpa.enabled` | bool | `false` | Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling. |
+| `kedify.kpa.defaultClass` | string | `"hpa"` | Default autoscaling class used consistently by the KEDA operator and admission webhook. Supported values are `hpa` and `kpa`; `kpa` requires `kedify.kpa.enabled=true`. Changing this to `kpa` replaces HPA with KPA for every existing ScaledObject that has no explicit `autoscaling.kedify.io/class` annotation; canary explicit KPA selections before changing the installation default. |
+| `kedify.multitenant` | object | `{"address":"","agentNamespace":"keda","agentServiceAccount":"kedify-agent","authority":"","configSecretName":"kedify-multitenancy-config","mode":""}` | For keda installed in multitenant environment Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior |
+| `kedify.multitenant.address` | string | `""` | Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.<clusterDomain>:9666) |
+| `kedify.multitenant.agentNamespace` | string | `"keda"` | Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret) |
+| `kedify.multitenant.agentServiceAccount` | string | `"kedify-agent"` | ServiceAccount name of the kedify-agent |
+| `kedify.multitenant.authority` | string | `""` | SNI authority override for gRPC connection to the tenant's keda-operator |
+| `kedify.multitenant.configSecretName` | string | `"kedify-multitenancy-config"` | Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace |
+| `kedify.multitenant.mode` | string | `""` | Multitenant mode: "" (disabled), "default" or "tenant" "": multitenancy disabled, standard KEDA deployment "default": deploys keda-operator + keda-operator-metrics-apiserver (and optionally keda-admission-webhooks); the metrics apiserver is configured to route HPA metric requests to the tenant keda-operators "tenant": deploys only keda-operator. The shared singletons (metrics apiserver, admission webhooks, CRDs) and the operator's webhook/apiservice patching are turned off automatically in this mode, so you do not need to set metricsServer.enabled / webhooks.enabled / crds.install. Give each tenant a unique operator.name so its cluster-scoped RBAC and leader election do not collide with the default install or other tenants. serviceAccount.operator.name and certificates.secretName only need overriding when multiple tenants share a namespace. |
 | `networkPolicy.cilium` | object | `{"operator":{"extraEgressRules":[]}}` | Allow use of extra egress rules for cilium network policies |
 | `networkPolicy.enabled` | bool | `false` | Enable network policies |
 | `networkPolicy.flavor` | string | `"cilium"` | Flavor of the network policies (cilium, kubernetes) |
@@ -127,6 +136,7 @@ their default values.
 | `watchLabelSelector` | string | `""` | Restricts the operator to reconcile only ScaledObjects and ScaledJobs (and their derived HorizontalPodAutoscalers) matching the given Kubernetes label selector. Default (empty) means no label-based filtering. Mirrors `watchNamespace`, but filters by label instead of by namespace. Examples: "environment=production", "tier in (gold,silver)", "!canary" |
 | `watchLabelSelectorForTriggerauth` | string | `""` | Restricts the operator to reconcile only TriggerAuthentications and ClusterTriggerAuthentications matching the given Kubernetes label selector. Default (empty) means no label-based filtering. Decoupled from `watchLabelSelector` so a single cluster-scoped ClusterTriggerAuthentication can be shared across operators scoped to different label selectors. |
 | `watchNamespace` | string | `""` | Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces |
+| `certificates.operator.apiServicePatching.enabled` | bool | `nil` | When explicitly set, controls whether the operator injects the self-generated TLS CA into the APIService for the KEDA Metrics API Server via the `--enable-apiservice-patching` flag. When unset (default), the flag is not passed and the operator uses its built-in default. Only effective when `certificates.autoGenerated=true` and `certificates.certManager.enabled=false`. If set to `false` while `metricsServer.enabled=true`, you must provide an alternative CA injection mechanism or the metrics API will fail TLS verification. |
 
 ### Operator
 
@@ -144,8 +154,8 @@ for receiver configuration and upgrade steps.
 | `hashiCorpVault.kubernetesAuth.audience` | string | `"vault"` | Projected operator-token audience, also globally approved. Empty disables projection; does not configure named-SA minting. Use an audience not accepted by kube-apiserver. |
 | `hashiCorpVault.kubernetesAuth.projectedTokenMountPath` | string | `"/var/run/secrets/keda-vault"` | Mount directory for the Vault token (<path>/token). Empty/null disables projection and implicit file selection; explicit TA token paths remain usable. |
 | `image.keda.registry` | string | `"ghcr.io"` | Image registry of KEDA operator |
-| `image.keda.repository` | string | `"kedacore/keda"` | Image name of KEDA operator |
-| `image.keda.tag` | string | `""` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
+| `image.keda.repository` | string | `"kedify/keda-operator"` | Image name of KEDA operator |
+| `image.keda.tag` | string | `"v2.20.1-4"` | Image tag of KEDA operator. Optional, given app version of Helm chart is used by default |
 | `logging.operator.format` | string | `"console"` | Logging format for KEDA Operator. allowed values: `json` or `console` |
 | `logging.operator.level` | string | `"info"` | Logging level for KEDA Operator. allowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string |
 | `logging.operator.stackTracesEnabled` | bool | `false` | If enabled, the stack traces will be also printed |
@@ -190,6 +200,7 @@ for receiver configuration and upgrade steps.
 | `upgradeStrategy.operator` | object | `{}` | Capability to configure [Deployment upgrade strategy] for operator |
 | `volumes.keda.extraVolumeMounts` | list | `[]` | Extra volume mounts for KEDA deployment |
 | `volumes.keda.extraVolumes` | list | `[]` | Extra volumes for KEDA deployment |
+| `operator.leaderElectionID` | string | `nil` | When set, overrides the leader election Lease resource name via the `--leader-election-id` flag. When unset (default), the operator uses its built-in default (`operator.keda.sh`). Override it to allow multiple independent KEDA operator deployments in the same namespace. |
 
 ### Metrics server
 
@@ -197,8 +208,8 @@ for receiver configuration and upgrade steps.
 |-----------|------|---------|-------------|
 | `extraArgs.metricsAdapter` | object | `{}` | Additional Metrics Adapter container arguments |
 | `image.metricsApiServer.registry` | string | `"ghcr.io"` | Image registry of KEDA Metrics API Server |
-| `image.metricsApiServer.repository` | string | `"kedacore/keda-metrics-apiserver"` | Image name of KEDA Metrics API Server |
-| `image.metricsApiServer.tag` | string | `""` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
+| `image.metricsApiServer.repository` | string | `"kedify/keda-metrics-apiserver"` | Image name of KEDA Metrics API Server |
+| `image.metricsApiServer.tag` | string | `"v2.20.1-4"` | Image tag of KEDA Metrics API Server. Optional, given app version of Helm chart is used by default |
 | `logging.metricServer.level` | int | `0` | Logging level for Metrics Server (Deprecated). allowed values: `0` for info, `4` for debug, or an integer value greater than 0, specified as string |
 | `logging.metricServer.stderrthreshold` | string | `"ERROR"` | Logging stderrthreshold for Metrics Server (Deprecated) allowed values: 'DEBUG','INFO','WARN','ERROR','ALERT','EMERG' |
 | `logging.metricServer.zapEncoder` | string | `"console"` | Zap Logging encoder for Metrics Server. allowed values: `json` or `console` |
@@ -247,7 +258,7 @@ for receiver configuration and upgrade steps.
 |-----------|------|---------|-------------|
 | `opentelemetry.collector.uri` | string | `""` | Uri of OpenTelemetry Collector to push telemetry to |
 | `opentelemetry.operator.enabled` | bool | `false` | Enable pushing metrics to an OpenTelemetry Collector for operator |
-| `prometheus.metricServer.enabled` | bool | `false` | Enable metric server Prometheus metrics expose |
+| `prometheus.metricServer.enabled` | bool | `true` | Enable metric server Prometheus metrics expose |
 | `prometheus.metricServer.podMonitor.additionalLabels` | object | `{}` | Additional labels to add for metric server using podMonitor crd (prometheus operator) |
 | `prometheus.metricServer.podMonitor.enabled` | bool | `false` | Enables PodMonitor creation for the Prometheus Operator |
 | `prometheus.metricServer.podMonitor.interval` | string | `""` | Scraping interval for metric server using podMonitor crd (prometheus operator) |
@@ -272,7 +283,7 @@ for receiver configuration and upgrade steps.
 | `prometheus.metricServer.serviceMonitor.targetLabels` | list | `[]` | TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics |
 | `prometheus.metricServer.serviceMonitor.targetPort` | string | `""` | Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port |
 | `prometheus.metricServer.serviceMonitor.tlsConfig` | object | `{}` | TLS configuration for scraping metrics |
-| `prometheus.operator.enabled` | bool | `false` | Enable KEDA Operator prometheus metrics expose |
+| `prometheus.operator.enabled` | bool | `true` | Enable KEDA Operator prometheus metrics expose |
 | `prometheus.operator.podMonitor.additionalLabels` | object | `{}` | Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator) |
 | `prometheus.operator.podMonitor.enabled` | bool | `false` | Enables PodMonitor creation for the Prometheus Operator |
 | `prometheus.operator.podMonitor.interval` | string | `""` | Scraping interval for KEDA Operator using podMonitor crd (prometheus operator) |
@@ -300,7 +311,7 @@ for receiver configuration and upgrade steps.
 | `prometheus.operator.serviceMonitor.targetLabels` | list | `[]` | TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics |
 | `prometheus.operator.serviceMonitor.targetPort` | string | `""` | Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port |
 | `prometheus.operator.serviceMonitor.tlsConfig` | object | `{}` | TLS configuration for scraping metrics |
-| `prometheus.webhooks.enabled` | bool | `false` | Enable KEDA admission webhooks prometheus metrics expose |
+| `prometheus.webhooks.enabled` | bool | `true` | Enable KEDA admission webhooks prometheus metrics expose |
 | `prometheus.webhooks.port` | int | `8080` | Port used for exposing KEDA admission webhooks prometheus metrics |
 | `prometheus.webhooks.prometheusRules.additionalLabels` | object | `{}` | Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator) |
 | `prometheus.webhooks.prometheusRules.alerts` | list | `[]` | Additional alerts to add for KEDA admission webhooks using prometheusRules crd (prometheus operator) |
@@ -339,8 +350,8 @@ for receiver configuration and upgrade steps.
 |-----------|------|---------|-------------|
 | `extraArgs.webhooks` | object | `{}` | Additional KEDA admission webhooks container arguments |
 | `image.webhooks.registry` | string | `"ghcr.io"` | Image registry of KEDA admission-webhooks |
-| `image.webhooks.repository` | string | `"kedacore/keda-admission-webhooks"` | Image name of KEDA admission-webhooks |
-| `image.webhooks.tag` | string | `""` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
+| `image.webhooks.repository` | string | `"kedify/keda-admission-webhooks"` | Image name of KEDA admission-webhooks |
+| `image.webhooks.tag` | string | `"v2.20.1-4"` | Image tag of KEDA admission-webhooks . Optional, given app version of Helm chart is used by default |
 | `logging.webhooks.format` | string | `"console"` | Logging format for KEDA Admission webhooks. allowed values: `json` or `console` |
 | `logging.webhooks.level` | string | `"info"` | Logging level for KEDA Operator. allowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string |
 | `logging.webhooks.timeEncoding` | string | `"rfc3339"` | Logging time encoding for KEDA Operator. allowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano` |
@@ -380,7 +391,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to
 `helm install`. For example:
 
 ```console
-$ helm install keda kedacore/keda --namespace keda \
+$ helm install keda kedify/keda --namespace keda \
                --set image.keda.tag=<different tag from app version> \
                --set image.metricsApiServer.tag=<different tag from app version> \
                --set image.webhooks.tag=<different tag from app version>
@@ -390,7 +401,7 @@ Alternatively, a YAML file that specifies the values for the above parameters ca
 be provided while installing the chart. For example,
 
 ```console
-helm install keda kedacore/keda --namespace keda -f values.yaml
+helm install keda kedify/keda --namespace keda -f values.yaml
 ```
 
 ## KEDA is secure by default

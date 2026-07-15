@@ -65,6 +65,16 @@
               "pattern": "^(aws:|gcp:|kfy:)[a-zA-Z0-9][a-zA-Z0-9-]*$"
             }
           ]
+        },
+        "features": {
+          "type": "object",
+          "properties": {
+            "kedifyPodAutoscalerEnabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler resources."
+            }
+          }
         }
       },
       "if": {
