@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 9,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -1089,10 +1089,13 @@
       "description": "Latest bounded result and step status labels emitted by each selected runner.",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "custom": {
             "align": "auto",
             "cellOptions": {
-              "type": "auto"
+              "type": "color-text"
             },
             "filterable": true,
             "footer": {
@@ -1103,12 +1106,26 @@
             "wrapHeaderText": true,
             "wrapText": false
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "skipped": {
+                  "color": "#808080ad",
+                  "index": 1
+                },
+                "success": {
+                  "color": "semi-dark-green",
+                  "index": 0
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "text",
                 "value": 0
               }
             ]
@@ -1130,7 +1147,7 @@
         ]
       },
       "gridPos": {
-        "h": 5,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 19
@@ -1214,7 +1231,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 26
       },
       "id": 11,
       "panels": [],
@@ -1315,10 +1332,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 13,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 27
       },
       "id": 12,
       "options": {
@@ -1363,7 +1380,7 @@
           "refId": "B"
         }
       ],
-      "title": "Check Duration vs Overall SLO",
+      "title": "Whole Check Duration vs Overall SLO",
       "type": "timeseries"
     },
     {
@@ -1485,10 +1502,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 13,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 27
       },
       "id": 13,
       "options": {
@@ -1578,7 +1595,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 40
       },
       "id": 14,
       "maxPerRow": 4,
@@ -1627,85 +1644,6 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "Deployment replica counts observed after scale-up and scale-down.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 45
-      },
-      "id": 16,
-      "options": {
-        "displayMode": "lcd",
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "sizing": "auto",
-        "text": {},
-        "valueMode": "color"
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "max by (check, phase) (kedify_autoscaling_check_observed_replicas{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
-          "legendFormat": "{{check}} / {{phase}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Observed Target Replicas",
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
       "description": "Current duration of every emitted check step.",
       "fieldConfig": {
         "defaults": {
@@ -1735,10 +1673,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 15,
         "w": 8,
-        "x": 16,
-        "y": 52
+        "x": 0,
+        "y": 51
       },
       "id": 26,
       "options": {
@@ -1784,217 +1722,66 @@
       "type": "bargauge"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 60
-      },
-      "id": 17,
-      "panels": [],
-      "title": "Target Response Latency",
-      "type": "row"
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "Rate-based heatmap of response_delay_seconds histogram observations from selected target services.",
+      "description": "Deployment replica counts observed after scale-up and scale-down.",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "scaleDistribution": {
-              "type": "linear"
-            }
-          }
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 14,
-        "x": 0,
-        "y": 61
+        "h": 15,
+        "w": 8,
+        "x": 8,
+        "y": 51
       },
-      "id": 18,
+      "id": 16,
       "options": {
-        "calculate": true,
-        "cellGap": 1,
-        "cellValues": {},
-        "color": {
-          "exponent": 0.5,
-          "fill": "dark-orange",
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Oranges",
-          "steps": 64
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": 1e-9
-        },
+        "displayMode": "lcd",
         "legend": {
-          "show": true
-        },
-        "rowsFrame": {
-          "layout": "auto"
-        },
-        "tooltip": {
-          "mode": "single",
-          "showColorScale": true,
-          "yHistogram": true
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false,
-          "unit": "s"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by (le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[30s]))",
-          "format": "heatmap",
-          "instant": false,
-          "legendFormat": "{{le}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Response Delay Distribution",
-      "type": "heatmap"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "description": "p50, p95, p99, and average response delay derived from the target histogram, compared with the selected response SLO.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 8,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Response SLO"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    8,
-                    6
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 10,
-        "x": 14,
-        "y": 61
-      },
-      "id": 19,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "displayMode": "table",
+          "calcs": [],
+          "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "text": {},
+        "valueMode": "color"
       },
       "pluginVersion": "12.3.1",
       "targets": [
@@ -2004,321 +1791,14 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
-          "legendFormat": "{{check}} p50",
+          "expr": "max by (check, phase) (kedify_autoscaling_check_observed_replicas{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"})",
+          "legendFormat": "{{check}} / {{phase}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
-          "legendFormat": "{{check}} p95",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
-          "legendFormat": "{{check}} p99",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (check) (rate(response_delay_seconds_sum{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])) / sum by (check) (rate(response_delay_seconds_count{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval]))",
-          "legendFormat": "{{check}} average",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "vector($response_slo)",
-          "legendFormat": "Response SLO",
-          "range": true,
-          "refId": "E"
         }
       ],
-      "title": "Response Latency Percentiles",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 70
-      },
-      "id": 20,
-      "panels": [],
-      "title": "Installation",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "description": "Static labels from kedify_autoscaling_check_info for every selected runner.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": true,
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false,
-            "minWidth": 80,
-            "wrapHeaderText": true,
-            "wrapText": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Interval"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "s"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 71
-      },
-      "id": 21,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "Check"
-          }
-        ]
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Runner Metadata",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true,
-              "__name__": true,
-              "exported_check": true,
-              "instance": true,
-              "job": true,
-              "role": true,
-              "service": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "check": 2,
-              "interval_seconds": 4,
-              "kubernetes_namespace": 0,
-              "primary_metric": 5,
-              "release": 1,
-              "runner_namespace": 3
-            },
-            "renameByName": {
-              "check": "Check",
-              "interval_seconds": "Interval",
-              "kubernetes_namespace": "Namespace",
-              "primary_metric": "Primary Metric",
-              "release": "Release",
-              "runner_namespace": "Runner Namespace"
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "description": "Deployment inventory built from kube-state-metrics and the chart check/role labels.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": true,
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false,
-            "minWidth": 80,
-            "wrapHeaderText": true,
-            "wrapText": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Ready"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "red",
-                      "value": 0
-                    },
-                    {
-                      "color": "green",
-                      "value": 1
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 71
-      },
-      "id": 22,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "Check"
-          }
-        ]
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "max by (namespace, deployment, label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) (kube_deployment_status_replicas_ready{namespace=~\"$namespace\"} * on (namespace, deployment) group_left(label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) kube_deployment_labels{namespace=~\"$namespace\",label_app_kubernetes_io_name=\"autoscaling-checks\",label_app_kubernetes_io_instance=~\"$release\",label_autoscaling_checks_kedify_io_check=~\"$check\"})",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Runner and Target Workloads",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "instance": true,
-              "job": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Value": 5,
-              "deployment": 4,
-              "label_app_kubernetes_io_instance": 1,
-              "label_autoscaling_checks_kedify_io_check": 2,
-              "label_autoscaling_checks_kedify_io_role": 3,
-              "namespace": 0
-            },
-            "renameByName": {
-              "Value": "Ready",
-              "deployment": "Deployment",
-              "label_app_kubernetes_io_instance": "Release",
-              "label_autoscaling_checks_kedify_io_check": "Check",
-              "label_autoscaling_checks_kedify_io_role": "Role",
-              "namespace": "Namespace"
-            }
-          }
-        }
-      ],
-      "type": "table"
+      "title": "Observed Target Replicas",
+      "type": "bargauge"
     },
     {
       "collapsed": true,
@@ -2326,7 +1806,546 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 66
+      },
+      "id": 17,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Deployment inventory built from kube-state-metrics and the chart check/role labels.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "footer": {
+                  "reducers": []
+                },
+                "inspect": false,
+                "minWidth": 80,
+                "wrapHeaderText": true,
+                "wrapText": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Ready"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "red",
+                          "value": 0
+                        },
+                        {
+                          "color": "green",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 12,
+            "x": 0,
+            "y": 67
+          },
+          "id": 22,
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Check"
+              }
+            ]
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "max by (namespace, deployment, label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) (kube_deployment_status_replicas_ready{namespace=~\"$namespace\"} * on (namespace, deployment) group_left(label_app_kubernetes_io_instance, label_autoscaling_checks_kedify_io_check, label_autoscaling_checks_kedify_io_role) kube_deployment_labels{namespace=~\"$namespace\",label_app_kubernetes_io_name=\"autoscaling-checks\",label_app_kubernetes_io_instance=~\"$release\",label_autoscaling_checks_kedify_io_check=~\"$check\"})",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Runner and Target Workloads",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "instance": true,
+                  "job": true
+                },
+                "includeByName": {},
+                "indexByName": {
+                  "Value": 5,
+                  "deployment": 4,
+                  "label_app_kubernetes_io_instance": 1,
+                  "label_autoscaling_checks_kedify_io_check": 2,
+                  "label_autoscaling_checks_kedify_io_role": 3,
+                  "namespace": 0
+                },
+                "renameByName": {
+                  "Value": "Ready",
+                  "deployment": "Deployment",
+                  "label_app_kubernetes_io_instance": "Release",
+                  "label_autoscaling_checks_kedify_io_check": "Check",
+                  "label_autoscaling_checks_kedify_io_role": "Role",
+                  "namespace": "Namespace"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "p50, p95, p99, and average response delay derived from the target histogram, compared with the selected response SLO.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 8,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "showValues": false,
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Response SLO"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        8,
+                        6
+                      ],
+                      "fill": "dash"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 12,
+            "x": 12,
+            "y": 67
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.50, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+              "legendFormat": "{{check}} p50",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.95, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+              "legendFormat": "{{check}} p95",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.99, sum by (check, le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])))",
+              "legendFormat": "{{check}} p99",
+              "range": true,
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "sum by (check) (rate(response_delay_seconds_sum{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval])) / sum by (check) (rate(response_delay_seconds_count{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[$__rate_interval]))",
+              "legendFormat": "{{check}} average",
+              "range": true,
+              "refId": "D"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "vector($response_slo)",
+              "legendFormat": "Response SLO",
+              "range": true,
+              "refId": "E"
+            }
+          ],
+          "title": "Response Latency Percentiles",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Rate-based heatmap of response_delay_seconds histogram observations from selected target services across all the checks",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 78
+          },
+          "id": 33,
+          "options": {
+            "calculate": true,
+            "cellGap": 1,
+            "cellValues": {},
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-orange",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Oranges",
+              "steps": 64
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-9
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": true,
+              "yHistogram": true
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "s"
+            }
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (le) (rate(response_delay_seconds_bucket{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}[300s]))",
+              "format": "heatmap",
+              "instant": false,
+              "legendFormat": "{{le}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Response Delay Distribution of Target (http & otel checks)",
+          "type": "heatmap"
+        }
+      ],
+      "title": "Target Response Latency",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 67
+      },
+      "id": 20,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Static labels from kedify_autoscaling_check_info for every selected runner.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "footer": {
+                  "reducers": []
+                },
+                "inspect": false,
+                "minWidth": 80,
+                "wrapHeaderText": true,
+                "wrapText": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Interval"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 92
+          },
+          "id": 21,
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Check"
+              }
+            ]
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "kedify_autoscaling_check_info{kubernetes_namespace=~\"$namespace\",release=~\"$release\",check=~\"$check\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Runner Metadata",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Value": true,
+                  "__name__": true,
+                  "exported_check": true,
+                  "instance": true,
+                  "job": true,
+                  "role": true,
+                  "service": true
+                },
+                "includeByName": {},
+                "indexByName": {
+                  "check": 2,
+                  "interval_seconds": 4,
+                  "kubernetes_namespace": 0,
+                  "primary_metric": 5,
+                  "release": 1,
+                  "runner_namespace": 3
+                },
+                "renameByName": {
+                  "check": "Check",
+                  "interval_seconds": "Interval",
+                  "kubernetes_namespace": "Namespace",
+                  "primary_metric": "Primary Metric",
+                  "release": "Release",
+                  "runner_namespace": "Runner Namespace"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Installation",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 68
       },
       "id": 23,
       "panels": [
@@ -2344,7 +2363,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 90
+            "y": 101
           },
           "id": 24,
           "options": {
@@ -2390,7 +2409,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 90
+            "y": 101
           },
           "id": 25,
           "options": {
@@ -2607,8 +2626,8 @@
       },
       {
         "current": {
-          "text": "60",
-          "value": "60"
+          "text": "120",
+          "value": "120"
         },
         "includeAll": false,
         "label": "Scale Down SLO",
@@ -2620,12 +2639,12 @@
             "value": "30"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "1 min",
             "value": "60"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2 min",
             "value": "120"
           },
@@ -2728,7 +2747,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
