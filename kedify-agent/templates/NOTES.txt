@@ -25,3 +25,6 @@ You have successfully installed the:
 {{- if (or ((.Values.kedifyPredictor).enabled) (and (index .Values "kedify-predictor") (index .Values "kedify-predictor").enabled)) }}
  - kedify-predictor
 {{- end}}
+{{- if (or ((.Values.autoscalingChecks).enabled) (and (index .Values "autoscaling-checks") (index .Values "autoscaling-checks").enabled)) }}
+ - autoscaling-checks
+{{- end}}
