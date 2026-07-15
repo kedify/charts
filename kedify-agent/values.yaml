@@ -285,3 +285,14 @@ autoscaling-checks:
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/autoscaling-checks
   enabled: false
+  http:
+    enabled: true
+  prometheus:
+    enabled: false
+  otel:
+    enabled: false
+  cpu:
+    enabled: true
+  memory:
+    enabled: false
+
