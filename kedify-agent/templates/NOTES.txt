@@ -28,3 +28,5 @@ You have successfully installed the:
 {{- if (or ((.Values.autoscalingChecks).enabled) (and (index .Values "autoscaling-checks") (index .Values "autoscaling-checks").enabled)) }}
  - autoscaling-checks
 {{- end}}
+{{- end}}
+
