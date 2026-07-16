@@ -27,6 +27,7 @@ You have successfully installed the:
 {{- end}}
 {{- if (or ((.Values.autoscalingChecks).enabled) (and (index .Values "autoscaling-checks") (index .Values "autoscaling-checks").enabled)) }}
  - autoscaling-checks
+{{- end}}
 {{- if (or ((.Values.kedifyObservability).enabled) (and (index .Values "kedify-observability") (index .Values "kedify-observability").enabled)) }}
  - kedify-observability (kubectl port-forward -nobs svc/grafana 3000:80)
 {{- end}}
