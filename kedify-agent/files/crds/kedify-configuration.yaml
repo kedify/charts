@@ -48,11 +48,6 @@ spec:
       name: Metric Server
       priority: 20
       type: string
-    - description: Health of KEDA's Admission controller
-      jsonPath: .status.components.keda.deployments.keda-admission-webhooks.phase
-      name: Admission
-      priority: 20
-      type: string
     - description: Health of KEDA's HTTP Addon interceptor
       jsonPath: .status.components.httpAddon.deployments.keda-add-ons-http-interceptor.phase
       name: Interceptor
