@@ -74,7 +74,20 @@ jobs:
           fi
           milestone=$(gh pr view -R kedify/charts ${PR_NUMBER} --json 'milestone' --jq '.milestone.title')
           echo "release PR #${PR_NUMBER} with milestone: $milestone"
-          next_milestone_prs=( $(gh pr list -R kedify/charts --search "milestone:${{ inputs.chart }}/next" --state merged --json number --jq '.[].number') )
+          # Resolve the '/next' milestone number, then enumerate its merged PRs via GraphQL.
+          # The REST search and issues APIs are backed by a search index that goes stale for
+          # extended periods and returns an incomplete (or empty) list, which stranded merged
+          # PRs in '/next' across releases and duplicated them in later changelogs. The GraphQL
+          # milestone->pullRequests connection traverses the relationship directly and stays
+          # consistent immediately after a merge.
+          next_milestone_number=$(gh api --paginate '/repos/kedify/charts/milestones?state=all' \
+              --jq '.[] | select(.title == "${{ inputs.chart }}/next") | .number')
+          next_milestone_prs=( $(gh api graphql -f query='
+            { repository(owner: "kedify", name: "charts") {
+                milestone(number: '"${next_milestone_number}"') {
+                  pullRequests(first: 100, states: MERGED) { nodes { number } }
+                } } }' --jq '.data.repository.milestone.pullRequests.nodes[].number') )
+          echo "found ${#next_milestone_prs[@]} merged PR(s) in ${{ inputs.chart }}/next"
           for pr in "${next_milestone_prs[@]}"; do
               echo "moving PR $pr milestone '${{ inputs.chart }}/next' => '$milestone'"
               gh pr edit -R kedify/charts "$pr" --milestone "$milestone"
