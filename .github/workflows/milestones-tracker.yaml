@@ -82,11 +82,25 @@ jobs:
           # consistent immediately after a merge.
           next_milestone_number=$(gh api --paginate '/repos/kedify/charts/milestones?state=all' \
               --jq '.[] | select(.title == "${{ inputs.chart }}/next") | .number')
-          next_milestone_prs=( $(gh api graphql -f query='
-            { repository(owner: "kedify", name: "charts") {
-                milestone(number: '"${next_milestone_number}"') {
-                  pullRequests(first: 100, states: MERGED) { nodes { number } }
-                } } }' --jq '.data.repository.milestone.pullRequests.nodes[].number') )
+          next_milestone_prs=()
+          if [[ -z "$next_milestone_number" ]]; then
+              echo "no '${{ inputs.chart }}/next' milestone found; nothing to move"
+          elif [[ "$next_milestone_number" =~ ^[0-9]+$ ]]; then
+              # Paginate the connection with gh's built-in GraphQL pagination (query takes an
+              # $endCursor variable and returns pageInfo) so milestones with more than 100 merged
+              # PRs are never truncated, which would otherwise reintroduce the stranding bug.
+              next_milestone_prs=( $(gh api graphql --paginate -f query='
+                query($endCursor: String) {
+                  repository(owner: "kedify", name: "charts") {
+                    milestone(number: '"${next_milestone_number}"') {
+                      pullRequests(first: 100, after: $endCursor, states: MERGED) {
+                        nodes { number }
+                        pageInfo { hasNextPage endCursor }
+                      } } } }' --jq '.data.repository.milestone.pullRequests.nodes[].number') )
+          else
+              echo "expected exactly one '${{ inputs.chart }}/next' milestone, got: '${next_milestone_number}'" >&2
+              exit 1
+          fi
           echo "found ${#next_milestone_prs[@]} merged PR(s) in ${{ inputs.chart }}/next"
           for pr in "${next_milestone_prs[@]}"; do
               echo "moving PR $pr milestone '${{ inputs.chart }}/next' => '$milestone'"
