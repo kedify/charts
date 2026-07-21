@@ -1,0 +1,50 @@
+name: Sync envoy version to kedify-proxy chart
+
+# Dependabot tracks the envoyproxy/envoy image via kedify-proxy/Dockerfile (a file
+# that is never built, it only holds the pinned tag). When Dependabot bumps it,
+# this workflow pushes a follow-up commit to the same PR branch that syncs
+# appVersion in Chart.yaml and bumps the chart patch version, so the Dependabot
+# PR is mergeable as-is.
+on:
+  pull_request:
+    paths:
+      - 'kedify-proxy/Dockerfile'
+
+permissions:
+  contents: read
+
+jobs:
+  sync-chart-yaml:
+    # Dependabot-triggered runs get a read-only GITHUB_TOKEN by default,
+    # the explicit permissions block below elevates it for the push
+    permissions:
+      contents: write
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Sync appVersion and bump chart version
+        run: |
+          envoy_version="$(sed -n 's|^FROM envoyproxy/envoy:||p' kedify-proxy/Dockerfile)"
+          if [ -z "${envoy_version}" ]; then
+            echo "could not parse envoy version from kedify-proxy/Dockerfile"
+            exit 1
+          fi
+          current="$(sed -n 's/^appVersion: "\(.*\)"$/\1/p' kedify-proxy/Chart.yaml)"
+          if [ "${envoy_version}" = "${current}" ]; then
+            echo "Chart.yaml already in sync with ${envoy_version}"
+            exit 0
+          fi
+          sed -i "s/^appVersion: \".*\"$/appVersion: \"${envoy_version}\"/" kedify-proxy/Chart.yaml
+          chart_version="$(sed -n 's/^version: //p' kedify-proxy/Chart.yaml)"
+          new_chart_version="$(echo "${chart_version}" | awk -F. -v OFS=. '{$NF+=1; print}')"
+          sed -i "s/^version: .*$/version: ${new_chart_version}/" kedify-proxy/Chart.yaml
+
+          git config user.name "kedifybot"
+          git config user.email "153312683+kedifybot@users.noreply.github.com"
+          git add kedify-proxy/Chart.yaml
+          git commit -s -m "chore(kedify-proxy): envoy ${envoy_version}, chart ${new_chart_version}"
+          git push
