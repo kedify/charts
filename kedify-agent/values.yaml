@@ -34,7 +34,7 @@ agent:
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: /helm/kedify/kedify-proxy.tgz
-    chartVersion: v0.0.11
+    chartVersion: v0.0.12
     # if enabled, the Kedify agent will watch for ConfigMaps with name pattern: <namespace>-kedify-proxy-configmap and will update the Kedify proxy configuration accordingly
     proxyConfigmapWatcherEnabled: true
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
@@ -250,7 +250,6 @@ agent:
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
   extraArgs: {}
-
 # when set to: 'helm' (default), the installation will rely on helm hooks for CRD and CR installation and cleanup
 #              'jobs' - the helm hooks will be disabled for CRD & CR installation and k8s jobs will be used instead
 #              'argo' - everything will be installed as regular manifests and argocd annotations will be used
@@ -267,32 +266,28 @@ keda:
       enabled: true
     webhooks:
       enabled: true
-
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
   interceptor:
     scaledObject:
       waitForCrd: true
-
 otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false
   fullnameOverride: kedify-otel-scaler
   otelOperator:
     enabled: true
-
 kedify-predictor:
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   fullnameOverride: kedify-predictor
-
 autoscaling-checks:
   # Optionally install set of small check runner apps that validate KEDA/Kedify autoscaling end to end
   # each check is a small web service that can be scaled up and down by KEDA/Kedify based on the configured triggers
   # To enable, set this to true and configure the checks you want to run. The checks will be installed in the same namespace as the Kedify agent.
-  
+
   # for all available values:
   # helm show values oci://ghcr.io/kedify/charts/autoscaling-checks
   enabled: false
@@ -306,9 +301,7 @@ autoscaling-checks:
     enabled: true
   memory:
     enabled: false
-
 kedify-observability:
   # Optionally install the opinionated observability stack for Kedify.
   # For all available values, check https://github.com/kedify/charts/blob/main/kedify-observability/values.yaml
   enabled: false
-
