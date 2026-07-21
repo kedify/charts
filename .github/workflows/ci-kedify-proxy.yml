@@ -102,12 +102,20 @@ jobs:
           helm repo add kedifykeda https://kedify.github.io/charts
           helm repo update kedifykeda
           KEDA_VERSION=$(helm search repo kedifykeda/keda --versions --devel -o json | jq -r '[.[] | select(.name == "kedifykeda/keda")][0].version')
+          if [[ -z "${KEDA_VERSION}" || "${KEDA_VERSION}" == "null" ]]; then
+            echo "::error::could not resolve latest kedifykeda/keda chart version"
+            exit 1
+          fi
           echo "installing keda ${KEDA_VERSION}"
           helm install keda kedifykeda/keda --version "${KEDA_VERSION}" --namespace keda --wait --timeout 5m
 
       - name: Install released kedify HTTP add-on chart (interceptor = Envoy control plane)
         run: |
           HTTP_ADD_ON_VERSION=$(helm search repo kedifykeda/keda-add-ons-http --versions --devel -o json | jq -r '.[0].version')
+          if [[ -z "${HTTP_ADD_ON_VERSION}" || "${HTTP_ADD_ON_VERSION}" == "null" ]]; then
+            echo "::error::could not resolve latest kedifykeda/keda-add-ons-http chart version"
+            exit 1
+          fi
           echo "installing keda-add-ons-http ${HTTP_ADD_ON_VERSION}"
           cat <<EOF > http-add-on-values.yaml
           interceptor:
@@ -116,28 +124,13 @@ jobs:
           EOF
           helm install http-add-on kedifykeda/keda-add-ons-http --version "${HTTP_ADD_ON_VERSION}" --namespace keda --values http-add-on-values.yaml --wait --timeout 5m
 
-      - name: Install kedify-proxy chart with agent-default values
-        run: helm install kedify-proxy ./kedify-proxy/ --namespace demo --create-namespace --wait --timeout 5m
-
-      - name: Verify xDS connection between kedify-proxy and interceptor
-        run: |
-          kubectl -n demo port-forward svc/kedify-proxy-admin 9901:9901 &
-          PF=$!
-          trap 'kill ${PF} 2>/dev/null || true' EXIT
-          sleep 3
-          for N in {1..20}; do
-            STATE=$(curl -s localhost:9901/stats | awk '/^control_plane.connected_state:/{print $2}')
-            echo "control_plane.connected_state: ${STATE:-<no response>}"
-            if [[ "$STATE" == "1" ]]; then
-              exit 0
-            fi
-            sleep 3
-          done
-          echo "::error::kedify-proxy never established the xDS connection to the interceptor"
-          exit 1
-
+      # the app and HTTPScaledObject exist before the proxy is installed, mirroring how
+      # kedify-agent deploys kedify-proxy into namespaces that already have HSOs; without
+      # any HSO the interceptor has no xDS snapshot to push and envoy sits in initial-fetch
+      # timeouts long enough for the chart's default liveness probe to kill it
       - name: Deploy test app with HTTPScaledObject
         run: |
+          kubectl create ns demo
           cat <<EOF | kubectl apply -f -
           apiVersion: apps/v1
           kind: Deployment
@@ -203,6 +196,26 @@ jobs:
               max: 2
           EOF
 
+      - name: Install kedify-proxy chart with agent-default values
+        run: helm install kedify-proxy ./kedify-proxy/ --namespace demo --wait --timeout 5m
+
+      - name: Verify xDS connection between kedify-proxy and interceptor
+        run: |
+          kubectl -n demo port-forward svc/kedify-proxy-admin 9901:9901 &
+          PF=$!
+          trap 'kill ${PF} 2>/dev/null || true' EXIT
+          sleep 3
+          for N in {1..20}; do
+            STATE=$(curl -s localhost:9901/stats | awk '/^control_plane.connected_state:/{print $2}')
+            echo "control_plane.connected_state: ${STATE:-<no response>}"
+            if [[ "$STATE" == "1" ]]; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::kedify-proxy never established the xDS connection to the interceptor"
+          exit 1
+
       - name: Verify interceptor pushes app config over xDS
         run: |
           kubectl -n demo port-forward svc/kedify-proxy-admin 9902:9901 &
@@ -256,6 +269,10 @@ jobs:
           kubectl get so -A || true
           echo "--- events (keda) ---"
           kubectl -n keda get events --sort-by=.lastTimestamp | tail -30 || true
+          echo "--- events (demo) ---"
+          kubectl -n demo get events --sort-by=.lastTimestamp | tail -30 || true
+          echo "--- demo pod descriptions ---"
+          kubectl -n demo describe pods | grep -E "^Name:|Image:|State:|Reason:|Exit Code:|Message:" || true
           echo "--- kedify-proxy logs ---"
           kubectl -n demo logs deploy/kedify-proxy --tail=100 || true
           echo "--- interceptor logs ---"
