@@ -93,34 +93,28 @@ jobs:
       - name: Create KEDA namespace
         run: kubectl create ns keda
 
-      - name: Install KEDA chart
+      # The xDS control plane only exists in the kedify interceptor fork, and released
+      # kedify charts pin image tags that match their binaries. The in-repo charts track
+      # the upstream rebase and default to upstream kedacore images (no xDS), so the
+      # latest released kedify charts are the right counterpart for this smoke test.
+      - name: Install released kedify KEDA chart
         run: |
-          cat <<EOF > keda-values.yaml
-          image:
-            keda:
-              tag: kedify-main
-            metricsApiServer:
-              tag: kedify-main
-            webhooks:
-              tag: kedify-main
-          EOF
-          helm install keda ./keda/ --namespace keda --values keda-values.yaml --wait --timeout 5m
+          helm repo add kedifykeda https://kedify.github.io/charts
+          helm repo update kedifykeda
+          KEDA_VERSION=$(helm search repo kedifykeda/keda --versions --devel -o json | jq -r '[.[] | select(.name == "kedifykeda/keda")][0].version')
+          echo "installing keda ${KEDA_VERSION}"
+          helm install keda kedifykeda/keda --version "${KEDA_VERSION}" --namespace keda --wait --timeout 5m
 
-      - name: Install HTTP add-on chart (interceptor = Envoy control plane)
+      - name: Install released kedify HTTP add-on chart (interceptor = Envoy control plane)
         run: |
+          HTTP_ADD_ON_VERSION=$(helm search repo kedifykeda/keda-add-ons-http --versions --devel -o json | jq -r '.[0].version')
+          echo "installing keda-add-ons-http ${HTTP_ADD_ON_VERSION}"
           cat <<EOF > http-add-on-values.yaml
-          # chart defaults point at the upstream ghcr.io/kedacore images, which have
-          # no kedify-main tag; the kedify forks live under ghcr.io/kedify
-          images:
-            tag: kedify-main
-            operator: ghcr.io/kedify/http-add-on-operator
-            interceptor: ghcr.io/kedify/http-add-on-interceptor
-            scaler: ghcr.io/kedify/http-add-on-scaler
           interceptor:
             replicas:
               min: 1
           EOF
-          helm install http-add-on ./http-add-on/ --namespace keda --values http-add-on-values.yaml --wait --timeout 5m
+          helm install http-add-on kedifykeda/keda-add-ons-http --version "${HTTP_ADD_ON_VERSION}" --namespace keda --values http-add-on-values.yaml --wait --timeout 5m
 
       - name: Install kedify-proxy chart with agent-default values
         run: helm install kedify-proxy ./kedify-proxy/ --namespace demo --create-namespace --wait --timeout 5m
@@ -260,7 +254,13 @@ jobs:
           kubectl get pods -A || true
           kubectl get httpscaledobjects -A || true
           kubectl get so -A || true
+          echo "--- events (keda) ---"
+          kubectl -n keda get events --sort-by=.lastTimestamp | tail -30 || true
           echo "--- kedify-proxy logs ---"
           kubectl -n demo logs deploy/kedify-proxy --tail=100 || true
           echo "--- interceptor logs ---"
           kubectl -n keda logs deploy/keda-add-ons-http-interceptor --tail=100 || true
+          echo "--- interceptor previous logs ---"
+          kubectl -n keda logs deploy/keda-add-ons-http-interceptor --previous --tail=50 || true
+          echo "--- keda pod descriptions ---"
+          kubectl -n keda describe pods | grep -E "^Name:|Image:|State:|Reason:|Exit Code:|Message:" || true
