@@ -28,6 +28,7 @@ jobs:
 
       - name: Sync appVersion and bump chart version
         run: |
+          set -euo pipefail
           envoy_version="$(sed -n 's|^FROM envoyproxy/envoy:||p' kedify-proxy/Dockerfile)"
           if [ -z "${envoy_version}" ]; then
             echo "could not parse envoy version from kedify-proxy/Dockerfile"
@@ -40,6 +41,10 @@ jobs:
           fi
           sed -i "s/^appVersion: \".*\"$/appVersion: \"${envoy_version}\"/" kedify-proxy/Chart.yaml
           chart_version="$(sed -n 's/^version: //p' kedify-proxy/Chart.yaml)"
+          if [ -z "${chart_version}" ]; then
+            echo "could not parse chart version from kedify-proxy/Chart.yaml"
+            exit 1
+          fi
           new_chart_version="$(echo "${chart_version}" | awk -F. -v OFS=. '{$NF+=1; print}')"
           sed -i "s/^version: .*$/version: ${new_chart_version}/" kedify-proxy/Chart.yaml
 
