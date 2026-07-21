@@ -12,11 +12,3 @@ updates:
     all-updates:
       patterns:
         - "*"
-- package-ecosystem: docker
-  # tracks the envoy version pin in kedify-proxy/Dockerfile (kedify-only entry,
-  # keep on rebases from kedacore/charts)
-  directory: "/kedify-proxy"
-  schedule:
-    interval: weekly
-  labels:
-  - dependency-management

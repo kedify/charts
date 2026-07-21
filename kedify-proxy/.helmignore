@@ -28,6 +28,3 @@
 # example values
 /examples
 
-
-# dependabot version tracking, not part of the chart
-Dockerfile
