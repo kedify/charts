@@ -62,6 +62,7 @@ jobs:
               exit 0
           fi
           labels=( $(gh pr view -R kedify/charts ${PR_NUMBER} --json 'labels' --jq '.labels[].name') )
+          has_release_label="false"
           for label in "${labels[@]}"; do
               if [[ "$label" == "release/${{ inputs.chart }}" ]]; then
                   has_release_label="true"
