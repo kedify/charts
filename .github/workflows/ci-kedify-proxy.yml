@@ -1,5 +1,6 @@
 name: Helm Chart CI (kedify-proxy)
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
