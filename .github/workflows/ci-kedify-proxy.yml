@@ -57,15 +57,8 @@ jobs:
 
       - name: Extract rendered Envoy bootstrap
         run: |
-          helm template kedify-proxy ./kedify-proxy --namespace demo > rendered.yaml
-          python3 -c "
-          import yaml
-          for doc in yaml.safe_load_all(open('rendered.yaml')):
-              if doc and doc.get('kind') == 'Deployment':
-                  for env in doc['spec']['template']['spec']['containers'][0]['env']:
-                      if env['name'] == 'ENVOY_CONFIG':
-                          open('envoy-bootstrap.yaml', 'w').write(env['value'])
-          "
+          helm template kedify-proxy ./kedify-proxy --namespace demo | \
+            yq 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "ENVOY_CONFIG") | .value' > envoy-bootstrap.yaml
           test -s envoy-bootstrap.yaml
           cat envoy-bootstrap.yaml
 
@@ -73,7 +66,11 @@ jobs:
       # so an Envoy bump that drops or changes bootstrap config fields fails here
       - name: Validate bootstrap with Envoy from appVersion
         run: |
-          APP_VERSION=$(awk -F'"' '/^appVersion:/{print $2}' kedify-proxy/Chart.yaml)
+          APP_VERSION=$(yq '.appVersion' kedify-proxy/Chart.yaml)
+          if [[ -z "${APP_VERSION}" || "${APP_VERSION}" == "null" ]]; then
+            echo "::error::could not read appVersion from kedify-proxy/Chart.yaml"
+            exit 1
+          fi
           echo "Validating bootstrap against envoyproxy/envoy:${APP_VERSION}"
           docker run --rm -v "${PWD}:/config" "envoyproxy/envoy:${APP_VERSION}" --mode validate -c /config/envoy-bootstrap.yaml
 
@@ -112,8 +109,13 @@ jobs:
       - name: Install HTTP add-on chart (interceptor = Envoy control plane)
         run: |
           cat <<EOF > http-add-on-values.yaml
+          # chart defaults point at the upstream ghcr.io/kedacore images, which have
+          # no kedify-main tag; the kedify forks live under ghcr.io/kedify
           images:
             tag: kedify-main
+            operator: ghcr.io/kedify/http-add-on-operator
+            interceptor: ghcr.io/kedify/http-add-on-interceptor
+            scaler: ghcr.io/kedify/http-add-on-scaler
           interceptor:
             replicas:
               min: 1
@@ -126,6 +128,8 @@ jobs:
       - name: Verify xDS connection between kedify-proxy and interceptor
         run: |
           kubectl -n demo port-forward svc/kedify-proxy-admin 9901:9901 &
+          PF=$!
+          trap 'kill ${PF} 2>/dev/null || true' EXIT
           sleep 3
           for N in {1..20}; do
             STATE=$(curl -s localhost:9901/stats | awk '/^control_plane.connected_state:/{print $2}')
@@ -208,6 +212,8 @@ jobs:
       - name: Verify interceptor pushes app config over xDS
         run: |
           kubectl -n demo port-forward svc/kedify-proxy-admin 9902:9901 &
+          PF=$!
+          trap 'kill ${PF} 2>/dev/null || true' EXIT
           sleep 3
           for N in {1..20}; do
             LDS=$(curl -s localhost:9902/stats | awk '/^listener_manager.lds.update_success:/{print $2}')
@@ -226,6 +232,8 @@ jobs:
       - name: Verify traffic through kedify-proxy scales app from zero
         run: |
           kubectl -n demo port-forward svc/kedify-proxy 8080:8080 &
+          PF=$!
+          trap 'kill ${PF} 2>/dev/null || true' EXIT
           sleep 3
           for N in {1..10}; do
             CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 -H "Host: demo.test" http://localhost:8080/ || true)
