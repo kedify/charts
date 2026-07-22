@@ -1,0 +1,9 @@
+{{- if not .Values.disableSchemaValidation }}
+
+{{- if .Values.agent.createApiKeySecret }}
+{{- include "validateApiKey" .Values.agent.apiKey }}
+{{- include "validateOrgId" .Values.agent.orgId }}
+{{- end }}
+
+{{- include "validateCloudAccountId" .Values.agent.cloudAccountID }}
+{{- end }}
