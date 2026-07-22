@@ -20,7 +20,7 @@ Kubernetes: `>=v1.23.0-0`
 | https://kedify.github.io/charts | keda | v2.20.1-6 |
 | https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-5 |
 | oci://ghcr.io/kedify/charts | autoscaling-checks | 0.0.2 |
-| oci://ghcr.io/kedify/charts | kedify-observability | 0.0.3 |
+| oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.5 |
 | oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
 
