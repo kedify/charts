@@ -16,6 +16,6 @@ dependencies:
   version: 0.0.2
 - name: kedify-observability
   repository: oci://ghcr.io/kedify/charts
-  version: 0.0.3
-digest: sha256:fd501a6af3cdc257be5733ab5399a1fbb6c4de283fab5d852e1eeb848275c0bf
-generated: "2026-07-21T13:22:05.658319936Z"
+  version: 0.0.4
+digest: sha256:577b58c4c47bc30aa9958f9b2f934edebab57188ebecbb9b3582fac4fb31803e
+generated: "2026-07-22T16:09:36.213667+02:00"
