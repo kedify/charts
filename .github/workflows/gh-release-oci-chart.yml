@@ -66,7 +66,7 @@ jobs:
           path: ${{ inputs.chart }}
           registry: ghcr.io
           registry_username: kedify
-          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          registry_password: ${{ secrets.PAT_TOKEN }}
 
       - name: Print Summary
         run: |
