@@ -2,6 +2,7 @@ optionalResources:
   all:
     enabled: false
 
+  namespaceOverride: ""
   scaledObjectsAndJobsCommon:
     namespaceCount: 2
     namespacePrefix: obs
@@ -54,7 +55,7 @@ dashboards:
 # ------------------------
 grafana:
   enabled: true
-  namespaceOverride: obs
+  namespaceOverride: ""
   fullnameOverride: grafana
   replicas: 1
   service:
@@ -83,7 +84,7 @@ grafana:
           uid: prometheus
           type: prometheus
           access: proxy
-          url: http://prometheus-server.obs.svc.cluster.local
+          url: http://prometheus-server
           isDefault: true
           editable: true
           jsonData:
@@ -92,7 +93,7 @@ grafana:
           uid: loki
           type: loki
           access: proxy
-          url: http://loki-gateway.obs.svc.cluster.local
+          url: http://loki-gateway
           editable: true
           
 
@@ -120,7 +121,7 @@ grafana:
 # ---------------------
 loki:
   enabled: true
-  namespaceOverride: obs
+  namespaceOverride: ""
   fullnameOverride: loki
   loki:
     auth_enabled: false
@@ -154,7 +155,7 @@ loki:
   minio:
     enabled: true
     fullnameOverride: minio
-    address: minio.obs.svc.cluster.local:9000
+    address: minio:9000
 
   deploymentMode: Monolithic
   singleBinary:
@@ -217,12 +218,11 @@ collector:
     - name: varlibdockercontainers
       mountPath: /var/lib/docker/containers
       readOnly: true
-  config:
+  alternateConfig:
+    extensions:
+      health_check:
+        endpoint: ${env:MY_POD_IP}:13133
     receivers:
-      jaeger: null
-      prometheus: null
-      zipkin: null
-      otlp: null
       file_log/kedify_others:
         include:
           - /var/log/pods/keda_*/*/*.log
@@ -317,12 +317,10 @@ collector:
       batch: {}
     exporters:
       otlphttp/loki:
-        endpoint: http://loki-gateway.obs.svc.cluster.local/otlp
+        endpoint: http://loki-gateway/otlp
     service:
       extensions: [health_check]
       pipelines:
-        traces: null
-        metrics: null
         logs:
           receivers:
             - file_log/kedify_others
@@ -354,7 +352,7 @@ collector:
 # ---------------------------
 prometheus:
   enabled: true
-  forceNamespace: obs
+  forceNamespace: ""
   alertmanager:
     enabled: false
   prometheus-node-exporter:
@@ -497,7 +495,7 @@ prometheus:
       scrape_interval: 30s
       static_configs:
       - targets:
-        - kube-state-metrics.obs.svc.cluster.local:8080
+        - kube-state-metrics:8080
     kedify-predictor:
       metric_relabel_configs:
       - action: keep
@@ -508,7 +506,7 @@ prometheus:
       scrape_interval: 30s
       static_configs:
       - targets:
-        - kedify-predictor.keda.svc.cluster.local:8080
+        - kedify-predictor:8080
     kubernetes-api-servers:
       enabled: false
     kubernetes-nodes:
@@ -537,7 +535,7 @@ prometheus:
   kube-state-metrics:
     enabled: true
     fullnameOverride: kube-state-metrics
-    namespaceOverride: obs
+    namespaceOverride: ""
     metricLabelsAllowlist:
       - deployments=[app.kubernetes.io/instance,app.kubernetes.io/name,app.kubernetes.io/component,app.kubernetes.io/managed-by,component,autoscaling-checks.kedify.io/check,autoscaling-checks.kedify.io/role]
       - daemonsets=[app.kubernetes.io/instance,app.kubernetes.io/name,app.kubernetes.io/component,app.kubernetes.io/managed-by,component]
