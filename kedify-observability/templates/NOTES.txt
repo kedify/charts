@@ -34,6 +34,6 @@
                     +--------------------------------------------+
 
 continue with:
-kubectl port-forward -nobs svc/grafana 3000:80
+kubectl port-forward -n{{ .Release.Namespace }} svc/grafana 3000:80
 open http://localhost:3000/dashboards
 
