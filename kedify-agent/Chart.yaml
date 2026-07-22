@@ -29,7 +29,7 @@ dependencies:
     condition: autoscalingChecks.enabled,autoscaling-checks.enabled
   - name: kedify-observability
     repository: oci://ghcr.io/kedify/charts
-    version: 0.0.3
+    version: 0.0.4
     condition: kedifyObservability.enabled,kedify-observability.enabled
 home: https://github.com/kedify/charts
 sources:
