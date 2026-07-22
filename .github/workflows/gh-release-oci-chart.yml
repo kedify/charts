@@ -37,7 +37,6 @@ jobs:
           fetch-depth: 0
       - name: Smoke test helm chart 'renderability'
         run: |
-          helm dependency update ./${{ inputs.chart }}
           helm dependency build ./${{ inputs.chart }}
           helm lint ./${{ inputs.chart }}
           helm template ./${{ inputs.chart }}
@@ -54,6 +53,9 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Build Helm chart dependencies
+        run: helm dependency build ./${{ inputs.chart }}
 
       - name: Publish Helm chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
