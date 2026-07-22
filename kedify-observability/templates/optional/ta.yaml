@@ -4,6 +4,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: example-configmap
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 data:
   someKey: "randomValue12345"
 ---
@@ -12,6 +13,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 type: Opaque
 data:
   someKey: cmFuZG9tVmFsdWU2Nzg5  # Base64 encoded "randomValue6789"
@@ -21,6 +23,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-aws-pod-identity
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: aws
@@ -30,6 +33,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-gcp-pod-identity
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: gcp
@@ -39,6 +43,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-azure-workload-pod-identity
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: azure-workload
@@ -48,15 +53,11 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-configmap
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   configMapTargetRef:
   - parameter: someParameter
     name: example-configmap
-    key: someKey
-spec:
-  configMapTargetRef:
-  - parameter: someParameter
-    name: example-configmap-keda
     key: someKey
 ---
 # TriggerAuthentication with Secret
@@ -64,6 +65,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-secret
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   secretTargetRef:
   - parameter: someParameter
@@ -75,6 +77,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-combined
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: aws
@@ -88,6 +91,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-combined2
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: aws
@@ -105,6 +109,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: trigger-auth-all
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   podIdentity:
     provider: aws

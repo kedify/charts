@@ -1,8 +1,8 @@
-
 {{- if or .Values.optionalResources.all.enabled (or .Values.optionalResources.scaledObjects.enabled .Values.optionalResources.scaledJobs.enabled) }}
 {{- range $i := until (.Values.optionalResources.scaledObjectsAndJobsCommon.namespaceCount | int) }}
 
 {{- $ns := printf "%s-%d" ($.Values.optionalResources.scaledObjectsAndJobsCommon.namespacePrefix | default $.Release.Name) $i }}
+---
 apiVersion: v1
 kind: Namespace
 metadata:

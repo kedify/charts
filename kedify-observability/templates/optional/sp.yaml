@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-scaling-policy-metrics
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 data:
   so-count: "8"
   sj-count: "12"
@@ -13,7 +13,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-scaling-policy-target
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -34,7 +34,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ .Release.Name }}-scaling-policy-so
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -58,7 +58,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
   name: {{ .Release.Name }}-scaling-policy-sj
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   jobTargetRef:
     template:
@@ -90,7 +90,7 @@ apiVersion: keda.kedify.io/v1alpha1
 kind: ScalingPolicy
 metadata:
   name: {{ .Release.Name }}-scalingpolicy-sample
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   targets:
     - apiVersion: keda.sh/v1alpha1

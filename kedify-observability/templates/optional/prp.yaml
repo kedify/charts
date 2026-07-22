@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-nginx-prp
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
   labels:
     app: {{ .Release.Name }}-nginx-prp
 spec:
@@ -31,7 +31,7 @@ apiVersion: keda.kedify.io/v1alpha1
 kind: PodResourceProfile
 metadata:
   name: {{ .Release.Name }}-nginx-prp
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   selector:
     matchLabels:

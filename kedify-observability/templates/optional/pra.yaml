@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-heavy-pra
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
   labels:
     app: {{ .Release.Name }}-heavy-pra
 spec:
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-heavy-pra
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
   labels:
     app: {{ .Release.Name }}-heavy-pra
 spec:
@@ -70,7 +70,7 @@ apiVersion: keda.kedify.io/v1alpha1
 kind: PodResourceAutoscaler
 metadata:
   name: {{ .Release.Name }}-heavy-pra
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   target:
     kind: deployment

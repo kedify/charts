@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-app-1
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 0
   selector:
@@ -26,7 +26,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-test-keda-metric-1
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -49,7 +49,7 @@ kind: ScaledObject
 apiVersion: keda.sh/v1alpha1
 metadata:
   name: {{ .Release.Name }}-app-1
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
   labels:
     scaling-group: cap-5
 spec:
@@ -76,7 +76,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-app-2
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 0
   selector:
@@ -99,7 +99,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-test-keda-metric-2
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -122,7 +122,7 @@ kind: ScaledObject
 apiVersion: keda.sh/v1alpha1
 metadata:
   name: {{ .Release.Name }}-app-2
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
   labels:
     scaling-group: cap-5
 spec:
@@ -148,7 +148,7 @@ apiVersion: keda.kedify.io/v1alpha1
 kind: ScalingGroup
 metadata:
   name: {{ .Release.Name }}-max-group
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   capacity: 5
   selector:

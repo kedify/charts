@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-mm
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -35,7 +35,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-mm
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   selector:
     app: {{ .Release.Name }}-mm
@@ -51,7 +51,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ .Release.Name }}-mm
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   scaleTargetRef:
     name: {{ .Release.Name }}-demo
@@ -88,7 +88,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-demo
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -126,7 +126,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-demo
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   type: NodePort
   ports:
@@ -140,7 +140,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-config
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 data:
   nginx.conf: |
     server {
@@ -161,7 +161,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-index-html
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 data:
   index.html: |
     <html>
@@ -186,7 +186,7 @@ apiVersion: keda.kedify.io/v1alpha1
 kind: MetricPredictor
 metadata:
   name: {{ .Release.Name }}-mm-in-ten
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.optionalResources.namespaceOverride | default .Release.Namespace }}
 spec:
   source:
     keda:
