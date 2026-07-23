@@ -431,10 +431,8 @@ rules:
   - get
   - list
   - watch
-  - create
   - update
   - patch
-  - delete
 - apiGroups:
   - autoscaling.kedify.io
   resources:
