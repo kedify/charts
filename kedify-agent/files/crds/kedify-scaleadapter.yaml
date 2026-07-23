@@ -129,6 +129,7 @@ spec:
                   scale to/from zero) through this adapter's /scale subresource. Leave it
                   unset when creating the adapter.
                 format: int32
+                minimum: 0
                 type: integer
               targetRef:
                 description: |-
