@@ -394,7 +394,6 @@ rules:
   resourceNames:
   - kedifyconfigurations.install.kedify.io
   - scalingpolicies.keda.kedify.io
-  - scaleadapters.autoscaling.kedify.io
   - clustertriggerauthentications.keda.sh
   - cloudeventsources.eventing.keda.sh
   - clustercloudeventsources.eventing.keda.sh
@@ -415,11 +414,37 @@ rules:
   - eventing.keda.sh
   - install.kedify.io
   - keda.kedify.io
-  - autoscaling.kedify.io
   resources:
   - "*"
   verbs:
   - "*"
+
+{{- if (.Values.agent.features).scaleAdaptersEnabled }}
+# ScaleAdapter bridging for targets with an incomplete /scale subresource.
+# Deliberately resource-scoped: the autoscaling.kedify.io group is shared with
+# KPA, whose RBAC is gated separately and must not be granted here.
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - scaleadapters
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - scaleadapters/status
+  - scaleadapters/scale
+  verbs:
+  - get
+  - update
+  - patch
+{{- end }}
 
 {{- if .Values.agent.rbac.uninstall }}
 # Kedify needs to be able to uninstall itself
