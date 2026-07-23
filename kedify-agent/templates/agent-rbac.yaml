@@ -394,6 +394,7 @@ rules:
   resourceNames:
   - kedifyconfigurations.install.kedify.io
   - scalingpolicies.keda.kedify.io
+  - scaleadapters.autoscaling.kedify.io
   - clustertriggerauthentications.keda.sh
   - cloudeventsources.eventing.keda.sh
   - clustercloudeventsources.eventing.keda.sh
@@ -414,6 +415,7 @@ rules:
   - eventing.keda.sh
   - install.kedify.io
   - keda.kedify.io
+  - autoscaling.kedify.io
   resources:
   - "*"
   verbs:
