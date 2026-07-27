@@ -70,9 +70,19 @@ spec:
           spec:
             description: ScaleAdapterSpec defines the desired state of ScaleAdapter
             properties:
-              podSelector:
+              replicas:
                 description: |-
-                  PodSelector selects the Pods that belong to the target workload. It is
+                  Replicas is the desired replica count forwarded to the target's /scale
+                  subresource. It is initialized by the controller from the target's
+                  current desired replicas and afterwards managed by the HPA (or KEDA for
+                  scale to/from zero) through this adapter's /scale subresource. Leave it
+                  unset when creating the adapter.
+                format: int32
+                minimum: 0
+                type: integer
+              selector:
+                description: |-
+                  Selector selects the Pods that belong to the target workload. It is
                   serialized into status.selector, which the HPA requires to be non-empty.
                   The matching labels must be present on the Pods of the target workload
                   (for Agones Fleets, add them to the Pod template at
@@ -121,16 +131,6 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
-              replicas:
-                description: |-
-                  Replicas is the desired replica count forwarded to the target's /scale
-                  subresource. It is initialized by the controller from the target's
-                  current desired replicas and afterwards managed by the HPA (or KEDA for
-                  scale to/from zero) through this adapter's /scale subresource. Leave it
-                  unset when creating the adapter.
-                format: int32
-                minimum: 0
-                type: integer
               targetRef:
                 description: |-
                   TargetRef references the resource whose /scale subresource desired
@@ -154,7 +154,7 @@ spec:
                 - name
                 type: object
             required:
-            - podSelector
+            - selector
             - targetRef
             type: object
           status:
@@ -224,7 +224,7 @@ spec:
                 type: integer
               selector:
                 description: |-
-                  Selector is the serialized form of spec.podSelector, exposed through
+                  Selector is the serialized form of spec.selector, exposed through
                   this adapter's /scale subresource for the HPA.
                 type: string
               targetDesiredReplicas:
