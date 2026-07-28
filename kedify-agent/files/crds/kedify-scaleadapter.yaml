@@ -70,13 +70,34 @@ spec:
           spec:
             description: ScaleAdapterSpec defines the desired state of ScaleAdapter
             properties:
+              currentReplicasPath:
+                description: |-
+                  CurrentReplicasPath is a dot-separated field path (e.g. ".status.size")
+                  to the current replica count reported by the target resource, mirrored
+                  into status.replicas. It can only be set together with
+                  DesiredReplicasPath. When DesiredReplicasPath is set and this is not,
+                  status.replicas mirrors the desired replica count instead.
+                minLength: 1
+                type: string
+              desiredReplicasPath:
+                description: |-
+                  DesiredReplicasPath is a dot-separated field path (e.g. ".spec.size")
+                  to the desired replica count on the target resource. When set, the
+                  adapter reads and writes desired replicas through this field instead of
+                  the target's /scale subresource, which allows adapting targets that do
+                  not implement the scale contract at all. This requires RBAC for get and
+                  update on the whole target resource rather than just its /scale
+                  subresource. Wildcards and array indices are not supported.
+                minLength: 1
+                type: string
               replicas:
                 description: |-
-                  Replicas is the desired replica count forwarded to the target's /scale
-                  subresource. It is initialized by the controller from the target's
-                  current desired replicas and afterwards managed by the HPA (or KEDA for
-                  scale to/from zero) through this adapter's /scale subresource. Leave it
-                  unset when creating the adapter.
+                  Replicas is the desired replica count forwarded to the target, through
+                  its /scale subresource or through DesiredReplicasPath. It is initialized
+                  by the controller from the target's current desired replicas and
+                  afterwards managed by the HPA (or KEDA for scale to/from zero) through
+                  this adapter's /scale subresource. Leave it unset when creating the
+                  adapter.
                 format: int32
                 minimum: 0
                 type: integer
@@ -133,8 +154,8 @@ spec:
                 x-kubernetes-map-type: atomic
               targetRef:
                 description: |-
-                  TargetRef references the resource whose /scale subresource desired
-                  replicas are managed through this adapter.
+                  TargetRef references the resource whose desired replicas are managed
+                  through this adapter, by default through its /scale subresource.
                 properties:
                   apiVersion:
                     description: APIVersion of the target resource, e.g. "agones.dev/v1".
@@ -157,6 +178,9 @@ spec:
             - selector
             - targetRef
             type: object
+            x-kubernetes-validations:
+            - message: currentReplicasPath can only be set together with desiredReplicasPath
+              rule: '!has(self.currentReplicasPath) || has(self.desiredReplicasPath)'
           status:
             description: ScaleAdapterStatus defines the observed state of ScaleAdapter
             properties:
@@ -218,8 +242,8 @@ spec:
                 type: array
               replicas:
                 description: |-
-                  Replicas mirrors the current replica count reported by the target's
-                  /scale subresource.
+                  Replicas mirrors the current replica count reported by the target
+                  through its /scale subresource or CurrentReplicasPath.
                 format: int32
                 type: integer
               selector:
@@ -230,8 +254,8 @@ spec:
               targetDesiredReplicas:
                 description: |-
                   TargetDesiredReplicas is the desired replica count last observed on
-                  (or written to) the target's /scale subresource. It is used to detect
-                  competing replica writers and for troubleshooting.
+                  (or written to) the target. It is used to detect competing replica
+                  writers and for troubleshooting.
                 format: int32
                 type: integer
             required:
