@@ -131,8 +131,11 @@ agent:
     distributedScaledObjectsEnabled: false
     distributedScaledJobsEnabled: false
     # -- Enable the ScaleAdapter controller that bridges HPA/KEDA to resources
-    # with an incomplete /scale subresource (e.g. Agones Fleet). The agent
-    # additionally needs RBAC for the target kinds' /scale subresource, see agent.extraRbacRules.
+    # with an incomplete /scale subresource (e.g. Agones Fleet), or without one
+    # at all (spec.desiredReplicasPath). The agent additionally needs RBAC via
+    # agent.extraRbacRules: get + update on the target kinds' /scale subresource,
+    # or get, list, watch + update on the whole resource for targets adapted
+    # through replica field paths.
     scaleAdaptersEnabled: false
     scalingPoliciesEnabled: true
     recommendationsForLabeledNamespaces: true
