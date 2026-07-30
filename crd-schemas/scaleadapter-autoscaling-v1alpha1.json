@@ -1,0 +1,204 @@
+{
+  "description": "ScaleAdapter is the Schema for the scaleadapters API. It exposes a fully\nHPA-compatible /scale subresource on behalf of a target resource whose own\n/scale implementation is incomplete (e.g. missing status.selector, as is the\ncase for Agones Fleets) and forwards desired replica changes to the target.",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "ScaleAdapterSpec defines the desired state of ScaleAdapter",
+      "properties": {
+        "currentReplicasPath": {
+          "description": "CurrentReplicasPath is a dot-separated field path (e.g. \".status.size\")\nto the current replica count reported by the target resource, mirrored\ninto status.replicas. It can only be set together with\nDesiredReplicasPath. When DesiredReplicasPath is set and this is not,\nstatus.replicas mirrors the desired replica count instead.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "desiredReplicasPath": {
+          "description": "DesiredReplicasPath is a dot-separated field path (e.g. \".spec.size\")\nto the desired replica count on the target resource. When set, the\nadapter reads and writes desired replicas through this field instead of\nthe target's /scale subresource, which allows adapting targets that do\nnot implement the scale contract at all. This requires RBAC for get and\nupdate on the whole target resource rather than just its /scale\nsubresource. Wildcards and array indices are not supported.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "replicas": {
+          "description": "Replicas is the desired replica count forwarded to the target, through\nits /scale subresource or through DesiredReplicasPath. It is initialized\nby the controller from the target's current desired replicas and\nafterwards managed by the HPA (or KEDA for scale to/from zero) through\nthis adapter's /scale subresource. Leave it unset when creating the\nadapter.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "selector": {
+          "description": "Selector selects the Pods that belong to the target workload. It is\nserialized into status.selector, which the HPA requires to be non-empty.\nThe matching labels must be present on the Pods of the target workload\n(for Agones Fleets, add them to the Pod template at\nspec.template.spec.template.metadata.labels).",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": "object"
+            }
+          },
+          "type": "object",
+          "x-kubernetes-map-type": "atomic",
+          "additionalProperties": false
+        },
+        "targetRef": {
+          "description": "TargetRef references the resource whose desired replicas are managed\nthrough this adapter, by default through its /scale subresource.",
+          "properties": {
+            "apiVersion": {
+              "description": "APIVersion of the target resource, e.g. \"agones.dev/v1\".",
+              "minLength": 1,
+              "type": "string"
+            },
+            "kind": {
+              "description": "Kind of the target resource, e.g. \"Fleet\".",
+              "minLength": 1,
+              "type": "string"
+            },
+            "name": {
+              "description": "Name of the target resource.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "apiVersion",
+            "kind",
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "selector",
+        "targetRef"
+      ],
+      "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "currentReplicasPath can only be set together with desiredReplicasPath",
+          "rule": "!has(self.currentReplicasPath) || has(self.desiredReplicasPath)"
+        }
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "ScaleAdapterStatus defines the observed state of ScaleAdapter",
+      "properties": {
+        "conditions": {
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API Resource.",
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.\nThis may be an empty string.",
+                "maxLength": 32768,
+                "type": "string"
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.generation that the condition was set based upon.\nFor instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date\nwith respect to the current state of the instance.",
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition.\nProducers of specific condition types may define expected values and meanings for this field,\nand whether the values are considered a guaranteed API.\nThe value should be a CamelCase string.\nThis field may not be empty.",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$",
+                "type": "string"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "replicas": {
+          "description": "Replicas mirrors the current replica count reported by the target\nthrough its /scale subresource or CurrentReplicasPath.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "selector": {
+          "description": "Selector is the serialized form of spec.selector, exposed through\nthis adapter's /scale subresource for the HPA.",
+          "type": "string"
+        },
+        "targetDesiredReplicas": {
+          "description": "TargetDesiredReplicas is the desired replica count last observed on\n(or written to) the target. It is used to detect competing replica\nwriters and for troubleshooting.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "additionalProperties": false
+}
