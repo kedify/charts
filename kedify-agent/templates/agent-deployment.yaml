@@ -95,6 +95,8 @@ spec:
               value: {{ .Values.agent.features.distributedScaledJobsEnabled | quote }}
             - name: DSO_ENABLED
               value: {{ .Values.agent.features.distributedScaledObjectsEnabled | quote }}
+            - name: SCALE_ADAPTER_ENABLED
+              value: {{ (.Values.agent.features).scaleAdaptersEnabled | default false | quote }}
             {{- if (.Values.agent.features).podResourceProfilesEnabled }}
             - name: PRP_ENABLED
               value: {{ .Values.agent.features.podResourceProfilesEnabled | quote }}
