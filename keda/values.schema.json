@@ -568,7 +568,7 @@
                     ]
                 },
                 "rollingUpdate": {
-                    "type": "object",
+                    "type": ["object", "null"],
                     "properties": {
                         "maxSurge": {
                             "$ref": "#/definitions/IntOrPercent"
@@ -870,7 +870,7 @@
             "enum": [
                 "epoch",
                 "millis",
-                "nano",
+                "nanos",
                 "iso8601",
                 "rfc3339",
                 "rfc3339nano"
@@ -879,7 +879,7 @@
         "LoggingLevelType": {
             "default": "info",
             "anyOf": [
-                { 
+                {
                     "enum": [
                         "debug",
                         "info",
@@ -888,7 +888,11 @@
                 },
                 {
                     "type": "integer",
-                    "minimum": 0 
+                    "minimum": 0
+                },
+                {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
                 }
             ]
         },
@@ -928,7 +932,20 @@
                     "properties": {
                         "level": {
                             "type": "integer",
-                            "minimum": 0 
+                            "minimum": 0
+                        },
+                        "zapLevel": {
+                            "$ref": "#/definitions/LoggingLevelType"
+                        },
+                        "zapEncoder": {
+                            "enum": [
+                                "console",
+                                "json"
+                            ],
+                            "default": "console"
+                        },
+                        "zapTimeEncoding": {
+                            "$ref": "#/definitions/TimeEncodingType"
                         },
                         "stderrthreshold": {
                             "enum": [
