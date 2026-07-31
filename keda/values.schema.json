@@ -50,6 +50,13 @@
                 "additionalLabels": {
                     "$ref": "#/definitions/AdditionalLabels"
                 },
+                "additionalAnnotations": {
+                    "$ref": "#/definitions/AdditionalAnnotations"
+                },
+                "hostAliases": {
+                    "type": "array",
+                    "items": {}
+                },
                 "podAnnotations": {
                     "$ref": "#/definitions/PodAnnotations"
                 },
@@ -536,6 +543,21 @@
                 "readinessProbe"
             ]
         },
+        "IntOrPercent": {
+            "anyOf": [
+                {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                {
+                    "type": "string",
+                    "pattern": "^[0-9]+%$"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
         "UpgradeStrategyType": {
             "type": "object",
             "properties": {
@@ -546,56 +568,45 @@
                     ]
                 },
                 "rollingUpdate": {
-                    "type": "object",
+                    "type": ["object", "null"],
                     "properties": {
                         "maxSurge": {
-                            "type": "integer",
-                            "minimum": 0
+                            "$ref": "#/definitions/IntOrPercent"
                         },
                         "maxUnavailable": {
-                            "type": "integer",
-                            "minimum": 0
+                            "$ref": "#/definitions/IntOrPercent"
                         }
                     }
                 }
-            },
-            "required": [
-                "type",
-                "rollingUpdate"
-            ]
+            }
         },
         "UpgradeStrategy": {
             "type": "object",
-            "upgradeStrategy": {
-                "type": "object",
-                "properties": {
-                    "operator": {
-                        "$ref": "#/definitions/UpgradeStrategyType"
-                    },
-                    "metricsApiServer": {
-                        "$ref": "#/definitions/UpgradeStrategyType"
-                    },
-                    "webhooks": {
-                        "$ref": "#/definitions/UpgradeStrategyType"
-                    }
+            "properties": {
+                "operator": {
+                    "$ref": "#/definitions/UpgradeStrategyType"
                 },
-                "required": [
-                    "operator",
-                    "metricsApiServer",
-                    "webhooks"
-                ]
-            }
+                "metricsApiServer": {
+                    "$ref": "#/definitions/UpgradeStrategyType"
+                },
+                "webhooks": {
+                    "$ref": "#/definitions/UpgradeStrategyType"
+                }
+            },
+            "required": [
+                "operator",
+                "metricsApiServer",
+                "webhooks"
+            ]
         },
         "PodDisruptionBudgetType": {
             "type": "object",
             "properties": {
                 "maxUnavailable": {
-                    "type": ["integer", "null"],
-                    "minimum": 0
+                    "$ref": "#/definitions/IntOrPercent"
                 },
                 "minAvailable": {
-                    "type": ["integer", "null"],
-                    "minimum": 0
+                    "$ref": "#/definitions/IntOrPercent"
                 }
             }
         },
@@ -855,22 +866,20 @@
             }
         },
         "TimeEncodingType": {
-            "timeEncoding": {
-                "default": "rfc3339",
-                "enum": [
-                    "epoch",
-                    "millis",
-                    "nano",
-                    "iso8601",
-                    "rfc3339",
-                    "rfc3339nano"
-                ]
-            }
+            "default": "rfc3339",
+            "enum": [
+                "epoch",
+                "millis",
+                "nanos",
+                "iso8601",
+                "rfc3339",
+                "rfc3339nano"
+            ]
         },
         "LoggingLevelType": {
             "default": "info",
             "anyOf": [
-                { 
+                {
                     "enum": [
                         "debug",
                         "info",
@@ -879,7 +888,11 @@
                 },
                 {
                     "type": "integer",
-                    "minimum": 0 
+                    "minimum": 0
+                },
+                {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
                 }
             ]
         },
@@ -919,7 +932,20 @@
                     "properties": {
                         "level": {
                             "type": "integer",
-                            "minimum": 0 
+                            "minimum": 0
+                        },
+                        "zapLevel": {
+                            "$ref": "#/definitions/LoggingLevelType"
+                        },
+                        "zapEncoder": {
+                            "enum": [
+                                "console",
+                                "json"
+                            ],
+                            "default": "console"
+                        },
+                        "zapTimeEncoding": {
+                            "$ref": "#/definitions/TimeEncodingType"
                         },
                         "stderrthreshold": {
                             "enum": [
@@ -1130,6 +1156,18 @@
                 "webhooks"
             ]
         },
+        "Quantity": {
+            "anyOf": [
+                {
+                    "type": "number",
+                    "minimum": 0
+                },
+                {
+                    "type": "string",
+                    "pattern": "^[0-9]+(\\.[0-9]+)?(e[0-9]+|m|k|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$"
+                }
+            ]
+        },
         "ResourcesType": {
             "type": "object",
             "properties": {
@@ -1137,21 +1175,10 @@
                     "type": "object",
                     "properties": {
                         "cpu": {
-                            "anyOf": [
-                                { 
-                                    "type": "string",
-                                    "pattern": "^[1-9]([0-9]*)?m$"
-                                },
-                                {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "maximum": 128
-                                }
-                            ]
+                            "$ref": "#/definitions/Quantity"
                         },
                         "memory": {
-                            "type": "string",
-                            "pattern": "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+                            "$ref": "#/definitions/Quantity"
                         }
                     },
                     "required": [
@@ -1163,11 +1190,10 @@
                     "type": "object",
                     "properties": {
                         "cpu": {
-                            "type": "string"
+                            "$ref": "#/definitions/Quantity"
                         },
                         "memory": {
-                            "type": "string",
-                            "minLength": 1
+                            "$ref": "#/definitions/Quantity"
                         }
                     },
                     "required": [
@@ -1272,7 +1298,7 @@
                 "operator": {
                     "$ref": "#/definitions/ProfilingType"
                 },
-                "metricServer": {
+                "metricsServer": {
                     "$ref": "#/definitions/ProfilingType"
                 },
                 "webhooks": {

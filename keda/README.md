@@ -21,7 +21,7 @@ helm repo add kedify https://kedify.github.io/charts
 helm repo update
 
 kubectl create namespace keda
-helm install keda kedacore/keda --namespace keda --version 2.20.2
+helm install keda kedify/keda --namespace keda --version v2.20.1-4
 ```
 
 ## Introduction
@@ -36,7 +36,7 @@ To install the chart with the release name `keda`:
 
 ```console
 $ kubectl create namespace keda
-$ helm install keda kedacore/keda --namespace keda --version 2.20.2
+$ helm install keda kedify/keda --namespace keda --version v2.20.1-4
 ```
 
 ## Uninstalling the Chart
@@ -89,10 +89,7 @@ their default values.
 | `grpcTLSCertsSecret` | string | `""` | Set this if you are using an external scaler and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /grpccerts path on the Pod |
 | `hashiCorpVaultTLS` | string | `""` | Set this if you are using HashiCorp Vault and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /vault path on the Pod |
 | `hostAliases` | list | `[]` | HostAliases for pod networking ([docs](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/)) |
-| `http.idleConnTimeout` | string | `"90s"` | Maximum time an idle HTTP connection remains in the pool. Must be greater than zero. |
 | `http.keepAlive.enabled` | bool | `true` | Enable HTTP connection keep alive |
-| `http.maxIdleConns` | int | `0` | Maximum number of idle HTTP connections across all hosts. Zero means no limit. |
-| `http.maxIdleConnsPerHost` | int | `1000` | Maximum number of idle HTTP connections to keep per host |
 | `http.minTlsVersion` | string | `"TLS12"` | The minimum TLS version to use for all scalers that use raw HTTP clients (some scalers use SDKs to access target services. These have built-in HTTP clients, and this value does not necessarily apply to them) |
 | `http.timeout` | int | `3000` | The default HTTP timeout to use for all scalers that use raw HTTP clients (some scalers use SDKs to access target services. These have built-in HTTP clients, and the timeout does not necessarily apply to them) |
 | `http.tlsCipherList` | string | `""` | The list of cipher suites to use when making HTTP over TLS connections. When left empty or unset, the TLS implementation will provide a default list of cipher suites which are believed to be secure. |
