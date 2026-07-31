@@ -3,8 +3,8 @@
 {{- if not . }}
 {{- fail "'agent.apiKey' is not set" }}
 {{- end }}
-{{- if not (regexMatch "^kfy_[0-9a-zA-Z]{32}$" (. | toString)) }}
-{{- fail (printf "'agent.apiKey' is not valid.\n - It must be in the format: 'kfy_***' (got: '%s')\n - You can get this value from https://dashboard.kedify.io/api-keys" (. | toString)) }}
+{{- if not (regexMatch "^kfy_[0-9a-zA-Z]{32,}$" (. | toString)) }}
+{{- fail (printf "'agent.apiKey' is not valid.\n - It must be in the format: 'kfy_***' (got: '%s...')\n - You can get this value from https://dashboard.kedify.io/api-keys" (trunc 8 (. | toString))) }}
 {{- end }}
 {{- end -}}
 
