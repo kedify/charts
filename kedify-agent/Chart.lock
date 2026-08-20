@@ -10,12 +10,12 @@ dependencies:
   version: 0.1.4
 - name: kedify-predictor
   repository: oci://ghcr.io/kedify/charts
-  version: 0.1.5
+  version: 0.1.6
 - name: autoscaling-checks
   repository: oci://ghcr.io/kedify/charts
   version: 0.0.2
 - name: kedify-observability
   repository: oci://ghcr.io/kedify/charts
   version: 0.0.4
-digest: sha256:49358c9cc19c94687ecdc8dd22da409b091e20e306cf38f9821366a0e87a1b74
-generated: "2026-07-31T12:44:22.508377853Z"
+digest: sha256:75705b36ad6a3ef85a19721ba72986c1220bc6e1732488f359561b06621f09c2
+generated: "2026-08-17T14:54:32.91003936Z"
