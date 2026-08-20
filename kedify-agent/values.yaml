@@ -1,6 +1,10 @@
 clusterName: "cluster-1"
 # when set to true, the schema validation will be disabled
 disableSchemaValidation: false
+global:
+  features:
+    # -- Enable KEDA raw metrics gRPC for distributed scaling.
+    distributedScalingEnabled: false
 agent:
   replicas: 1
   # you should already have this

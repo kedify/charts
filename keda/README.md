@@ -86,6 +86,7 @@ their default values.
 | `extraObjects` | list | `[]` | Array of extra K8s manifests to deploy |
 | `global.dnsConfig` | object | `{}` | DNS config for KEDA components |
 | `global.image.registry` | string | `nil` | Global image registry of KEDA components |
+| `global.features.distributedScalingEnabled` | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaling. |
 | `grpcTLSCertsSecret` | string | `""` | Set this if you are using an external scaler and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /grpccerts path on the Pod |
 | `hashiCorpVaultTLS` | string | `""` | Set this if you are using HashiCorp Vault and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /vault path on the Pod |
 | `hostAliases` | list | `[]` | HostAliases for pod networking ([docs](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/)) |

@@ -1,4 +1,5 @@
 {{- $kedifyKpaDefaultClass := include "keda.kedifyKpaDefaultClass" . -}}
+{{- $globalFeatures := default (dict) .Values.global.features -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -184,6 +185,10 @@ spec:
               value: {{ .Values.service.minTlsVersion }}
             - name: KEDA_SERVICE_TLS_CIPHER_LIST
               value: {{ .Values.service.tlsCipherList | quote }}
+            {{- if $globalFeatures.distributedScalingEnabled }}
+            - name: RAW_METRICS_GRPC_PROTOCOL
+              value: enabled
+            {{- end }}
             {{- if ( not .Values.http.keepAlive.enabled ) }}
             - name: KEDA_HTTP_DISABLE_KEEP_ALIVE
               value: "true"
