@@ -68,6 +68,8 @@ kedify:
     enabled: false
     # -- Default autoscaling class used by both the KEDA operator and admission webhook. Set to "kpa" only when KPA support is enabled. Changing this to "kpa" replaces HPA with KPA for every existing ScaledObject that has no explicit autoscaling.kedify.io/class annotation; canary explicit KPA selections before changing the installation default.
     defaultClass: hpa
+    # -- Exact KPA controller Deployment name for this tenant. Required when KPA and multitenant mode are enabled. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs.
+    deploymentName: ""
 
   # -- For keda installed in multitenant environment
   # Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior

@@ -315,11 +315,18 @@
                         "kpa"
                     ],
                     "default": "hpa"
+                },
+                "deploymentName": {
+                    "type": "string",
+                    "maxLength": 63,
+                    "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+                    "default": ""
                 }
             },
             "required": [
                 "enabled",
-                "defaultClass"
+                "defaultClass",
+                "deploymentName"
             ]
         },
         "KedifyMultitenant": {

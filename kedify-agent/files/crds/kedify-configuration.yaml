@@ -456,6 +456,12 @@ spec:
                           description: DeploymentName is the matching KPA controller
                             deployment in namespace/name form.
                           type: string
+                        deploymentUID:
+                          description: |-
+                            DeploymentUID is the Kubernetes UID of the registered KPA controller Deployment.
+                            Log and metrics collectors compare this Agent-reported identity with the live
+                            Deployment before accessing tenant control-plane data.
+                          type: string
                         enabled:
                           description: Enabled reflects the tenant KEDA operator's
                             --enable-kpa flag.

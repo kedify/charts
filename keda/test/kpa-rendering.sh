@@ -23,6 +23,7 @@ helm template test "${chart_dir}" --namespace keda \
 helm template test "${chart_dir}" --namespace keda \
   --set kedify.kpa.enabled=true \
   --set kedify.kpa.defaultClass=kpa \
+  --set kedify.kpa.deploymentName=kpa-tenant-a \
   --set kedify.multitenant.mode=tenant \
   --set watchNamespace=tenant-a >"${tenant_render}"
 
@@ -47,6 +48,13 @@ fi
 if helm template test "${chart_dir}" --namespace keda \
   --set kedify.kpa.defaultClass=kpa >/dev/null 2>&1; then
   echo "KPA default class must require KPA support" >&2
+  exit 1
+fi
+
+if helm template test "${chart_dir}" --namespace keda \
+  --set kedify.kpa.enabled=true \
+  --set kedify.multitenant.mode=tenant >/dev/null 2>&1; then
+  echo "multitenant KPA must require an exact KPA Deployment name" >&2
   exit 1
 fi
 
@@ -78,5 +86,10 @@ ruby -ryaml -e '
 if [[ "$(grep -c -- '--enable-kpa' "${tenant_render}")" -ne 1 ]] ||
    [[ "$(grep -c -- '--autoscaling-default-class=kpa' "${tenant_render}")" -ne 1 ]]; then
   echo "KPA-enabled tenant mode must configure only its operator" >&2
+  exit 1
+fi
+
+if ! grep -q -- 'kpaDeploymentName: "kpa-tenant-a"' "${tenant_render}"; then
+  echo "tenant registration must include the exact KPA Deployment name" >&2
   exit 1
 fi
