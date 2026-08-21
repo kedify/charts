@@ -6,7 +6,8 @@ chart_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 default_render="$(mktemp)"
 enabled_render="$(mktemp)"
 restricted_render="$(mktemp)"
-trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}"' EXIT
+multitenant_render="$(mktemp)"
+trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}" "${multitenant_render}"' EXIT
 
 helm template test "${chart_dir}" \
   --namespace keda \
@@ -29,6 +30,13 @@ helm template test "${chart_dir}" \
   --set agent.rbac.ingressAutoWire=false \
   --show-only templates/agent-deployment.yaml \
   --show-only templates/agent-rbac.yaml >"${restricted_render}"
+
+helm template test "${chart_dir}" \
+  --namespace keda \
+  --values "${chart_dir}/test/test-values.yaml" \
+  --set agent.features.multitenantKEDAEnabled=true \
+  --show-only templates/agent-deployment.yaml \
+  --show-only templates/agent-rbac.yaml >"${multitenant_render}"
 
 if grep -q 'autoscaling.kedify.io' "${default_render}"; then
   echo "KPA RBAC must not be rendered by default" >&2
@@ -66,6 +74,26 @@ if ! grep -A1 -F 'name: RBAC_READ_KPAS' "${restricted_render}" | grep -q 'value:
   echo "KPA support must retain KPA read access when broad Service reads are disabled" >&2
   exit 1
 fi
+
+if ! grep -A1 -F 'name: RBAC_READ_CUSTOM_RESOURCE_DEFINITIONS' "${multitenant_render}" | grep -q 'value: "true"'; then
+  echo "Multi-tenant installations must enable the KPA CRD metadata watch" >&2
+  exit 1
+fi
+
+for resource in pods/log leases replicasets customresourcedefinitions; do
+  if ! grep -q -- "- ${resource}" "${multitenant_render}"; then
+    echo "Multi-tenant RBAC is missing ${resource}" >&2
+    exit 1
+  fi
+done
+
+crd_rule="$(grep -A7 '^  - customresourcedefinitions$' "${multitenant_render}")"
+for verb in get list watch; do
+  if ! grep -q -- "- ${verb}" <<<"${crd_rule}"; then
+    echo "Multi-tenant CRD RBAC is missing ${verb}" >&2
+    exit 1
+  fi
+done
 
 restricted_service_rule="$(grep -A4 '^  - services$' "${restricted_render}")"
 if ! grep -q '^  - list$' <<<"${restricted_service_rule}" || \

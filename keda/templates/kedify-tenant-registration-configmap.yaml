@@ -22,4 +22,7 @@ data:
   tlsSecretRef: {{ (include "keda.certificates.secretName" .) | quote }}
   isDefaultTenant: {{ eq .Values.kedify.multitenant.mode "default" | quote }}
   operatorDeploymentName: {{ (include "keda.operator.name" .) | quote }}
+  {{- if .Values.kedify.kpa.enabled }}
+  kpaDeploymentName: {{ required "kedify.kpa.deploymentName is required when KPA and multitenant mode are enabled" .Values.kedify.kpa.deploymentName | quote }}
+  {{- end }}
 {{- end }}
