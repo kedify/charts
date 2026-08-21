@@ -194,6 +194,50 @@ rules:
   - get
   resourceNames:
   - kube-system
+{{- if .Values.agent.multicluster.localCluster.enabled }}
+# Multi-cluster distributed scaling on the local cluster. These rules match the
+# member-cluster RBAC documented for GitOps installations.
+- apiGroups:
+  - "*"
+  resources:
+  - "*/scale"
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+{{- end }}
 {{- if .Values.agent.features.recommendationsForLabeledNamespaces }}
 # for metrics in a namespace if requested by a label on the namespace
 - apiGroups:
