@@ -1,3 +1,15 @@
+{{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
+{{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
+{{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
+{{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
+{{- $podResourceProfilesEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesEnabled")) "true" -}}
+{{- $prpRequiresAnnotatedPods := eq (include "kedify-agent.featureEnabled" (list . "prpRequiresAnnotatedPods")) "true" -}}
+{{- $podResourceProfilesDownscaleGuardEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesDownscaleGuardEnabled")) "true" -}}
+{{- $podResourceAutoscalersEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceAutoscalersEnabled")) "true" -}}
+{{- $praRequiresAnnotatedPods := eq (include "kedify-agent.featureEnabled" (list . "praRequiresAnnotatedPods")) "true" -}}
+{{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
+{{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
+{{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -90,30 +102,30 @@ spec:
               value: {{ .Values.agent.noBanner | quote }}
             {{- end }}
             - name: SCALING_POLICY_ENABLED
-              value: {{ .Values.agent.features.scalingPoliciesEnabled | quote }}
+              value: {{ $scalingPoliciesEnabled | quote }}
             - name: DSJ_ENABLED
-              value: {{ .Values.agent.features.distributedScaledJobsEnabled | quote }}
+              value: {{ $distributedScaledJobsEnabled | quote }}
             - name: DSO_ENABLED
-              value: {{ .Values.agent.features.distributedScaledObjectsEnabled | quote }}
+              value: {{ $distributedScaledObjectsEnabled | quote }}
             - name: SCALE_ADAPTER_ENABLED
-              value: {{ (.Values.agent.features).scaleAdaptersEnabled | default false | quote }}
-            {{- if (.Values.agent.features).podResourceProfilesEnabled }}
+              value: {{ $scaleAdaptersEnabled | quote }}
+            {{- if $podResourceProfilesEnabled }}
             - name: PRP_ENABLED
-              value: {{ .Values.agent.features.podResourceProfilesEnabled | quote }}
+              value: {{ $podResourceProfilesEnabled | quote }}
             - name: PRP_REQUIRES_ANNOTATED_PODS
-              value: {{ .Values.agent.features.prpRequiresAnnotatedPods | quote }}
+              value: {{ $prpRequiresAnnotatedPods | quote }}
             - name: PRP_MEMORY_DOWNSCALE_GUARD_ENABLED
-              value: {{ .Values.agent.features.podResourceProfilesDownscaleGuardEnabled | quote }}
+              value: {{ $podResourceProfilesDownscaleGuardEnabled | quote }}
             {{- end }}
             - name: PRA_ENABLED
-              value: {{ .Values.agent.features.podResourceAutoscalersEnabled | quote }}
-            {{- if (.Values.agent.features).podResourceAutoscalersEnabled }}
+              value: {{ $podResourceAutoscalersEnabled | quote }}
+            {{- if $podResourceAutoscalersEnabled }}
             - name: PRA_REQUIRES_ANNOTATED_PODS
-              value: {{ .Values.agent.features.praRequiresAnnotatedPods | quote }}
+              value: {{ $praRequiresAnnotatedPods | quote }}
             {{- end }}
-            {{- if not .Values.agent.features.recommendationsForLabeledNamespaces }}
+            {{- if not $recommendationsForLabeledNamespaces }}
             - name: METRICS_FOR_LABELED_NAMESPACES_ENABLED
-              value: {{ .Values.agent.features.recommendationsForLabeledNamespaces | quote }}
+              value: {{ $recommendationsForLabeledNamespaces | quote }}
             {{- end }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
@@ -130,9 +142,9 @@ spec:
             - name: RBAC_READ_HPAS
               value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readHpas) | quote }}
             - name: RBAC_READ_KPAS
-              value: {{ .Values.agent.features.kedifyPodAutoscalerEnabled | quote }}
+              value: {{ $kedifyPodAutoscalerEnabled | quote }}
             - name: RBAC_READ_CUSTOM_RESOURCE_DEFINITIONS
-              value: {{ .Values.agent.features.multitenantKEDAEnabled | quote }}
+              value: {{ $multitenantKEDAEnabled | quote }}
             - name: RBAC_READ_STATEFUL_SETS
               value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readStatefulSets) | quote }}
             - name: RBAC_MANAGE_KUBE_RESOURCES

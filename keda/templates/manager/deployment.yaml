@@ -216,6 +216,10 @@ spec:
               value: {{ .Values.service.minTlsVersion }}
             - name: KEDA_SERVICE_TLS_CIPHER_LIST
               value: {{ .Values.service.tlsCipherList | quote }}
+            {{- if $globalFeatures.distributedScaledJobsEnabled }}
+            - name: RAW_METRICS_GRPC_PROTOCOL
+              value: enabled
+            {{- end }}
             {{- if ( not .Values.http.keepAlive.enabled ) }}
             - name: KEDA_HTTP_DISABLE_KEEP_ALIVE
               value: "true"

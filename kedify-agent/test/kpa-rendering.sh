@@ -25,7 +25,7 @@ helm template test "${chart_dir}" \
 helm template test "${chart_dir}" \
   --namespace keda \
   --values "${chart_dir}/test/test-values.yaml" \
-  --set agent.features.kedifyPodAutoscalerEnabled=true \
+  --set global.features.kedifyPodAutoscalerEnabled=true \
   --set agent.rbac.readServices=false \
   --set agent.rbac.ingressAutoWire=false \
   --show-only templates/agent-deployment.yaml \

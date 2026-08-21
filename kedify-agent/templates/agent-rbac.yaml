@@ -1,4 +1,12 @@
 {{- if .Values.agent.rbac.create }}
+{{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
+{{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
+{{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
+{{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
+{{- $podResourceProfilesEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesEnabled")) "true" -}}
+{{- $podResourceAutoscalersEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceAutoscalersEnabled")) "true" -}}
+{{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
+{{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -194,7 +202,51 @@ rules:
   - get
   resourceNames:
   - kube-system
-{{- if .Values.agent.features.recommendationsForLabeledNamespaces }}
+{{- if and .Values.agent.multicluster.localCluster.enabled (or $distributedScaledJobsEnabled $distributedScaledObjectsEnabled) }}
+# Multi-cluster distributed scaling on the local cluster. These rules match the
+# member-cluster RBAC documented for GitOps installations.
+- apiGroups:
+  - "*"
+  resources:
+  - "*/scale"
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+{{- end }}
+{{- if $recommendationsForLabeledNamespaces }}
 # for metrics in a namespace if requested by a label on the namespace
 - apiGroups:
   - ""
@@ -236,7 +288,7 @@ rules:
   - get
   - list
   - watch
-{{- if .Values.agent.features.multitenantKEDAEnabled }}
+{{- if $multitenantKEDAEnabled }}
 # Discover tenant registration ConfigMaps cluster-wide. RBAC cannot filter
 # list/watch by label and tenants live in arbitrary namespaces, so this has to
 # be cluster-wide; only ConfigMaps labelled kedify.io/tenant-registration=true
@@ -322,7 +374,7 @@ rules:
   - get
   - list
   - watch
-{{- if .Values.agent.features.podResourceProfilesEnabled }}
+{{- if $podResourceProfilesEnabled }}
 # for pod resource profiles pod updates
 - apiGroups:
   - ""
@@ -332,7 +384,7 @@ rules:
   - patch
   - update
 {{- end }}
-{{- if or .Values.agent.features.podResourceProfilesEnabled .Values.agent.features.podResourceAutoscalersEnabled }}
+{{- if or $podResourceProfilesEnabled $podResourceAutoscalersEnabled }}
 # for pod resource profiles and pod resource autoscalers
 - apiGroups:
   - ""
@@ -395,7 +447,7 @@ rules:
   - list
   - watch
 {{- end }}
-{{- if .Values.agent.features.kedifyPodAutoscalerEnabled }}
+{{- if $kedifyPodAutoscalerEnabled }}
 - apiGroups:
   - autoscaling.kedify.io
   resources:
@@ -455,7 +507,7 @@ rules:
   verbs:
   - "*"
 
-{{- if (.Values.agent.features).scaleAdaptersEnabled }}
+{{- if $scaleAdaptersEnabled }}
 # ScaleAdapter bridging for targets with an incomplete /scale subresource.
 # Deliberately resource-scoped: the autoscaling.kedify.io group is shared with
 # KPA, whose RBAC is gated separately and must not be granted here.
@@ -606,7 +658,7 @@ rules:
   - watch
 {{- end }}
 
-{{- if and .Values.agent.features.kedifyPodAutoscalerEnabled (not (and .Values.agent.rbac.ingressAutoWire .Values.agent.rbac.readServices)) }}
+{{- if and $kedifyPodAutoscalerEnabled (not (and .Values.agent.rbac.ingressAutoWire .Values.agent.rbac.readServices)) }}
 # KPA metrics endpoint discovery only lists Services with the KPA discovery label.
 - apiGroups:
   - ""

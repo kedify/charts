@@ -1,6 +1,23 @@
 clusterName: "cluster-1"
 # when set to true, the schema validation will be disabled
 disableSchemaValidation: false
+global:
+  features:
+    podResourceProfilesDownscaleGuardEnabled: true
+    podResourceProfilesEnabled: true
+    podResourceAutoscalersEnabled: false
+    prpRequiresAnnotatedPods: true
+    praRequiresAnnotatedPods: false
+    distributedScaledObjectsEnabled: false
+    # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
+    distributedScaledJobsEnabled: false
+    scaleAdaptersEnabled: false
+    scalingPoliciesEnabled: true
+    recommendationsForLabeledNamespaces: true
+    multitenantKEDAEnabled: false
+    # -- Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA).
+    # KPA can be installed separately; leave disabled when its CRD/controller is not present
+    kedifyPodAutoscalerEnabled: false
 agent:
   replicas: 1
   # you should already have this
@@ -143,6 +160,13 @@ agent:
     # -- Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA).
     # KPA can be installed separately; leave disabled when its CRD/controller is not present
     kedifyPodAutoscalerEnabled: false
+  multicluster:
+    localCluster:
+      # -- Register the KEDA cluster itself as a multi-cluster member.
+      # This grants the agent permissions to scale local Deployments and manage local Jobs.
+      enabled: false
+      # -- Member-cluster alias. This is also the name of the generated kubeconfig Secret.
+      name: multicluster-local
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
     # standard reconciliation still applies and changes in EndpointSlices for autowired Services are picked up automatically too without waiting for this period

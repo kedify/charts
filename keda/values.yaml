@@ -8,6 +8,9 @@ global:
     registry: null
   # -- DNS config for KEDA components
   dnsConfig: {}
+  features:
+    # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
+    distributedScaledJobsEnabled: false
   # nameservers:
   #   - 1.2.3.4
   # searches:

@@ -61,6 +61,14 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{/* Returns true when either the agent feature or its global feature value is enabled. */}}
+{{- define "kedify-agent.featureEnabled" -}}
+{{- $context := index . 0 -}}
+{{- $feature := index . 1 -}}
+{{- $globalFeatures := default (dict) $context.Values.global.features -}}
+{{- if or (index $context.Values.agent.features $feature) (index $globalFeatures $feature) -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
 {{/*
 CRD installation labels
 */}}

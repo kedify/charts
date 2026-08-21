@@ -11,7 +11,7 @@ spec:
   kedaInstallations:
   - name: {{ .Release.Namespace }}
     namespace: {{ .Release.Namespace }}
-    {{- if .Values.agent.features.multitenantKEDAEnabled }}
+    {{- if eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" }}
     multitenancy: {}
     {{- end }}
 {{ toYaml .Values.agent.kedifyConfiguration | indent 4 }}
