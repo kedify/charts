@@ -108,14 +108,6 @@ spec:
             timeoutSeconds: {{ .Values.webhooks.livenessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.webhooks.livenessProbe.failureThreshold }}
             successThreshold: {{ .Values.webhooks.livenessProbe.successThreshold }}
-          startupProbe:
-            # The Service sends admission requests to the TLS listener. Gate
-            # readiness on that listener so Helm does not run post-install
-            # hooks while the webhook Service still refuses connections.
-            tcpSocket:
-              port: {{ .Values.webhooks.port | default 9443 }}
-            periodSeconds: 5
-            failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /readyz
