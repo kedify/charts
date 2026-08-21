@@ -249,6 +249,42 @@ rules:
   - get
   - list
   - watch
+# Tenant control-plane logs are authorized against Agent-discovered component
+# inventory before this cluster-wide Kubernetes permission is used.
+{{- if .Values.agent.rbac.readLogs }}
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+{{- end }}
+# Verify Pod -> ReplicaSet -> Deployment ownership for tenant control-plane
+# metrics and logs without starting a ReplicaSet informer.
+{{- if or .Values.agent.rbac.readLogs .Values.agent.rbac.readDeploymentsClusterwide }}
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+{{- end }}
+# Watch only KPA CRD metadata so tenant capability and Helm ownership status is
+# refreshed when the cluster-scoped CRD changes.
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
 # Per-tenant TLS cert secrets are read through the namespaced, resourceName-scoped
 # Roles the keda chart creates in each tenant namespace
 # (kedify-agent-secret-rbac.yaml). Those bind this agent ServiceAccount and use
