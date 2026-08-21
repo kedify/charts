@@ -28,7 +28,8 @@ Kubernetes: `>=v1.23.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| global.features.distributedScalingEnabled | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaling. |
+| global.features.distributedScaledJobsEnabled | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaled jobs. |
+| global.features.kedifyPodAutoscalerEnabled | bool | `false` | Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA). KPA can be installed separately; leave disabled when its CRD/controller is not present |
 | agent.features.scaleAdaptersEnabled | bool | `false` | Enable the ScaleAdapter controller that bridges HPA/KEDA to resources with an incomplete /scale subresource (e.g. Agones Fleet), or without one at all (spec.desiredReplicasPath). The agent additionally needs RBAC via agent.extraRbacRules: get + update on the target kinds' /scale subresource, or get, list, watch + update on the whole resource for targets adapted through replica field paths. |
 | agent.features.kedifyPodAutoscalerEnabled | bool | `false` | Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA). KPA can be installed separately; leave disabled when its CRD/controller is not present |
 | agent.multicluster.localCluster.enabled | bool | `false` | Register the KEDA cluster itself as a multi-cluster member. This grants the agent permissions to scale local Deployments and manage local Jobs. |
