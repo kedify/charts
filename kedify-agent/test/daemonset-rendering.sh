@@ -16,8 +16,10 @@ render() {
 }
 
 render >"${default_render}"
-render --set agent.rbac.readMetrics=false --set agent.rbac.readDaemonSets=false >"${disabled_render}"
-render --set agent.rbac.readMetrics=false --set agent.rbac.readDaemonSets=true >"${enabled_render}"
+render --set agent.rbac.readMetrics=false --set agent.rbac.readDaemonSets=false \
+  --set agent.rbac.readLogs=false --set agent.rbac.readDeploymentsClusterwide=false >"${disabled_render}"
+render --set agent.rbac.readMetrics=false --set agent.rbac.readDaemonSets=true \
+  --set agent.rbac.readLogs=false --set agent.rbac.readDeploymentsClusterwide=false >"${enabled_render}"
 
 assert_daemonset_access() {
   local render="$1"
