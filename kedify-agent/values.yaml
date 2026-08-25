@@ -188,6 +188,8 @@ agent:
     readLogs: true
     # if true, rbac necessary for reading stateful sets is added
     readStatefulSets: false
+    # if true, rbac necessary for reading daemon sets is added
+    readDaemonSets: false
     # if true, rbac necessary for reading HPAs (horizontal pod autoscalers) is added
     readHpas: false
     # if true, rbac necessary for reading Nodes is added

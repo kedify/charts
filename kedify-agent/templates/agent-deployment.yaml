@@ -147,6 +147,8 @@ spec:
               value: {{ $multitenantKEDAEnabled | quote }}
             - name: RBAC_READ_STATEFUL_SETS
               value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readStatefulSets) | quote }}
+            - name: RBAC_READ_DAEMON_SETS
+              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readDaemonSets) | quote }}
             - name: RBAC_MANAGE_KUBE_RESOURCES
               value: {{ .Values.agent.rbac.selfUpdates | quote }}
             - name: RBAC_MANAGE_CUSTOM_RESOURCE_DEFINITIONS

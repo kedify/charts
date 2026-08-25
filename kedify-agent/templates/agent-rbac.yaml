@@ -467,6 +467,16 @@ rules:
   - list
   - watch
 {{- end }}
+{{- if .Values.agent.rbac.readDaemonSets }}
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+{{- end }}
 {{- if or .Values.agent.rbac.shouldBeAbleToInstallKeda .Values.agent.rbac.shouldBeAbleToInstallHttpAddon }}
 # required by Kedify to be able to crud CR(D)s related to KEDA
 - apiGroups:
