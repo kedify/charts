@@ -199,14 +199,15 @@ spec:
                     description: |-
                       Kind specifies the target workload whose containers will be obtaining the resource updates
                       Caveat: if set to 'scaledobject' the ScaledObject has to have its
-                              '.spec.scaleTargetRef.kind' equal to 'deployment' or 'statefulset' so that
-                              we can reach to its pods transitively.DeepCopy  In other words not every
-                              scalable CR will work here. For MachindeDeployments this feature doesn't
-                              make sense.
+                              '.spec.scaleTargetRef.kind' equal to 'deployment', 'daemonset',
+                              'statefulset', or 'rollout' so that we can reach its pods transitively.
+                              In other words, not every scalable CR will work here.
+                      The 'rollout' kind refers to an Argo Rollout in argoproj.io/v1alpha1.
                     enum:
                     - deployment
                     - daemonset
                     - statefulset
+                    - rollout
                     - scaledobject
                     type: string
                   name:
