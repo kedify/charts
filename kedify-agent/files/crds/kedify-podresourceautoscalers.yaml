@@ -567,12 +567,14 @@ spec:
                   if target is specified, don't use the selector
                 properties:
                   kind:
-                    description: Kind specifies the target workload whose containers
-                      will be obtaining the resource updates
+                    description: |-
+                      Kind specifies the target workload whose containers will be obtaining the resource updates
+                      The 'rollout' kind refers to an Argo Rollout in argoproj.io/v1alpha1.
                     enum:
                     - deployment
                     - daemonset
                     - statefulset
+                    - rollout
                     type: string
                   name:
                     minLength: 1
