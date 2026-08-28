@@ -123,7 +123,7 @@ agent:
         interval: 30
         disabled: true
   image:
-    tag: "v0.6.8"
+    tag: "v0.7.0"
     repository: ghcr.io/kedify/agent
     pullPolicy: Always
   imagePullSecrets: []
