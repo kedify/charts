@@ -2416,6 +2416,47 @@ entries:
     version: 0.7.0
   kedify-agent:
   - apiVersion: v2
+    appVersion: v0.7.0
+    created: "2026-08-28T11:26:50.946725251Z"
+    dependencies:
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.20.2-0
+    - condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.11.1-6
+    - condition: otelAddOn.enabled,otel-add-on.enabled
+      name: otel-add-on
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.1.4
+    - condition: kedifyPredictor.enabled,kedify-predictor.enabled
+      name: kedify-predictor
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.1.6
+    - condition: autoscalingChecks.enabled,autoscaling-checks.enabled
+      name: autoscaling-checks
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.0.2
+    - condition: kedifyObservability.enabled,kedify-observability.enabled
+      name: kedify-observability
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.0.4
+    description: Kedify agent - Helm Chart
+    digest: e9ce41ea677046fda6acf8c9366f723fd72a730e6d83e592b9e8229c7893e01c
+    home: https://github.com/kedify/charts
+    icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
+    sources:
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-agent-v0.7.0.tgz
+    version: v0.7.0
+  - apiVersion: v2
     appVersion: v0.6.8
     created: "2026-07-31T15:07:21.559434421Z"
     dependencies:
@@ -4726,4 +4767,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2026-07-31T13:58:46.0960136Z"
+generated: "2026-08-28T11:26:50.889759909Z"
