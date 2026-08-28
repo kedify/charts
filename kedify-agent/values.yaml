@@ -6,6 +6,8 @@ global:
     podResourceProfilesDownscaleGuardEnabled: true
     podResourceProfilesEnabled: true
     podResourceAutoscalersEnabled: false
+    # -- Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC.
+    argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
     distributedScaledObjectsEnabled: false
@@ -143,6 +145,8 @@ agent:
     podResourceProfilesDownscaleGuardEnabled: true
     podResourceProfilesEnabled: true
     podResourceAutoscalersEnabled: false
+    # -- Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC.
+    argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
     distributedScaledObjectsEnabled: false

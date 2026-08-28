@@ -47,3 +47,6 @@ jobs:
 
       - name: Test DaemonSet rendering
         run: kedify-agent/test/daemonset-rendering.sh
+
+      - name: Test Argo Rollouts rendering
+        run: kedify-agent/test/argo-rollouts-rendering.sh
