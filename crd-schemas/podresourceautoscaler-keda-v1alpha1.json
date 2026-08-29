@@ -615,11 +615,12 @@
           "description": "Target is the reference to a workload whose pods should be modified\nif target is specified, don't use the selector",
           "properties": {
             "kind": {
-              "description": "Kind specifies the target workload whose containers will be obtaining the resource updates",
+              "description": "Kind specifies the target workload whose containers will be obtaining the resource updates\nThe 'rollout' kind refers to an Argo Rollout in argoproj.io/v1alpha1.",
               "enum": [
                 "deployment",
                 "daemonset",
-                "statefulset"
+                "statefulset",
+                "rollout"
               ],
               "type": "string"
             },

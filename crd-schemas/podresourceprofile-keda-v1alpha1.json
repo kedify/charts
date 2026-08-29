@@ -173,11 +173,12 @@
           "description": "Target is the reference to a workload whose pods should be modified\nif target is specified, don't use the selector",
           "properties": {
             "kind": {
-              "description": "Kind specifies the target workload whose containers will be obtaining the resource updates\nCaveat: if set to 'scaledobject' the ScaledObject has to have its\n        '.spec.scaleTargetRef.kind' equal to 'deployment' or 'statefulset' so that\n        we can reach to its pods transitively.DeepCopy  In other words not every\n        scalable CR will work here. For MachindeDeployments this feature doesn't\n        make sense.",
+              "description": "Kind specifies the target workload whose containers will be obtaining the resource updates\nCaveat: if set to 'scaledobject' the ScaledObject has to have its\n        '.spec.scaleTargetRef.kind' equal to 'deployment', 'daemonset',\n        'statefulset', or 'rollout' so that we can reach its pods transitively.\n        In other words, not every scalable CR will work here.\nThe 'rollout' kind refers to an Argo Rollout in argoproj.io/v1alpha1.",
               "enum": [
                 "deployment",
                 "daemonset",
                 "statefulset",
+                "rollout",
                 "scaledobject"
               ],
               "type": "string"
