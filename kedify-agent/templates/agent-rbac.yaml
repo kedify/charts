@@ -8,6 +8,7 @@
 {{- $argoRolloutsEnabled := eq (include "kedify-agent.featureEnabled" (list . "argoRolloutsEnabled")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
+{{- $legacyContainerResourceMetricsEnabled := .Values.agent.resourceMetrics.legacy.enabled -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -355,7 +356,7 @@ rules:
   resourceNames:
   - kedify-multitenancy-config
 {{- end }}
-{{- if .Values.agent.rbac.readNodes }}
+{{- if or .Values.agent.rbac.readNodes .Values.agent.rbac.readMetrics }}
 # for metrics and metered billing
 - apiGroups:
   - ""
@@ -412,6 +413,7 @@ rules:
   - list
   - watch
   - get
+{{- if $legacyContainerResourceMetricsEnabled }}
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -419,6 +421,13 @@ rules:
   verbs:
   - get
   - list
+{{- end }}
+- apiGroups:
+  - ""
+  resources:
+  - nodes/proxy
+  verbs:
+  - get
 - apiGroups:
   - batch
   resources:

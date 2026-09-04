@@ -135,6 +135,15 @@ agent:
   # comma-separated list of namespaces where pod utilization metrics should be collected
   # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
   metricsWatchNamespace: ""
+  resourceMetrics:
+    # Canonical pod requests, limits, and ownership are scraped from this Prometheus endpoint.
+    # When the bundled kube-state-metrics chart is enabled and this is empty, its Service URL is used automatically.
+    kubeStateMetrics:
+      url: ""
+    # Compatibility switch for the legacy metrics.k8s.io-backed container_* gauges.
+    # This defaults to true for one migration release and will default to false in the following release.
+    legacy:
+      enabled: true
   # if anything else than 'false', the log will not print the ascii logo
   noBanner: false
   # if anything else than 'false', the log will not contain colors
@@ -342,3 +351,18 @@ kedify-observability:
   # Optionally install the opinionated observability stack for Kedify.
   # For all available values, check https://github.com/kedify/charts/blob/main/kedify-observability/values.yaml
   enabled: false
+kube-state-metrics:
+  # Optionally install a deliberately minimal KSM instance for canonical resource, ownership, and restart metrics.
+  enabled: false
+  fullnameOverride: kedify-agent-kube-state-metrics
+  prometheusScrape: false
+  collectors:
+    - pods
+    - replicasets
+  metricAllowlist:
+    - kube_pod_container_resource_requests
+    - kube_pod_container_resource_limits
+    - kube_pod_container_status_restarts_total
+    - kube_pod_container_status_last_terminated_reason
+    - kube_pod_owner
+    - kube_replicaset_owner
