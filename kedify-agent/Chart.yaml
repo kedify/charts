@@ -31,6 +31,10 @@ dependencies:
     repository: oci://ghcr.io/kedify/charts
     version: 0.0.4
     condition: kedifyObservability.enabled,kedify-observability.enabled
+  - name: kube-state-metrics
+    repository: oci://ghcr.io/prometheus-community/charts
+    version: 8.4.1
+    condition: kube-state-metrics.enabled
 home: https://github.com/kedify/charts
 sources:
   - https://github.com/kedify/agent

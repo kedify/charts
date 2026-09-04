@@ -10,6 +10,11 @@
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
+{{- $kubeStateMetricsValues := index .Values "kube-state-metrics" -}}
+{{- $kubeStateMetricsURL := .Values.agent.resourceMetrics.kubeStateMetrics.url -}}
+{{- if and (not $kubeStateMetricsURL) $kubeStateMetricsValues.enabled -}}
+{{- $kubeStateMetricsURL = printf "http://kedify-agent-kube-state-metrics.%s.svc:8080/metrics" .Release.Namespace -}}
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -129,14 +134,18 @@ spec:
             {{- end }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
+            - name: KUBE_STATE_METRICS_URL
+              value: {{ $kubeStateMetricsURL | quote }}
+            - name: LEGACY_CONTAINER_RESOURCE_METRICS_ENABLED
+              value: {{ .Values.agent.resourceMetrics.legacy.enabled | quote }}
             - name: RBAC_READ_NODES
-              value: {{ .Values.agent.rbac.readNodes | quote }}
+              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readNodes) | quote }}
             - name: RBAC_READ_PODS
-              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readPods) | quote }}
+              value: {{ (or (and .Values.agent.rbac.readMetrics .Values.agent.resourceMetrics.legacy.enabled) .Values.agent.rbac.readPods) | quote }}
             - name: RBAC_READ_DEPLOYMENTS_CLUSTERWIDE
               value: {{ .Values.agent.rbac.readDeploymentsClusterwide | quote }}
             - name: RBAC_READ_DEPLOYMENTS
-              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readDeployments) | quote }}
+              value: {{ (or (and .Values.agent.rbac.readMetrics .Values.agent.resourceMetrics.legacy.enabled) .Values.agent.rbac.readDeployments) | quote }}
             - name: RBAC_READ_SERVICES
               value: {{ .Values.agent.rbac.readServices | quote }}
             - name: RBAC_READ_HPAS
@@ -146,9 +155,9 @@ spec:
             - name: RBAC_READ_CUSTOM_RESOURCE_DEFINITIONS
               value: {{ $multitenantKEDAEnabled | quote }}
             - name: RBAC_READ_STATEFUL_SETS
-              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readStatefulSets) | quote }}
+              value: {{ (or (and .Values.agent.rbac.readMetrics .Values.agent.resourceMetrics.legacy.enabled) .Values.agent.rbac.readStatefulSets) | quote }}
             - name: RBAC_READ_DAEMON_SETS
-              value: {{ (or .Values.agent.rbac.readMetrics .Values.agent.rbac.readDaemonSets) | quote }}
+              value: {{ (or (and .Values.agent.rbac.readMetrics .Values.agent.resourceMetrics.legacy.enabled) .Values.agent.rbac.readDaemonSets) | quote }}
             - name: RBAC_MANAGE_KUBE_RESOURCES
               value: {{ .Values.agent.rbac.selfUpdates | quote }}
             - name: RBAC_MANAGE_CUSTOM_RESOURCE_DEFINITIONS

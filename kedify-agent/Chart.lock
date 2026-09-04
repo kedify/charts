@@ -17,5 +17,8 @@ dependencies:
 - name: kedify-observability
   repository: oci://ghcr.io/kedify/charts
   version: 0.0.4
-digest: sha256:75705b36ad6a3ef85a19721ba72986c1220bc6e1732488f359561b06621f09c2
-generated: "2026-08-17T14:54:32.91003936Z"
+- name: kube-state-metrics
+  repository: oci://ghcr.io/prometheus-community/charts
+  version: 8.4.1
+digest: sha256:c5d7a5aa01bd9019b732b455c1781ef12ef13f10264089465d725fe0a5604b44
+generated: "2026-09-04T13:26:15.726112+02:00"
