@@ -10,6 +10,7 @@
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
+{{- $httpQuickstart := eq .Values.agent.quickstart "http" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,11 +60,15 @@ spec:
           {{- range $key, $value := .Values.agent.extraArgs }}
           - "--{{ $key }}={{ $value }}"
           {{- end }}
+          {{- with .Values.agent.quickstart }}
+          - "--quickstart={{ . }}"
+          {{- end }}
           command:
             - /manager
           env:
             - name: KEDIFY_SERVER
               value: {{ .Values.agent.kedifyServer }}
+            {{- if not $httpQuickstart }}
             {{- with .Values.agent.agentId }}
             - name: KEDIFY_AGENT_ID
               value: {{ . }}
@@ -83,6 +88,7 @@ spec:
                 secretKeyRef:
                   name: kedify-agent
                   key: apikey
+            {{- end }}
             - name: KEDIFY_PROXY_CHART_VERSION
               value: {{ .Values.agent.kedifyProxy.chartVersion | quote }}
             - name: KEDIFY_PROXY_CHART

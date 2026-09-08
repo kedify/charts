@@ -22,6 +22,8 @@ global:
     kedifyPodAutoscalerEnabled: false
 agent:
   replicas: 1
+  # Run an anonymous, time-limited quickstart. Supported value: http.
+  quickstart: ""
   # you should already have this
   orgId: ""
   # you should already have this
@@ -286,6 +288,7 @@ agent:
   tolerations: []
   affinity: {}
   # additional cli arguments passed to the agent in form of "key: value" => "--key=value"
+  # Duplicate arguments are allowed; agent.quickstart is rendered last when set.
   extraArgs: {}
 # when set to: 'helm' (default), the installation will rely on helm hooks for CRD and CR installation and cleanup
 #              'jobs' - the helm hooks will be disabled for CRD & CR installation and k8s jobs will be used instead

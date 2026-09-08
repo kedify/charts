@@ -1,8 +1,12 @@
 {{- if not .Values.disableSchemaValidation }}
 
-{{- if .Values.agent.createApiKeySecret }}
+{{- if and .Values.agent.createApiKeySecret (ne .Values.agent.quickstart "http") }}
 {{- include "validateApiKey" .Values.agent.apiKey }}
 {{- include "validateOrgId" .Values.agent.orgId }}
+{{- end }}
+
+{{- if and .Values.agent.quickstart (ne .Values.agent.quickstart "http") }}
+{{- fail "agent.quickstart must be empty or 'http'" }}
 {{- end }}
 
 {{- include "validateCloudAccountId" .Values.agent.cloudAccountID }}

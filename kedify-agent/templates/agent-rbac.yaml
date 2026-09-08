@@ -8,6 +8,7 @@
 {{- $argoRolloutsEnabled := eq (include "kedify-agent.featureEnabled" (list . "argoRolloutsEnabled")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
+{{- $httpQuickstart := eq .Values.agent.quickstart "http" -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -66,6 +67,18 @@ metadata:
   name: kedify-manager-role
   namespace: {{ .Release.Namespace }}
 rules:
+
+{{- if $httpQuickstart }}
+# The HTTP quickstart verifies this Deployment's creation time on startup.
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  resourceNames:
+  - kedify-agent
+  verbs:
+  - get
+{{- end }}
 
 {{- if .Values.agent.rbac.selfUpdates }}
 # Kedify agent needs to be able to update its own container image
