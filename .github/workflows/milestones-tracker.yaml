@@ -159,10 +159,11 @@ jobs:
       contents: read
     steps:
       - name: Check out autoscaling checks
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: kedify/autoscaling-checks
           ref: a62945310e320de97ce4526194eaaa2a323ba6f8 # v0.0.2
+          token: ${{ secrets.PAT_TOKEN }}
           persist-credentials: false
 
       - name: Set up Helm
