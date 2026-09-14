@@ -50,3 +50,6 @@ jobs:
 
       - name: Test Argo Rollouts rendering
         run: kedify-agent/test/argo-rollouts-rendering.sh
+
+      - name: Test vCluster discovery rendering
+        run: kedify-agent/test/vcluster-discovery-rendering.sh

@@ -1,4 +1,5 @@
 {{- if .Values.agent.rbac.create }}
+{{- $vclusterDiscoveryEnabled := eq (include "kedify-agent.featureEnabled" (list . "vclusterDiscoveryEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
 {{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
@@ -160,6 +161,13 @@ rules:
   - kedify-agent
 {{- end }}
 
+{{- if $vclusterDiscoveryEnabled }}
+# Maintain automatically discovered member registrations in the Agent namespace.
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "patch"]
+{{- end }}
+
 # kedify-agent reads API key from here and stores agent_id from fleet install initialization
 # it also needs to be able to read secrets containing the helm release info of its components
 - apiGroups:
@@ -194,6 +202,12 @@ kind: ClusterRole
 metadata:
   name: kedify-manager-role
 rules:
+{{- if $vclusterDiscoveryEnabled }}
+# Discover native vCluster exports and their internal API Services.
+- apiGroups: [""]
+  resources: ["secrets", "services"]
+  verbs: ["get", "list", "watch"]
+{{- end }}
 # to get kube-system UUID for self-registration in fleet installation
 - apiGroups:
   - ""

@@ -1,3 +1,4 @@
+{{- $vclusterDiscoveryEnabled := eq (include "kedify-agent.featureEnabled" (list . "vclusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
 {{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
@@ -10,6 +11,9 @@
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
+{{- if and $vclusterDiscoveryEnabled (not (or $distributedScaledObjectsEnabled $distributedScaledJobsEnabled)) -}}
+{{- fail "agent.features.vclusterDiscoveryEnabled requires distributedScaledObjectsEnabled or distributedScaledJobsEnabled" -}}
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -105,6 +109,10 @@ spec:
               value: {{ $scalingPoliciesEnabled | quote }}
             - name: DSJ_ENABLED
               value: {{ $distributedScaledJobsEnabled | quote }}
+            {{- if $vclusterDiscoveryEnabled }}
+            - name: VCLUSTER_DISCOVERY_ENABLED
+              value: "true"
+            {{- end }}
             - name: DSO_ENABLED
               value: {{ $distributedScaledObjectsEnabled | quote }}
             - name: SCALE_ADAPTER_ENABLED

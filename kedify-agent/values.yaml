@@ -13,6 +13,9 @@ global:
     distributedScaledObjectsEnabled: false
     # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
     distributedScaledJobsEnabled: false
+    # -- Automatically register shared-node vClusters from their native kubeconfig Secrets.
+    # Requires DSO or DSJ and an Agent image with vCluster discovery support.
+    vclusterDiscoveryEnabled: false
     scaleAdaptersEnabled: false
     scalingPoliciesEnabled: true
     recommendationsForLabeledNamespaces: true
@@ -151,6 +154,9 @@ agent:
     praRequiresAnnotatedPods: false
     distributedScaledObjectsEnabled: false
     distributedScaledJobsEnabled: false
+    # -- Automatically register shared-node vClusters from their native kubeconfig Secrets.
+    # Requires DSO or DSJ and an Agent image with vCluster discovery support.
+    vclusterDiscoveryEnabled: false
     # -- Enable the ScaleAdapter controller that bridges HPA/KEDA to resources
     # with an incomplete /scale subresource (e.g. Agones Fleet), or without one
     # at all (spec.desiredReplicasPath). The agent additionally needs RBAC via
