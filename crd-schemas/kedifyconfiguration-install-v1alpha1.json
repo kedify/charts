@@ -433,6 +433,63 @@
                 "description": "IsDefault indicates this is the default tenant",
                 "type": "boolean"
               },
+              "kpa": {
+                "description": "KPA contains tenant-aware KPA enablement, controller readiness, and pairing status.",
+                "properties": {
+                  "controllerReady": {
+                    "description": "ControllerReady indicates whether all desired KPA controller replicas are available.",
+                    "type": "boolean"
+                  },
+                  "crdOwner": {
+                    "description": "CRDOwner identifies the Helm release owning the cluster-scoped KPA CRD in namespace/release form.",
+                    "type": "string"
+                  },
+                  "deploymentName": {
+                    "description": "DeploymentName is the matching KPA controller deployment in namespace/name form.",
+                    "type": "string"
+                  },
+                  "deploymentUID": {
+                    "description": "DeploymentUID is the Kubernetes UID of the registered KPA controller Deployment.\nLog and metrics collectors compare this Agent-reported identity with the live\nDeployment before accessing tenant control-plane data.",
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "description": "Enabled reflects the tenant KEDA operator's --enable-kpa flag.",
+                    "type": "boolean"
+                  },
+                  "kedaMetricsAddress": {
+                    "description": "KEDAMetricsAddress is the KEDA MetricsService address observed on the matching controller.",
+                    "type": "string"
+                  },
+                  "message": {
+                    "description": "Message provides a concise explanation when capability or pairing is incomplete.",
+                    "type": "string"
+                  },
+                  "operatorObserved": {
+                    "description": "OperatorObserved indicates whether the tenant's KEDA operator deployment was inspected.",
+                    "type": "boolean"
+                  },
+                  "paired": {
+                    "description": "Paired indicates that the controller watch namespace and KEDA MetricsService address\nboth match this tenant's registered KEDA operator.",
+                    "type": "boolean"
+                  },
+                  "version": {
+                    "description": "Version is the matching KPA controller version.",
+                    "type": "string"
+                  },
+                  "watchNamespace": {
+                    "description": "WatchNamespace is the namespace set observed on the matching KPA controller.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "controllerReady",
+                  "enabled",
+                  "operatorObserved",
+                  "paired"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
               "message": {
                 "description": "Message contains additional information about the tenant status",
                 "type": "string"
@@ -443,6 +500,10 @@
               },
               "namespace": {
                 "description": "Namespace where the KEDA operator runs",
+                "type": "string"
+              },
+              "operatorDeploymentName": {
+                "description": "OperatorDeploymentName is the registered KEDA operator Deployment name.\nConsumers must use this identity rather than deriving it from Address,\nbecause an explicitly configured metrics service may have a different name.",
                 "type": "string"
               },
               "operatorReady": {
@@ -461,6 +522,7 @@
             "required": [
               "address",
               "configSynced",
+              "kpa",
               "name",
               "namespace",
               "operatorReady",
