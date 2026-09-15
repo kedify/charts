@@ -45,11 +45,13 @@ grep -q 'vCluster discovery requires multicluster.enabled' "$render_dir/error"
 render --set agent.features.distributedScaledObjectsEnabled=true > "$render_dir/legacy-dso.yaml"
 grep -A1 'name: DSO_ENABLED' "$render_dir/legacy-dso.yaml" | grep -q 'value: "true"'
 grep -A1 'name: DSJ_ENABLED' "$render_dir/legacy-dso.yaml" | grep -q 'value: "false"'
-render --set global.features.distributedScaledJobsEnabled=true \
-  --set global.features.multiclusterVclusterDiscoveryEnabled=true > "$render_dir/legacy-dsj.yaml"
+render --set global.features.distributedScaledJobsEnabled=true > "$render_dir/legacy-dsj.yaml"
 grep -A1 'name: DSO_ENABLED' "$render_dir/legacy-dsj.yaml" | grep -q 'value: "false"'
 grep -A1 'name: DSJ_ENABLED' "$render_dir/legacy-dsj.yaml" | grep -q 'value: "true"'
-grep -q 'MULTICLUSTER_VCLUSTER_DISCOVERY_ENABLED' "$render_dir/legacy-dsj.yaml"
+if grep -q 'MULTICLUSTER_VCLUSTER_DISCOVERY_ENABLED\|Discover native vCluster exports' "$render_dir/legacy-dsj.yaml"; then
+  echo 'Legacy DSJ must not enable vCluster discovery' >&2
+  exit 1
+fi
 
 # The shared global switch reaches the KEDA chart and enables DSJ raw metrics.
 helm template keda "$chart_dir/../keda" --namespace scaling-system \

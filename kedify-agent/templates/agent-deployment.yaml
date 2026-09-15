@@ -1,5 +1,5 @@
 {{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
-{{- $vClusterDiscoveryEnabled := or (eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true") (eq (include "kedify-agent.featureEnabled" (list . "multiclusterVclusterDiscoveryEnabled")) "true") -}}
+{{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
 {{- $distributedScaledObjectsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}

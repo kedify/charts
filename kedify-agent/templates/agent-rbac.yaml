@@ -1,6 +1,6 @@
 {{- if .Values.agent.rbac.create }}
 {{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
-{{- $vClusterDiscoveryEnabled := or (eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true") (eq (include "kedify-agent.featureEnabled" (list . "multiclusterVclusterDiscoveryEnabled")) "true") -}}
+{{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
 {{- $distributedScaledObjectsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}

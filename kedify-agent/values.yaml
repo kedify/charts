@@ -19,8 +19,6 @@ global:
     distributedScaledObjectsEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller and KEDA raw metrics gRPC during the compatibility period.
     distributedScaledJobsEnabled: false
-    # -- Deprecated: use multicluster.vClusterDiscoveryEnabled.
-    multiclusterVclusterDiscoveryEnabled: false
     scaleAdaptersEnabled: false
     scalingPoliciesEnabled: true
     recommendationsForLabeledNamespaces: true
@@ -166,8 +164,6 @@ agent:
     distributedScaledObjectsEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller during the compatibility period.
     distributedScaledJobsEnabled: false
-    # -- Deprecated: use multicluster.vClusterDiscoveryEnabled.
-    multiclusterVclusterDiscoveryEnabled: false
     # -- Enable the ScaleAdapter controller that bridges HPA/KEDA to resources
     # with an incomplete /scale subresource (e.g. Agones Fleet), or without one
     # at all (spec.desiredReplicasPath). The agent additionally needs RBAC via
