@@ -9,7 +9,11 @@ global:
   # -- DNS config for KEDA components
   dnsConfig: {}
   features:
+    # -- Enable Kedify multi-cluster scaling. This enables the raw metrics gRPC service required by DistributedScaledJobs.
+    multicluster:
+      enabled: false
     # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
+    # Deprecated: use multicluster.enabled.
     distributedScaledJobsEnabled: false
   # nameservers:
   #   - 1.2.3.4

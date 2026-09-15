@@ -1,6 +1,8 @@
 {{- if .Values.agent.rbac.create }}
-{{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
-{{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
+{{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
+{{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
+{{- $distributedScaledJobsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
+{{- $distributedScaledObjectsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
 {{- $podResourceProfilesEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesEnabled")) "true" -}}
@@ -194,6 +196,12 @@ kind: ClusterRole
 metadata:
   name: kedify-manager-role
 rules:
+{{- if $vClusterDiscoveryEnabled }}
+# Discover native vCluster exports and their internal API Services.
+- apiGroups: [""]
+  resources: ["secrets", "services"]
+  verbs: ["get", "list", "watch"]
+{{- end }}
 # to get kube-system UUID for self-registration in fleet installation
 - apiGroups:
   - ""
