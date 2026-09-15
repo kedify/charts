@@ -285,7 +285,7 @@ roleRef:
   name: {{ (include "keda.operator.name" $) }}-token-creator-{{ $r.name }}
 subjects:
 - kind: ServiceAccount
-  name: {{ ($.Values.serviceAccount.operator).name | default $.Values.serviceAccount.name }}
+  name: {{ include "keda.operator.serviceAccountName" $ }}
   namespace: {{ $.Release.Namespace }}
 {{- end }}
 {{- end }}

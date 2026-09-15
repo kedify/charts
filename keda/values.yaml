@@ -81,6 +81,37 @@ watchLabelSelector: ""
 # shared across operators scoped to different label selectors.
 watchLabelSelectorForTriggerauth: ""
 
+kedify:
+  kpa:
+    # -- Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling.
+    enabled: false
+    # -- Default autoscaling class used by both the KEDA operator and admission webhook. Set to "kpa" only when KPA support is enabled. Changing this to "kpa" replaces HPA with KPA for every existing ScaledObject that has no explicit autoscaling.kedify.io/class annotation; canary explicit KPA selections before changing the installation default.
+    defaultClass: hpa
+    # -- Exact KPA controller Deployment name for this tenant. Required when KPA and multitenant mode are enabled. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs.
+    deploymentName: ""
+
+  # -- For keda installed in multitenant environment
+  # Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior
+  multitenant:
+    # -- Multitenant mode: "" (disabled), "default" or "tenant"
+    # "": multitenancy disabled, standard KEDA deployment
+    # "default": deploys keda-operator + keda-operator-metrics-apiserver (and optionally keda-admission-webhooks); the metrics apiserver is configured to route HPA metric requests to the tenant keda-operators
+    # "tenant": deploys only keda-operator. The shared singletons (metrics apiserver, admission webhooks, CRDs) and the operator's webhook/apiservice patching are turned off automatically in this mode, so you do not need to set metricsServer.enabled / webhooks.enabled / crds.install. Give each tenant a unique operator.name so its cluster-scoped RBAC and leader election do not collide with the default install or other tenants. serviceAccount.operator.name and certificates.secretName only need overriding when multiple tenants share a namespace.
+    mode: ""
+
+    # -- Name of the Secret to store the connection information for tenants to configure default keda-operator-metrics-apiserver to connect to the correct keda-operator in the tenant namespace
+    configSecretName: kedify-multitenancy-config
+
+    # -- Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.<clusterDomain>:9666)
+    address: ""
+    # -- SNI authority override for gRPC connection to the tenant's keda-operator
+    authority: ""
+
+    # -- Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret)
+    agentNamespace: "keda"
+    # -- ServiceAccount name of the kedify-agent
+    agentServiceAccount: "kedify-agent"
+
 # -- Name of secret to use to pull images to use to pull Docker images
 imagePullSecrets: []
 
