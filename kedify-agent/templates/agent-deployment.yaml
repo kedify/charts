@@ -1,4 +1,4 @@
-{{- $vclusterDiscoveryEnabled := eq (include "kedify-agent.featureEnabled" (list . "vclusterDiscoveryEnabled")) "true" -}}
+{{- $multiclusterVclusterDiscoveryEnabled := eq (include "kedify-agent.featureEnabled" (list . "multiclusterVclusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true" -}}
 {{- $distributedScaledObjectsEnabled := eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true" -}}
@@ -11,8 +11,8 @@
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
-{{- if and $vclusterDiscoveryEnabled (not (or $distributedScaledObjectsEnabled $distributedScaledJobsEnabled)) -}}
-{{- fail "agent.features.vclusterDiscoveryEnabled requires distributedScaledObjectsEnabled or distributedScaledJobsEnabled" -}}
+{{- if and $multiclusterVclusterDiscoveryEnabled (not (or $distributedScaledObjectsEnabled $distributedScaledJobsEnabled)) -}}
+{{- fail "agent.features.multiclusterVclusterDiscoveryEnabled requires distributedScaledObjectsEnabled or distributedScaledJobsEnabled" -}}
 {{- end -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -109,8 +109,8 @@ spec:
               value: {{ $scalingPoliciesEnabled | quote }}
             - name: DSJ_ENABLED
               value: {{ $distributedScaledJobsEnabled | quote }}
-            {{- if $vclusterDiscoveryEnabled }}
-            - name: VCLUSTER_DISCOVERY_ENABLED
+            {{- if $multiclusterVclusterDiscoveryEnabled }}
+            - name: MULTICLUSTER_VCLUSTER_DISCOVERY_ENABLED
               value: "true"
             {{- end }}
             - name: DSO_ENABLED
