@@ -69,6 +69,17 @@ Create the name of the service account to use
 {{- if or (index $context.Values.agent.features $feature) (index $globalFeatures $feature) -}}true{{- else -}}false{{- end -}}
 {{- end }}
 
+{{/* Returns true when a nested multi-cluster feature is enabled for the agent or globally. */}}
+{{- define "kedify-agent.multiclusterFeatureEnabled" -}}
+{{- $context := index . 0 -}}
+{{- $feature := index . 1 -}}
+{{- $globalFeatures := default (dict) $context.Values.global.features -}}
+{{- $globalMulticluster := default (dict) (index $globalFeatures "multicluster") -}}
+{{- $agentFeatures := default (dict) $context.Values.agent.features -}}
+{{- $agentMulticluster := default (dict) (index $agentFeatures "multicluster") -}}
+{{- if or (index $agentMulticluster $feature) (index $globalMulticluster $feature) -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
 {{/*
 CRD installation labels
 */}}
