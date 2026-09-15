@@ -10,11 +10,16 @@ global:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
+    # -- Enable DistributedScaledObject and DistributedScaledJob controllers and bundled KEDA raw metrics gRPC.
+    multicluster:
+      enabled: false
+      # -- Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services.
+      vClusterDiscoveryEnabled: false
+    # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
-    # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
+    # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller and KEDA raw metrics gRPC during the compatibility period.
     distributedScaledJobsEnabled: false
-    # -- Discover shared-node vClusters directly from their native kubeconfig Secrets without copying credentials.
-    # Requires DSO or DSJ and an Agent image with vCluster discovery support.
+    # -- Deprecated: use multicluster.vClusterDiscoveryEnabled.
     multiclusterVclusterDiscoveryEnabled: false
     scaleAdaptersEnabled: false
     scalingPoliciesEnabled: true
@@ -152,10 +157,16 @@ agent:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
+    # -- Enable DistributedScaledObject and DistributedScaledJob controllers. Use the global setting when this chart installs KEDA.
+    multicluster:
+      enabled: false
+      # -- Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services.
+      vClusterDiscoveryEnabled: false
+    # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
+    # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller during the compatibility period.
     distributedScaledJobsEnabled: false
-    # -- Discover shared-node vClusters directly from their native kubeconfig Secrets without copying credentials.
-    # Requires DSO or DSJ and an Agent image with vCluster discovery support.
+    # -- Deprecated: use multicluster.vClusterDiscoveryEnabled.
     multiclusterVclusterDiscoveryEnabled: false
     # -- Enable the ScaleAdapter controller that bridges HPA/KEDA to resources
     # with an incomplete /scale subresource (e.g. Agones Fleet), or without one

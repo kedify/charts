@@ -1,6 +1,6 @@
 # kedify-agent
 
-![Version: v0.6.8](https://img.shields.io/badge/Version-v0.6.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.6.8](https://img.shields.io/badge/AppVersion-v0.6.8-informational?style=flat-square)
+![Version: v0.7.0](https://img.shields.io/badge/Version-v0.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.7.0](https://img.shields.io/badge/AppVersion-v0.7.0-informational?style=flat-square)
 
 Kedify agent - Helm Chart
 
@@ -29,12 +29,19 @@ Kubernetes: `>=v1.23.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | global.features.argoRolloutsEnabled | bool | `false` | Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC. |
-| global.features.distributedScaledJobsEnabled | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaled jobs. |
-| global.features.multiclusterVclusterDiscoveryEnabled | bool | `false` | Discover shared-node vClusters directly from their native kubeconfig Secrets without copying credentials. Requires DSO or DSJ and an Agent image with vCluster discovery support. |
+| global.features.multicluster | object | `{"enabled":false,"vClusterDiscoveryEnabled":false}` | Enable DistributedScaledObject and DistributedScaledJob controllers and bundled KEDA raw metrics gRPC. |
+| global.features.multicluster.vClusterDiscoveryEnabled | bool | `false` | Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services. |
+| global.features.distributedScaledObjectsEnabled | bool | `false` | Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period. |
+| global.features.distributedScaledJobsEnabled | bool | `false` | Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller and KEDA raw metrics gRPC during the compatibility period. |
+| global.features.multiclusterVclusterDiscoveryEnabled | bool | `false` | Deprecated: use multicluster.vClusterDiscoveryEnabled. |
 | global.features.kedifyPodAutoscalerEnabled | bool | `false` | Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA). KPA can be installed separately; leave disabled when its CRD/controller is not present |
 | agent.features.argoRolloutsEnabled | bool | `false` | Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC. |
+| agent.features.multicluster | object | `{"enabled":false,"vClusterDiscoveryEnabled":false}` | Enable DistributedScaledObject and DistributedScaledJob controllers. Use the global setting when this chart installs KEDA. |
+| agent.features.multicluster.vClusterDiscoveryEnabled | bool | `false` | Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services. |
+| agent.features.distributedScaledObjectsEnabled | bool | `false` | Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period. |
+| agent.features.distributedScaledJobsEnabled | bool | `false` | Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller during the compatibility period. |
+| agent.features.multiclusterVclusterDiscoveryEnabled | bool | `false` | Deprecated: use multicluster.vClusterDiscoveryEnabled. |
 | agent.features.scaleAdaptersEnabled | bool | `false` | Enable the ScaleAdapter controller that bridges HPA/KEDA to resources with an incomplete /scale subresource (e.g. Agones Fleet), or without one at all (spec.desiredReplicasPath). The agent additionally needs RBAC via agent.extraRbacRules: get + update on the target kinds' /scale subresource, or get, list, watch + update on the whole resource for targets adapted through replica field paths. |
-| agent.features.multiclusterVclusterDiscoveryEnabled | bool | `false` | Discover shared-node vClusters directly from their native kubeconfig Secrets without copying credentials. Requires DSO or DSJ and an Agent image with vCluster discovery support. |
 | agent.features.kedifyPodAutoscalerEnabled | bool | `false` | Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA). KPA can be installed separately; leave disabled when its CRD/controller is not present |
 | agent.multicluster.localCluster.enabled | bool | `false` | Register the KEDA cluster itself as a multi-cluster member. This grants the agent permissions to scale local Deployments and manage local Jobs. |
 | agent.multicluster.localCluster.name | string | `"multicluster-local"` | Member-cluster alias. This is also the name of the generated kubeconfig Secret. |
