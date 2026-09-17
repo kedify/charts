@@ -543,6 +543,59 @@ spec:
                     additionalProperties:
                       description: ClusterStatus defines the observed state of a cluster
                       properties:
+                        certificateAuthority:
+                          description: |-
+                            CertificateAuthority contains expiry information for the CA certificates
+                            configured in the member cluster's kubeconfig. The certificate contents
+                            are deliberately not included in status.
+                          properties:
+                            certificates:
+                              description: Certificates contains expiry metadata for
+                                each certificate in the configured CA bundle.
+                              items:
+                                description: CertificateAuthorityCertificateStatus
+                                  describes one CA certificate without exposing its
+                                  contents.
+                                properties:
+                                  expired:
+                                    description: Expired reports whether the certificate
+                                      was expired when the agent inspected it.
+                                    type: boolean
+                                  fingerprint:
+                                    description: Fingerprint is the SHA-256 fingerprint
+                                      of the DER-encoded certificate.
+                                    type: string
+                                  notAfter:
+                                    description: NotAfter is the time after which
+                                      the certificate is expired.
+                                    format: date-time
+                                    type: string
+                                  notBefore:
+                                    description: NotBefore is the time before which
+                                      the certificate is not valid.
+                                    format: date-time
+                                    type: string
+                                  subject:
+                                    description: Subject is the certificate subject's
+                                      distinguished name.
+                                    type: string
+                                required:
+                                - expired
+                                - fingerprint
+                                - notAfter
+                                - notBefore
+                                type: object
+                              type: array
+                            error:
+                              description: Error describes why the configured CA certificate
+                                could not be read or validated.
+                              type: string
+                            source:
+                              description: 'Source identifies where the effective
+                                REST configuration obtained the CA certificate: data
+                                or file.'
+                              type: string
+                          type: object
                         hardTaintScopes:
                           description: |-
                             HardTaintScopes lists hard-taint scopes for DSJs using priorityFailover.
