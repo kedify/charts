@@ -61,17 +61,26 @@ helm template test "${test_dir}/agent" --namespace keda \
   -f "${test_dir}/agent-values.yaml" \
   --set agent.rbac.readMetrics=false \
   --set agent.rbac.readDeploymentsClusterwide=false \
+  --set agent.rbac.selfUpdates=false \
   --set agent.features.recommendationsForLabeledNamespaces=false \
   --set global.features.recommendationsForLabeledNamespaces=false \
   --show-only templates/agent-rbac.yaml >"${test_dir}/shard-rbac.yaml"
 for resource in namespaces deployments; do
-  rule="$(grep -A6 -- "^  - ${resource}$" "${test_dir}/shard-rbac.yaml")"
-  for verb in get list watch; do
-    if ! grep -q -- "- ${verb}" <<<"${rule}"; then
-      echo "Shard RBAC needs ${verb} on ${resource} without telemetry reads" >&2
-      exit 1
-    fi
-  done
+  if ! awk -v target="${resource}" '
+    function check_rule() {
+      if (resource && get && list && watch && !scoped) found = 1
+    }
+    /^- apiGroups:/ { check_rule(); resource = get = list = watch = scoped = 0 }
+    $0 == "  - " target { resource = 1 }
+    $0 == "  - get" { get = 1 }
+    $0 == "  - list" { list = 1 }
+    $0 == "  - watch" { watch = 1 }
+    /^  resourceNames:/ { scoped = 1 }
+    END { check_rule(); exit !found }
+  ' "${test_dir}/shard-rbac.yaml"; then
+    echo "Shard RBAC needs unscoped get/list/watch on ${resource} without telemetry reads" >&2
+    exit 1
+  fi
 done
 
 if helm template test "${test_dir}/agent" --namespace keda \
@@ -127,6 +136,7 @@ for override in \
   '--set extraArgs.keda.watch-label-selector=other' \
   '--set extraArgs.keda.enable-kpa=false' \
   '--set env[0].name=WATCH_LABEL_SELECTOR' \
+  '--set env[0].name=KEDIFY_SCALINGGROUPS_ENABLED --set env[0].valueFrom.secretKeyRef.name=flags --set env[0].valueFrom.secretKeyRef.key=enabled' \
   '--set env[0].name=KEDIFY_SCALINGGROUPS_ENABLED --set env[0].value=true'; do
   read -r -a args <<<"${override}"
   if helm template shard "${repo_dir}/keda" --namespace operators \

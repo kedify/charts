@@ -48,8 +48,8 @@ unique, non-colliding resource names. Unchanged in default / non-multitenant mod
     {{- if has .name (list "WATCH_LABEL_SELECTOR" "WATCH_NAMESPACE") -}}
       {{- fail "env cannot override the shard WATCH_LABEL_SELECTOR or WATCH_NAMESPACE" -}}
     {{- end -}}
-    {{- if and (eq .name "KEDIFY_SCALINGGROUPS_ENABLED") (eq (toString .value) "true") -}}
-      {{- fail "ScalingGroups must be disabled for a shard" -}}
+    {{- if eq .name "KEDIFY_SCALINGGROUPS_ENABLED" -}}
+      {{- fail "env cannot override KEDIFY_SCALINGGROUPS_ENABLED for a shard" -}}
     {{- end -}}
   {{- end -}}
 {{- printf "kedify.io/shard-pool=%s,kedify.io/shard=%s" $pool $id -}}
