@@ -50,6 +50,23 @@ if grep -qF 'kedify.io/sharding-enrollment' "${test_dir}/agent-render.yaml"; the
   exit 1
 fi
 
+helm template test "${test_dir}/agent" --namespace keda \
+  -f "${test_dir}/agent-values.yaml" \
+  --set agent.rbac.readMetrics=false \
+  --set agent.rbac.readDeploymentsClusterwide=false \
+  --set agent.features.recommendationsForLabeledNamespaces=false \
+  --set global.features.recommendationsForLabeledNamespaces=false \
+  --show-only templates/agent-rbac.yaml >"${test_dir}/shard-rbac.yaml"
+for resource in namespaces deployments; do
+  rule="$(grep -A6 -- "^  - ${resource}$" "${test_dir}/shard-rbac.yaml")"
+  for verb in get list watch; do
+    if ! grep -q -- "- ${verb}" <<<"${rule}"; then
+      echo "Shard RBAC needs ${verb} on ${resource} without telemetry reads" >&2
+      exit 1
+    fi
+  done
+done
+
 if helm template test "${test_dir}/agent" --namespace keda \
   -f "${test_dir}/agent-values.yaml" \
   --set global.features.kedifyPodAutoscalerEnabled=false >/dev/null 2>&1; then
