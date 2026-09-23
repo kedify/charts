@@ -39,6 +39,12 @@ EOF
 
 helm template test "${test_dir}/agent" --namespace keda \
   -f "${test_dir}/agent-values.yaml" >"${test_dir}/agent-render.yaml"
+for field in shardPool shardId watchLabelSelector; do
+  if ! grep -q -- "^                    ${field}:$" "${repo_dir}/kedify-agent/files/crds/kedify-configuration.yaml"; then
+    echo "The Helm-installed KedifyConfiguration CRD must preserve status.discoveredTenants[].${field}" >&2
+    exit 1
+  fi
+done
 for expected in 'name: kedify-agent-sharding' 'pools.yaml: |' 'name: applications' \
   'strategy: Rendezvous' 'tenantRef: operators/keda-s0' \
   '--sharding-configmap-name=kedify-agent-sharding' \
