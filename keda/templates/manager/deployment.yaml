@@ -5,6 +5,7 @@
 {{- $tokens := include "keda.serviceAccountTokens" . | fromJson -}}
 {{- $tokenAudiences := include "keda.serviceAccountTokenAudiences" . | fromJsonArray -}}
 {{- $kedifyKpaDefaultClass := include "keda.kedifyKpaDefaultClass" . -}}
+{{- $shardSelector := include "keda.shardWatchLabelSelector" . -}}
 {{- $globalFeatures := default (dict) .Values.global.features -}}
 {{- $globalMulticluster := default (dict) (index $globalFeatures "multicluster") -}}
 apiVersion: apps/v1
@@ -118,6 +119,9 @@ spec:
           - "--k8s-cluster-name={{ tpl .Values.clusterName . }}"
           - "--k8s-cluster-domain={{ .Values.clusterDomain }}"
           - "--enable-prometheus-metrics={{ .Values.prometheus.operator.enabled }}"
+          {{- if $shardSelector }}
+          - "--watch-label-selector={{ $shardSelector }}"
+          {{- end }}
           {{- if .Values.kedify.kpa.enabled }}
           - --enable-kpa
           - --autoscaling-default-class={{ $kedifyKpaDefaultClass }}
@@ -194,7 +198,7 @@ spec:
             - name: WATCH_NAMESPACE
               value: {{ .Values.watchNamespace | quote }}
             - name: WATCH_LABEL_SELECTOR
-              value: {{ .Values.watchLabelSelector | quote }}
+              value: {{ default .Values.watchLabelSelector $shardSelector | quote }}
             - name: WATCH_LABEL_SELECTOR_FOR_TRIGGERAUTH
               value: {{ .Values.watchLabelSelectorForTriggerauth | quote }}
             - name: POD_NAME

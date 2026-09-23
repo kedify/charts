@@ -68,6 +68,18 @@ metadata:
   name: kedify-manager-role
   namespace: {{ .Release.Namespace }}
 rules:
+{{- if .Values.agent.sharding.pools }}
+# Enrollment proof is an Agent-owned annotation on its Helm-managed pool ConfigMap.
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - kedify-agent-sharding
+  verbs:
+  - get
+  - patch
+{{- end }}
 
 {{- if .Values.agent.rbac.selfUpdates }}
 # Kedify agent needs to be able to update its own container image
