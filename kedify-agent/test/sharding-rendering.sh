@@ -8,6 +8,7 @@ trap 'rm -rf "${test_dir}"' EXIT
 # The Agent umbrella has remote dependencies. Render its own templates in a
 # temporary copy so this focused test is independent of chart repositories.
 cp -R "${repo_dir}/kedify-agent" "${test_dir}/agent"
+rm -rf "${test_dir}/agent/charts"
 sed -i.bak '/^dependencies:/,$d' "${test_dir}/agent/Chart.yaml"
 rm "${test_dir}/agent/Chart.yaml.bak"
 
@@ -51,7 +52,7 @@ for expected in 'name: kedify-agent-sharding' 'pools.yaml: |' 'name: application
   '--sharding-configmap-namespace=keda'; do
   grep -qF -- "${expected}" "${test_dir}/agent-render.yaml"
 done
-if grep -qF 'kedify.io/sharding-enrollment' "${test_dir}/agent-render.yaml"; then
+if grep -qF 'kedify.io/shard-enrollment' "${test_dir}/agent-render.yaml"; then
   echo 'The Agent, not Helm, owns the enrollment annotation' >&2
   exit 1
 fi
