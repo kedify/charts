@@ -122,10 +122,14 @@ helm template shard "${repo_dir}/keda" --namespace operators \
   --show-only templates/manager/deployment.yaml >"${test_dir}/keda-render.yaml"
 for expected in 'shardPool: "applications"' 'shardId: "s0"' \
   'watchLabelSelector: "kedify.io/shard-pool=applications,kedify.io/shard=s0"' \
-  '--watch-label-selector=kedify.io/shard-pool=applications,kedify.io/shard=s0' \
-  'name: WATCH_LABEL_SELECTOR'; do
+  'name: WATCH_LABEL_SELECTOR' \
+  'value: "kedify.io/shard-pool=applications,kedify.io/shard=s0"'; do
   grep -qF -- "${expected}" "${test_dir}/keda-render.yaml"
 done
+if grep -qF -- '--watch-label-selector=' "${test_dir}/keda-render.yaml"; then
+  echo 'Shard KEDA must use WATCH_LABEL_SELECTOR without an unsupported selector flag' >&2
+  exit 1
+fi
 
 for override in \
   '--set kedify.multitenant.mode=default' \
@@ -148,7 +152,7 @@ done
 
 helm template default "${repo_dir}/keda" --namespace operators \
   --show-only templates/manager/deployment.yaml >"${test_dir}/default-keda.yaml"
-if grep -qF -- '--watch-label-selector=' "${test_dir}/default-keda.yaml"; then
+if grep -qF -- 'name: WATCH_LABEL_SELECTOR' "${test_dir}/default-keda.yaml"; then
   echo 'Default KEDA must not receive a shard selector' >&2
   exit 1
 fi

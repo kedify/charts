@@ -119,9 +119,6 @@ spec:
           - "--k8s-cluster-name={{ tpl .Values.clusterName . }}"
           - "--k8s-cluster-domain={{ .Values.clusterDomain }}"
           - "--enable-prometheus-metrics={{ .Values.prometheus.operator.enabled }}"
-          {{- if $shardSelector }}
-          - "--watch-label-selector={{ $shardSelector }}"
-          {{- end }}
           {{- if .Values.kedify.kpa.enabled }}
           - --enable-kpa
           - --autoscaling-default-class={{ $kedifyKpaDefaultClass }}
