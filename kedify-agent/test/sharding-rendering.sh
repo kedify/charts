@@ -126,6 +126,11 @@ for expected in 'shardPool: "applications"' 'shardId: "s0"' \
   'value: "kedify.io/shard-pool=applications,kedify.io/shard=s0"'; do
   grep -qF -- "${expected}" "${test_dir}/keda-render.yaml"
 done
+if [[ "$(grep -cE '^ *- name: WATCH_LABEL_SELECTOR$' "${test_dir}/keda-render.yaml")" != 1 ]] || \
+   [[ "$(awk '/- name: WATCH_LABEL_SELECTOR$/{getline; print}' "${test_dir}/keda-render.yaml")" != '              value: "kedify.io/shard-pool=applications,kedify.io/shard=s0"' ]]; then
+  echo 'Shard KEDA must have one exact native selector environment variable' >&2
+  exit 1
+fi
 if grep -qF -- '--watch-label-selector=' "${test_dir}/keda-render.yaml"; then
   echo 'Shard KEDA must use WATCH_LABEL_SELECTOR without an unsupported selector flag' >&2
   exit 1
@@ -152,7 +157,14 @@ done
 
 helm template default "${repo_dir}/keda" --namespace operators \
   --show-only templates/manager/deployment.yaml >"${test_dir}/default-keda.yaml"
-if grep -qF -- 'name: WATCH_LABEL_SELECTOR' "${test_dir}/default-keda.yaml"; then
-  echo 'Default KEDA must not receive a shard selector' >&2
+if [[ "$(awk '/- name: WATCH_LABEL_SELECTOR$/{getline; print}' "${test_dir}/default-keda.yaml")" != '              value: ""' ]]; then
+  echo 'Default KEDA selector must remain empty' >&2
+  exit 1
+fi
+helm template custom "${repo_dir}/keda" --namespace operators \
+  --set 'watchLabelSelector=team=payments' \
+  --show-only templates/manager/deployment.yaml >"${test_dir}/custom-keda.yaml"
+if [[ "$(awk '/- name: WATCH_LABEL_SELECTOR$/{getline; print}' "${test_dir}/custom-keda.yaml")" != '              value: "team=payments"' ]]; then
+  echo 'Nonsharded KEDA must retain its user-configured native selector' >&2
   exit 1
 fi
