@@ -28,6 +28,11 @@ on:
         required: true
         default: "kedify"
         type: string
+      ecr-keda-image-tag-suffix:
+        description: "Optional ECR-only suffix for republishing corrected KEDA images (for example, -r1)"
+        required: false
+        default: ""
+        type: string
       marketplace-product-id:
         description: "AWS Marketplace container product identifier (prod-...)"
         required: false
@@ -85,6 +90,11 @@ on:
         required: false
         default: "kedify"
         type: string
+      ecr-keda-image-tag-suffix:
+        description: "Optional ECR-only suffix for republishing corrected KEDA images (for example, -r1)"
+        required: false
+        default: ""
+        type: string
       marketplace-product-id:
         description: "AWS Marketplace container product identifier (prod-...)"
         required: false
@@ -130,6 +140,7 @@ env:
   ECR_REGISTRY: ${{ inputs['ecr-registry'] || '709825985650.dkr.ecr.us-east-1.amazonaws.com' }}
   ECR_REPOSITORY_PREFIX: ${{ inputs['ecr-repository-prefix'] || 'kedify/kedify-eks-addon-chart' }}
   ECR_IMAGE_REPOSITORY_PREFIX: ${{ inputs['ecr-image-repository-prefix'] || 'kedify' }}
+  ECR_KEDA_IMAGE_TAG_SUFFIX: ${{ inputs['ecr-keda-image-tag-suffix'] || '' }}
   MARKETPLACE_PRODUCT_ID: ${{ inputs['marketplace-product-id'] || 'prod-m2zll7yol7iog' }}
   MARKETPLACE_VERSION_TITLE: ${{ inputs['marketplace-version-title'] || '' }}
   MARKETPLACE_RELEASE_NOTES: ${{ inputs['marketplace-release-notes'] || '' }}
@@ -537,9 +548,16 @@ jobs:
           otel_chart_dir="${CHART_DIR}/charts/otel-add-on"
           otel_operator_chart_dir="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator"
 
-          export KEDA_OPERATOR_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.keda.tag' "${keda_chart_dir}")"
-          export KEDA_METRICS_APISERVER_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.metricsApiServer.tag' "${keda_chart_dir}")"
-          export KEDA_WEBHOOKS_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.webhooks.tag' "${keda_chart_dir}")"
+          if [[ -n "${ECR_KEDA_IMAGE_TAG_SUFFIX}" && ! "${ECR_KEDA_IMAGE_TAG_SUFFIX}" =~ ^-[A-Za-z0-9_.-]+$ ]]; then
+            echo "Invalid ECR KEDA image tag suffix: ${ECR_KEDA_IMAGE_TAG_SUFFIX}" >&2
+            exit 1
+          fi
+          KEDA_OPERATOR_SOURCE_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.keda.tag' "${keda_chart_dir}")"
+          KEDA_METRICS_APISERVER_SOURCE_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.metricsApiServer.tag' "${keda_chart_dir}")"
+          KEDA_WEBHOOKS_SOURCE_TAG="$(resolve_tag_from_values_or_chart "${keda_values}" '.image.webhooks.tag' "${keda_chart_dir}")"
+          export KEDA_OPERATOR_TAG="${KEDA_OPERATOR_SOURCE_TAG}${ECR_KEDA_IMAGE_TAG_SUFFIX}"
+          export KEDA_METRICS_APISERVER_TAG="${KEDA_METRICS_APISERVER_SOURCE_TAG}${ECR_KEDA_IMAGE_TAG_SUFFIX}"
+          export KEDA_WEBHOOKS_TAG="${KEDA_WEBHOOKS_SOURCE_TAG}${ECR_KEDA_IMAGE_TAG_SUFFIX}"
           export HTTP_ADDON_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.images.tag' "${http_chart_dir}")"
           export HTTP_ADDON_KUBE_RBAC_PROXY_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.images.kubeRbacProxy.tag' "${http_chart_dir}")"
           export HTTP_ADDON_KUBECTL_TAG="$(resolve_tag_from_values_or_chart "${http_values}" '.kubectlImage.tag' "${http_chart_dir}")"
@@ -613,6 +631,18 @@ jobs:
               "subjects":[{"kind":"ServiceAccount","name":"keda-metrics-server","namespace":"keda"}]
             }]
           ' "${CHART_DIR}/values.yaml"
+
+          # A recovery suffix changes only the immutable ECR destination tags. Keep the
+          # original released GHCR tags as mirror sources.
+          printf '%s\t%s\n' \
+            "kedify/keda-operator:${KEDA_OPERATOR_SOURCE_TAG}" \
+            "${ECR_IMAGE_FULL_PREFIX}/keda-operator:${KEDA_OPERATOR_TAG}" >> /tmp/extra-image-map.tsv
+          printf '%s\t%s\n' \
+            "kedify/keda-metrics-apiserver:${KEDA_METRICS_APISERVER_SOURCE_TAG}" \
+            "${ECR_IMAGE_FULL_PREFIX}/keda-metrics-apiserver:${KEDA_METRICS_APISERVER_TAG}" >> /tmp/extra-image-map.tsv
+          printf '%s\t%s\n' \
+            "kedify/keda-admission-webhooks:${KEDA_WEBHOOKS_SOURCE_TAG}" \
+            "${ECR_IMAGE_FULL_PREFIX}/keda-admission-webhooks:${KEDA_WEBHOOKS_TAG}" >> /tmp/extra-image-map.tsv
 
           # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
           otel_operator_values="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator/values.yaml"
