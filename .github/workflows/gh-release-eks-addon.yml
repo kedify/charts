@@ -216,6 +216,7 @@ jobs:
           : > /tmp/src-images.txt
           : > /tmp/source-image-candidates.tsv
           : > /tmp/image-map.tsv
+          : > /tmp/extra-image-map.tsv
           : > /tmp/extra-marketplace-images.txt
 
           ROOT_CHART_VERSION="$(yq -r '.version // ""' "${CHART_DIR}/Chart.yaml")"
@@ -242,6 +243,27 @@ jobs:
             local tag
 
             tag="$(yq -r "${yq_expr} // \"\"" "${values_file}" 2>/dev/null || true)"
+            if ! is_nonempty "${tag}"; then
+              tag="$(chart_default_tag "${fallback_chart_dir}")"
+            fi
+            if ! is_nonempty "${tag}"; then
+              tag="${ROOT_CHART_VERSION}"
+            fi
+            echo "${tag}"
+          }
+
+          resolve_tag_from_parent_or_dependency_values() {
+            local parent_values_file="$1"
+            local parent_yq_expr="$2"
+            local dependency_values_file="$3"
+            local dependency_yq_expr="$4"
+            local fallback_chart_dir="$5"
+            local tag
+
+            tag="$(yq -r "${parent_yq_expr} // \"\"" "${parent_values_file}" 2>/dev/null || true)"
+            if ! is_nonempty "${tag}"; then
+              tag="$(yq -r "${dependency_yq_expr} // \"\"" "${dependency_values_file}" 2>/dev/null || true)"
+            fi
             if ! is_nonempty "${tag}"; then
               tag="$(chart_default_tag "${fallback_chart_dir}")"
             fi
@@ -493,8 +515,8 @@ jobs:
           proxy_dst_repo="${ECR_IMAGE_FULL_PREFIX}/${proxy_image_name}"
 
           printf '%s\n' "${proxy_src_image}" >> /tmp/src-images.txt
-          printf '%s\t%s\n' "${proxy_src_image}" "${proxy_dst_image}" >> /tmp/image-map.tsv
-          printf '%s\n' "${proxy_dst_image}" > /tmp/extra-marketplace-images.txt
+          printf '%s\t%s\n' "${proxy_src_image}" "${proxy_dst_image}" >> /tmp/extra-image-map.tsv
+          printf '%s\n' "${proxy_dst_image}" >> /tmp/extra-marketplace-images.txt
 
           export PROXY_DST_REPO="${proxy_dst_repo}"
           export PROXY_DST_TAG="${proxy_src_tag}"
@@ -527,8 +549,8 @@ jobs:
           export OTEL_ADDON_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.image.tag' "${otel_chart_dir}")"
           export OTEL_KUBECTL_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.kubectlImage.tag' "${otel_chart_dir}")"
           export OTEL_OPERATOR_MANAGER_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.manager.image.tag' "${otel_operator_chart_dir}")"
-          export OTEL_OPERATOR_COLLECTOR_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.manager.collectorImage.tag' "${otel_operator_chart_dir}")"
-          export OTEL_OPERATOR_KUBE_RBAC_PROXY_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.kubeRBACProxy.image.tag' "${otel_operator_chart_dir}")"
+          export OTEL_OPERATOR_COLLECTOR_TAG="$(resolve_tag_from_parent_or_dependency_values "${otel_values}" '.otelOperator.manager.collectorImage.tag' "${otel_operator_chart_dir}/values.yaml" '.manager.collectorImage.tag' "${otel_operator_chart_dir}")"
+          export OTEL_OPERATOR_KUBE_RBAC_PROXY_TAG="$(resolve_tag_from_parent_or_dependency_values "${otel_values}" '.otelOperator.kubeRBACProxy.image.tag' "${otel_operator_chart_dir}/values.yaml" '.kubeRBACProxy.image.tag' "${otel_operator_chart_dir}")"
           export OTEL_OPERATOR_BUSYBOX_TAG="$(resolve_tag_from_values_or_chart "${otel_values}" '.otelOperator.testFramework.image.tag' "${otel_operator_chart_dir}")"
 
           # Pin dependency image overrides in parent values so packaged chart values
@@ -595,15 +617,21 @@ jobs:
           # Safety net: include OTel collector image declared by opentelemetry-operator manager.collectorImage.
           otel_operator_values="${CHART_DIR}/charts/otel-add-on/charts/opentelemetry-operator/values.yaml"
           if [[ -f "${otel_operator_values}" ]]; then
-            otel_collector_src_repo="$(yq -r '.manager.collectorImage.repository // ""' "${otel_operator_values}")"
-            otel_collector_src_tag="$(yq -r '.manager.collectorImage.tag // ""' "${otel_operator_values}")"
-            if is_nonempty "${otel_collector_src_repo}" && is_nonempty "${otel_collector_src_tag}"; then
-              otel_collector_src="${otel_collector_src_repo}:${otel_collector_src_tag}"
-              otel_collector_name="${otel_collector_src_repo##*/}"
-              otel_collector_dst="${ECR_IMAGE_FULL_PREFIX}/${otel_collector_name}:${otel_collector_src_tag}"
-              printf '%s\n' "${otel_collector_src}" >> /tmp/src-images.txt
-              printf '%s\t%s\n' "${otel_collector_src}" "${otel_collector_dst}" >> /tmp/image-map.tsv
+            otel_collector_src_repo="$(yq -r '.otelOperator.manager.collectorImage.repository // ""' "${otel_values}")"
+            if ! is_nonempty "${otel_collector_src_repo}"; then
+              otel_collector_src_repo="$(yq -r '.manager.collectorImage.repository // ""' "${otel_operator_values}")"
             fi
+            otel_collector_src_tag="${OTEL_OPERATOR_COLLECTOR_TAG}"
+            otel_collector_dst_repo="$(yq -r '.["otel-add-on"].otelOperator.manager.collectorImage.repository // ""' "${CHART_DIR}/values.yaml")"
+            if ! is_nonempty "${otel_collector_src_repo}" || ! is_nonempty "${otel_collector_src_tag}" || ! is_nonempty "${otel_collector_dst_repo}"; then
+              echo "Failed to resolve OpenTelemetry collector source or destination image" >&2
+              exit 1
+            fi
+            otel_collector_src="${otel_collector_src_repo}:${otel_collector_src_tag}"
+            otel_collector_dst="${otel_collector_dst_repo}:${otel_collector_src_tag}"
+            printf '%s\n' "${otel_collector_src}" >> /tmp/src-images.txt
+            printf '%s\t%s\n' "${otel_collector_src}" "${otel_collector_dst}" >> /tmp/extra-image-map.tsv
+            printf '%s\n' "${otel_collector_dst}" >> /tmp/extra-marketplace-images.txt
           fi
 
           sort -u /tmp/src-images.txt -o /tmp/src-images.txt
@@ -651,6 +679,7 @@ jobs:
 
           # Render rewritten local chart and extract image references exactly as Kubernetes sees them.
           helm template test ./kedify-agent -n keda \
+            --skip-tests \
             --set agent.createApiKeySecret=false \
             --set agent.orgId="" \
             --set keda.enabled=true \
@@ -669,13 +698,37 @@ jobs:
             | grep -E '^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]{4,24}\.amazonaws\.com\/[^[:space:]]+$' \
             | sort -u > /tmp/rendered-images-local.txt
 
-          # For already-rewritten ECR images, use src=dst so mirror loop still verifies/pushes missing tags.
-          while IFS= read -r img; do
-            [[ -z "${img}" ]] && continue
-            printf '%s\t%s\n' "${img}" "${img}" >> /tmp/image-map.tsv
-          done < /tmp/rendered-images-local.txt
+          # Values files provide the original source references, but include images for disabled
+          # subcharts and Helm tests. Restrict the mirror list to the install render plus required
+          # non-rendered runtime images such as kedify-proxy.
+          cat /tmp/rendered-images-local.txt /tmp/extra-marketplace-images.txt \
+            | sed '/^$/d' \
+            | sort -u > /tmp/required-images.txt
 
-          sort -u /tmp/image-map.tsv -o /tmp/image-map.tsv
+          # Keep one source per destination, preferring an upstream source over src=dst. Fall back
+          # to src=dst only when the values scan did not discover the original source reference.
+          awk -F '\t' '
+            NR == FNR {
+              required[$1] = 1
+              order[++count] = $1
+              next
+            }
+            FILENAME == ARGV[2] && $2 in required {
+              if (!($2 in source) || (source[$2] == $2 && $1 != $2)) {
+                source[$2] = $1
+              }
+            }
+            FILENAME == ARGV[3] && $2 in required {
+              source[$2] = $1
+            }
+            END {
+              for (i = 1; i <= count; i++) {
+                destination = order[i]
+                print ((destination in source) ? source[destination] : destination) "\t" destination
+              }
+            }
+          ' /tmp/required-images.txt /tmp/image-map.tsv /tmp/extra-image-map.tsv > /tmp/required-image-map.tsv
+          mv /tmp/required-image-map.tsv /tmp/image-map.tsv
           cut -f2 /tmp/image-map.tsv | sort -u > /tmp/dst-images.txt
 
       - name: Commit rewritten chart files to eks-addon branch
@@ -920,16 +973,6 @@ jobs:
             dst_tag="${dst##*:}"
             dst_repo_full="${dst%:*}"
             dst_repo_name="${dst_repo_full#${{ env.ECR_REGISTRY }}/}"
-            if aws ecr describe-images \
-              --registry-id "${registry_id}" \
-              --repository-name "${dst_repo_name}" \
-              --region "${{ env.AWS_REGION }}" \
-              --image-ids imageTag="${dst_tag}" >/dev/null 2>&1; then
-              echo "Image already exists in ECR, skipping mirror: ${dst}"
-              continue
-            fi
-
-            echo "Mirroring ${src} -> ${dst}"
             src_to_pull="${src}"
             if ! docker pull "${src_to_pull}"; then
               # Some chart values use short repository form (e.g. kedify/foo) without explicit registry.
@@ -985,6 +1028,24 @@ jobs:
                 exit 1
               fi
             fi
+
+            source_image_id="$(docker image inspect --format '{{.Id}}' "${src_to_pull}")"
+            if aws ecr describe-images \
+              --registry-id "${registry_id}" \
+              --repository-name "${dst_repo_name}" \
+              --region "${{ env.AWS_REGION }}" \
+              --image-ids imageTag="${dst_tag}" >/dev/null 2>&1; then
+              docker pull "${dst}"
+              destination_image_id="$(docker image inspect --format '{{.Id}}' "${dst}")"
+              if [[ "${source_image_id}" == "${destination_image_id}" ]]; then
+                echo "Image already matches source, skipping mirror: ${dst}"
+                continue
+              fi
+              echo "Refreshing changed image in ECR: ${src_to_pull} -> ${dst}"
+            else
+              echo "Mirroring ${src_to_pull} -> ${dst}"
+            fi
+
             docker tag "${src_to_pull}" "${dst}"
             docker push "${dst}"
           done < /tmp/image-map.tsv
