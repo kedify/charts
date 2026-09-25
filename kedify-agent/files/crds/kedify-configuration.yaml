@@ -517,10 +517,18 @@ spec:
                       description: OperatorReady indicates whether the keda-operator
                         deployment is ready
                       type: boolean
+                    shardId:
+                      type: string
+                    shardPool:
+                      description: Shard identity and selector are observed from the
+                        tenant registration.
+                      type: string
                     tlsCertReady:
                       description: TLSCertReady indicates whether the TLS cert secret
                         is found and populated
                       type: boolean
+                    watchLabelSelector:
+                      type: string
                     watchNamespace:
                       description: WatchNamespace is the namespace KEDA watches for
                         ScaledObjects/ScaledJobs

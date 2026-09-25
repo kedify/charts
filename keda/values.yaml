@@ -82,6 +82,11 @@ watchLabelSelector: ""
 watchLabelSelectorForTriggerauth: ""
 
 kedify:
+  # -- Optional KPA-only label shard identity. Both pool and id must be set.
+  # The Agent pool ConfigMap supplies namespace membership and tenantRef.
+  sharding:
+    pool: ""
+    id: ""
   kpa:
     # -- Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling.
     enabled: false
