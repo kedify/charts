@@ -68,6 +68,24 @@ metadata:
   name: kedify-manager-role
   namespace: {{ .Release.Namespace }}
 rules:
+# ClusterRegistration is scoped to the agent install namespace.
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations/status
+  verbs:
+  - get
+  - patch
+  - update
+
 
 {{- if .Values.agent.rbac.selfUpdates }}
 # Kedify agent needs to be able to update its own container image

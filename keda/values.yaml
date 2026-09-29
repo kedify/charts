@@ -81,6 +81,10 @@ watchLabelSelector: ""
 # shared across operators scoped to different label selectors.
 watchLabelSelectorForTriggerauth: ""
 
+multicluster:
+  # -- Enable ClusterRegistration discovery in the KEDA release namespace.
+  enabled: false
+
 kedify:
   kpa:
     # -- Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling.
