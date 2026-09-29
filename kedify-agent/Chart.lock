@@ -2,6 +2,9 @@ dependencies:
 - name: keda
   repository: https://kedify.github.io/charts
   version: v2.21.0-0
+- name: kpa
+  repository: oci://ghcr.io/kedify/charts
+  version: 0.0.2
 - name: keda-add-ons-http
   repository: https://kedify.github.io/charts
   version: v0.11.1-7

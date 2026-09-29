@@ -1,0 +1,18 @@
+{{- if .Values.agent.multicluster.localCluster.enabled }}
+{{- $localCluster := .Values.agent.multicluster.localCluster }}
+apiVersion: multicluster.kedify.io/v1alpha1
+kind: ClusterRegistration
+metadata:
+  name: {{ $localCluster.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    multicluster.kedify.io/local-cluster: "true"
+spec:
+  provider: kubeconfig
+  clusterName: {{ $localCluster.name | quote }}
+  displayName: {{ $localCluster.name | quote }}
+  context: {{ printf "kedify-agent@%s" $localCluster.name | quote }}
+  kubeconfigSecretRef:
+    name: {{ $localCluster.name }}
+    key: kubeconfig
+{{- end }}

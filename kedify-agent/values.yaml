@@ -10,10 +10,12 @@ global:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
-    # -- Enable DistributedScaledObject and DistributedScaledJob controllers and bundled KEDA raw metrics gRPC.
+    # -- Enable multicluster scaling. The default distributed type preserves the existing Agent DSO/DSJ workflow; dedicated delegates each registered cluster to KEDA/KPA with its own replica target.
     multicluster:
       enabled: false
-      # -- Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services.
+      # -- Scaling model. distributed spreads global DSO/DSJ demand across clusters; dedicated scales each registered cluster separately through KEDA/KPA.
+      type: distributed
+      # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
@@ -168,10 +170,10 @@ agent:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
-    # -- Enable DistributedScaledObject and DistributedScaledJob controllers. Use the global setting when this chart installs KEDA.
+    # -- Enable the existing Agent DistributedScaledObject and DistributedScaledJob controllers. This does not enable KEDA's dedicated remote ScaledObject/ScaledJob runtime.
     multicluster:
       enabled: false
-      # -- Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services.
+      # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. This is independent of the Agent DSO/DSJ controllers. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
@@ -192,10 +194,9 @@ agent:
     kedifyPodAutoscalerEnabled: false
   multicluster:
     localCluster:
-      # -- Register the KEDA cluster itself as a multi-cluster member.
-      # This grants the agent permissions to scale local Deployments and manage local Jobs.
+      # -- Register the management cluster through a ClusterRegistration. The Agent materializes and rotates its self-contained kubeconfig Secret. The registration can be consumed by dedicated KEDA/KPA mode or the existing Agent DSO/DSJ workflow and grants the Agent identity the required local scaling permissions.
       enabled: false
-      # -- Member-cluster alias. This is also the name of the generated kubeconfig Secret.
+      # -- Human-readable member-cluster identity. This is also the name of the generated ClusterRegistration and kubeconfig Secret.
       name: multicluster-local
   autowire:
     # period for EndpointSlices and Services in autowiring mode for redundant synchronization
@@ -329,6 +330,15 @@ keda:
       enabled: true
     webhooks:
       enabled: true
+kpa:
+  # KPA is rendered automatically only when global multicluster type is dedicated.
+  fullnameOverride: kpa
+  crds:
+    install: false
+  keda:
+    metricsAddress: keda-operator.keda.svc:9666
+    metricsAuthority: keda-operator.keda.svc
+    certificateSecret: kedaorg-certs
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false

@@ -1,8 +1,8 @@
 {{- if .Values.agent.rbac.create }}
-{{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
+{{- $distributedMulticlusterEnabled := eq (include "kedify-agent.distributedMulticlusterEnabled" .) "true" -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
-{{- $distributedScaledJobsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
-{{- $distributedScaledObjectsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
+{{- $distributedScaledJobsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
+{{- $distributedScaledObjectsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
 {{- $podResourceProfilesEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesEnabled")) "true" -}}
@@ -82,6 +82,29 @@ rules:
   - get
   - patch
 {{- end }}
+# ClusterRegistration is scoped to the agent install namespace.
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations
+  verbs:
+{{- if $vClusterDiscoveryEnabled }}
+  - create
+  - delete
+  - patch
+  - update
+{{- end }}
+  - get
+  - list
+  - watch
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations/status
+  verbs:
+  - get
+  - patch
+  - update
 
 {{- if .Values.agent.rbac.selfUpdates }}
 # Kedify agent needs to be able to update its own container image
@@ -183,6 +206,10 @@ rules:
   resources:
   - secrets
   verbs:
+{{- if or $vClusterDiscoveryEnabled .Values.agent.multicluster.localCluster.enabled }}
+  - create
+  - patch
+{{- end }}
   - get
   - delete
   - update
@@ -215,6 +242,17 @@ rules:
 - apiGroups: [""]
   resources: ["secrets", "services"]
   verbs: ["get", "list", "watch"]
+# Copy the exact KEDA and KPA CRD schemas installed in the main cluster into
+# discovered vClusters before publishing their ClusterRegistrations.
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  resourceNames:
+  - scaledobjects.keda.sh
+  - scaledjobs.keda.sh
+  - triggerauthentications.keda.sh
+  - clustertriggerauthentications.keda.sh
+  - kedifypodautoscalers.autoscaling.kedify.io
+  verbs: ["get"]
 {{- end }}
 # to get kube-system UUID for self-registration in fleet installation
 - apiGroups:
@@ -225,9 +263,70 @@ rules:
   - get
   resourceNames:
   - kube-system
-{{- if and .Values.agent.multicluster.localCluster.enabled (or $distributedScaledJobsEnabled $distributedScaledObjectsEnabled) }}
-# Multi-cluster distributed scaling on the local cluster. These rules match the
-# member-cluster RBAC documented for GitOps installations.
+{{- if .Values.agent.multicluster.localCluster.enabled }}
+# Native or legacy multi-cluster scaling on the local cluster. These rules
+# match the member-cluster RBAC documented for GitOps installations so the
+# generated ClusterRegistration can be consumed by KEDA and KPA directly.
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects
+  - scaledobjects/finalizers
+  - scaledjobs
+  - scaledjobs/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects/status
+  - scaledjobs/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - keda.sh
+  resources:
+  - triggerauthentications
+  - clustertriggerauthentications
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - keda.sh
+  resources:
+  - triggerauthentications/status
+  - clustertriggerauthentications/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - kedifypodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - autoscaling.kedify.io
+  resources:
+  - kedifypodautoscalers/status
+  verbs:
+  - get
+  - update
+  - patch
 - apiGroups:
   - "*"
   resources:
@@ -252,6 +351,8 @@ rules:
   - ""
   resources:
   - pods
+  - configmaps
+  - secrets
   verbs:
   - get
   - list
@@ -268,6 +369,21 @@ rules:
   - update
   - patch
   - delete
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
 {{- end }}
 {{- if $recommendationsForLabeledNamespaces }}
 # for metrics in a namespace if requested by a label on the namespace

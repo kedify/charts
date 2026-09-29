@@ -9,9 +9,11 @@ global:
   # -- DNS config for KEDA components
   dnsConfig: {}
   features:
-    # -- Enable Kedify multi-cluster scaling. This enables the raw metrics gRPC service required by DistributedScaledJobs.
+    # -- Enable multicluster scaling. distributed enables raw metrics for the Agent DSO/DSJ workflow; dedicated enables KEDA remote reconciliation through ClusterRegistrations.
     multicluster:
       enabled: false
+      # -- Scaling model. Defaults to distributed for compatibility with existing DSO/DSJ installations.
+      type: distributed
     # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
     # Deprecated: use multicluster.enabled.
     distributedScaledJobsEnabled: false
@@ -81,6 +83,10 @@ watchLabelSelector: ""
 # shared across operators scoped to different label selectors.
 watchLabelSelectorForTriggerauth: ""
 
+multicluster:
+  # -- Compatibility switch for standalone KEDA chart users. Prefer global.features.multicluster.enabled=true with type=dedicated in the Kedify Agent chart.
+  enabled: false
+
 kedify:
   # -- Optional KPA-only label shard identity. Both pool and id must be set.
   # The Agent pool ConfigMap supplies namespace membership and tenantRef.
@@ -92,7 +98,7 @@ kedify:
     enabled: false
     # -- Default autoscaling class used by both the KEDA operator and admission webhook. Set to "kpa" only when KPA support is enabled. Changing this to "kpa" replaces HPA with KPA for every existing ScaledObject that has no explicit autoscaling.kedify.io/class annotation; canary explicit KPA selections before changing the installation default.
     defaultClass: hpa
-    # -- Exact KPA controller Deployment name for this tenant. Required when KPA and multitenant mode are enabled. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs.
+    # -- Exact KPA controller Deployment name for this tenant. Required for a KPA shard and when dedicated multicluster reconciliation uses multitenant registration; optional for existing unsharded KPA tenants. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs.
     deploymentName: ""
 
   # -- For keda installed in multitenant environment

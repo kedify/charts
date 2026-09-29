@@ -119,7 +119,7 @@ rules:
   - patch
   - update
   - watch
-{{- if .Values.kedify.kpa.enabled }}
+{{- if or .Values.kedify.kpa.enabled (eq (include "keda.dedicatedMulticlusterEnabled" .) "true") }}
 - apiGroups:
   - autoscaling.kedify.io
   resources:

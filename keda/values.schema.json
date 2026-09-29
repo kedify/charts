@@ -23,6 +23,9 @@
                 "watchNamespace": {
                     "$ref": "#/definitions/WatchNamespace"
                 },
+                "multicluster": {
+                    "$ref": "#/definitions/Multicluster"
+                },
                 "kedify": {
                     "$ref": "#/definitions/Kedify"
                 },
@@ -174,6 +177,7 @@
                 "clusterDomain",
                 "crds",
                 "watchNamespace",
+                "multicluster",
                 "kedify",
                 "imagePullSecrets",
                 "networkPolicy",
@@ -312,6 +316,18 @@
                 {
                     "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(,[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                 }
+            ]
+        },
+        "Multicluster": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "required": [
+                "enabled"
             ]
         },
         "Kedify": {

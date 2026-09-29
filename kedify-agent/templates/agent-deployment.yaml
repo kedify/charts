@@ -1,9 +1,17 @@
 {{- $sharding := .Values.agent.sharding | default (dict) -}}
-{{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
+{{- $multiclusterType := include "kedify-agent.multiclusterType" . -}}
+{{- $distributedMulticlusterEnabled := eq (include "kedify-agent.distributedMulticlusterEnabled" .) "true" -}}
+{{- $dedicatedMulticlusterEnabled := eq (include "kedify-agent.dedicatedMulticlusterEnabled" .) "true" -}}
+{{- if and $dedicatedMulticlusterEnabled (not .Values.keda.enabled) -}}
+{{- fail "dedicated multicluster scaling requires keda.enabled=true" -}}
+{{- end -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
-{{- $distributedScaledJobsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
-{{- $distributedScaledObjectsEnabled := or $multiclusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
+{{- $distributedScaledJobsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
+{{- $distributedScaledObjectsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
+{{- if and $dedicatedMulticlusterEnabled (or $distributedScaledJobsEnabled $distributedScaledObjectsEnabled) -}}
+{{- fail "dedicated multicluster scaling is mutually exclusive with the Agent DistributedScaledObject/DistributedScaledJob controllers; disable agent.features.multicluster.enabled and the distributedScaledObjectsEnabled/distributedScaledJobsEnabled compatibility switches" -}}
+{{- end -}}
 {{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
 {{- $podResourceProfilesEnabled := eq (include "kedify-agent.featureEnabled" (list . "podResourceProfilesEnabled")) "true" -}}
 {{- $prpRequiresAnnotatedPods := eq (include "kedify-agent.featureEnabled" (list . "prpRequiresAnnotatedPods")) "true" -}}
@@ -13,9 +21,6 @@
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $multitenantKEDAEnabled := eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true" -}}
-{{- if and $vClusterDiscoveryEnabled (not (or $distributedScaledObjectsEnabled $distributedScaledJobsEnabled)) -}}
-{{- fail "vCluster discovery requires multicluster.enabled or a legacy distributed scaler feature flag" -}}
-{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

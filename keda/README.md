@@ -86,8 +86,10 @@ their default values.
 | `extraObjects` | list | `[]` | Array of extra K8s manifests to deploy |
 | `global.dnsConfig` | object | `{}` | DNS config for KEDA components |
 | `global.image.registry` | string | `nil` | Global image registry of KEDA components |
-| `global.features.multicluster` | object | `{"enabled":false}` | Enable Kedify multi-cluster scaling. This enables the raw metrics gRPC service required by DistributedScaledJobs. |
+| `global.features.multicluster` | object | `{"enabled":false,"type":"distributed"}` | Enable multicluster scaling. `distributed` enables raw metrics for the Agent DSO/DSJ workflow; `dedicated` enables KEDA remote reconciliation through ClusterRegistrations. |
+| `global.features.multicluster.type` | string | `"distributed"` | Scaling model. Defaults to `distributed` for compatibility with existing DSO/DSJ installations. |
 | `global.features.distributedScaledJobsEnabled` | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaled jobs. Deprecated: use multicluster.enabled. |
+| `multicluster.enabled` | bool | `false` | Compatibility switch for standalone KEDA chart users. Prefer `global.features.multicluster.enabled=true` with `type=dedicated` in the Kedify Agent chart. |
 | `grpcTLSCertsSecret` | string | `""` | Set this if you are using an external scaler and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /grpccerts path on the Pod |
 | `hashiCorpVaultTLS` | string | `""` | Set this if you are using HashiCorp Vault and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /vault path on the Pod |
 | `hostAliases` | list | `[]` | HostAliases for pod networking ([docs](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/)) |
@@ -99,7 +101,7 @@ their default values.
 | `imagePullSecrets` | list | `[]` | Name of secret to use to pull images to use to pull Docker images |
 | `kedify.kpa.enabled` | bool | `false` | Enable KEDA generation and validation of KedifyPodAutoscalers plus required RBAC. A compatible KPA CRD and controller must be installed separately. Transition ScaledObjects back to HPA before disabling. |
 | `kedify.kpa.defaultClass` | string | `"hpa"` | Default autoscaling class used consistently by the KEDA operator and admission webhook. Supported values are `hpa` and `kpa`; `kpa` requires `kedify.kpa.enabled=true`. Changing this to `kpa` replaces HPA with KPA for every existing ScaledObject that has no explicit `autoscaling.kedify.io/class` annotation; canary explicit KPA selections before changing the installation default. |
-| `kedify.kpa.deploymentName` | string | `""` | Exact KPA controller Deployment name for this tenant. Required when KPA and multitenant mode are enabled. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs. |
+| `kedify.kpa.deploymentName` | string | `""` | Exact KPA controller Deployment name for this tenant. Required for a KPA shard and when dedicated multicluster reconciliation uses multitenant registration; optional for existing unsharded KPA tenants. The Agent records its UID and uses that identity to authorize tenant KPA metrics and logs. |
 | `kedify.multitenant` | object | `{"address":"","agentNamespace":"keda","agentServiceAccount":"kedify-agent","authority":"","configSecretName":"kedify-multitenancy-config","mode":""}` | For keda installed in multitenant environment Each tenant keda should also configure watchNamespace to ensure desired multitenancy sharding behavior |
 | `kedify.multitenant.address` | string | `""` | Override gRPC address for the tenant's keda-operator (default: <operator.name>.<namespace>.svc.<clusterDomain>:9666) |
 | `kedify.multitenant.agentNamespace` | string | `"keda"` | Namespace where kedify-agent runs (used to grant it read access to this tenant's TLS secret) |
