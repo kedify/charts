@@ -86,8 +86,9 @@ their default values.
 | `extraObjects` | list | `[]` | Array of extra K8s manifests to deploy |
 | `global.dnsConfig` | object | `{}` | DNS config for KEDA components |
 | `global.image.registry` | string | `nil` | Global image registry of KEDA components |
-| `global.features.multicluster` | object | `{"enabled":false}` | Enable Kedify multi-cluster scaling. This enables the raw metrics gRPC service required by DistributedScaledJobs. |
+| `global.features.multicluster` | object | `{"enabled":false}` | Enable the raw metrics gRPC service used by remote KPA instances. Set the top-level multicluster.enabled value to enable remote reconciliation in KEDA. |
 | `global.features.distributedScaledJobsEnabled` | bool | `false` | Enable KEDA raw metrics gRPC for distributed scaled jobs. Deprecated: use multicluster.enabled. |
+| `multicluster.enabled` | bool | `false` | Enable remote ScaledObject and ScaledJob reconciliation through ClusterRegistrations in the KEDA release namespace. Registered clusters must install the KEDA/KPA CRDs and grant the remote credential the required workload, authentication, Secret, and Job permissions. |
 | `grpcTLSCertsSecret` | string | `""` | Set this if you are using an external scaler and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /grpccerts path on the Pod |
 | `hashiCorpVaultTLS` | string | `""` | Set this if you are using HashiCorp Vault and want to communicate over TLS (recommended). This variable holds the name of the secret that will be mounted to the /vault path on the Pod |
 | `hostAliases` | list | `[]` | HostAliases for pod networking ([docs](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/)) |

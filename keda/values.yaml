@@ -9,7 +9,7 @@ global:
   # -- DNS config for KEDA components
   dnsConfig: {}
   features:
-    # -- Enable Kedify multi-cluster scaling. This enables the raw metrics gRPC service required by DistributedScaledJobs.
+    # -- Enable the raw metrics gRPC service used by remote KPA instances. Set the top-level multicluster.enabled value to enable remote reconciliation in KEDA.
     multicluster:
       enabled: false
     # -- Enable KEDA raw metrics gRPC for distributed scaled jobs.
@@ -82,7 +82,7 @@ watchLabelSelector: ""
 watchLabelSelectorForTriggerauth: ""
 
 multicluster:
-  # -- Enable ClusterRegistration discovery in the KEDA release namespace.
+  # -- Enable remote ScaledObject and ScaledJob reconciliation through ClusterRegistrations in the KEDA release namespace. Registered clusters must install the KEDA/KPA CRDs and grant the remote credential the required workload, authentication, Secret, and Job permissions.
   enabled: false
 
 kedify:
