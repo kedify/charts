@@ -8,7 +8,8 @@ enabled_render="$(mktemp)"
 kpa_default_render="$(mktemp)"
 legacy_render="$(mktemp)"
 tenant_render="$(mktemp)"
-trap 'rm -f "${default_render}" "${enabled_render}" "${kpa_default_render}" "${legacy_render}" "${tenant_render}"' EXIT
+multicluster_render="$(mktemp)"
+trap 'rm -f "${default_render}" "${enabled_render}" "${kpa_default_render}" "${legacy_render}" "${tenant_render}" "${multicluster_render}"' EXIT
 
 helm template test "${chart_dir}" --namespace keda >"${default_render}"
 helm template test "${chart_dir}" --namespace keda \
@@ -26,6 +27,9 @@ helm template test "${chart_dir}" --namespace keda \
   --set kedify.kpa.deploymentName=kpa-tenant-a \
   --set kedify.multitenant.mode=tenant \
   --set watchNamespace=tenant-a >"${tenant_render}"
+helm template test "${chart_dir}" --namespace keda \
+  --set multicluster.enabled=true \
+  --set kedify.kpa.enabled=true >"${multicluster_render}"
 
 if grep -q -- 'autoscaling.kedify.io' "${default_render}" || grep -q -- '--enable-kpa' "${default_render}"; then
   echo "KPA RBAC and arguments must not be rendered by default" >&2
@@ -93,3 +97,18 @@ if ! grep -q -- 'kpaDeploymentName: "kpa-tenant-a"' "${tenant_render}"; then
   echo "tenant registration must include the exact KPA Deployment name" >&2
   exit 1
 fi
+
+if [[ "$(grep -c -- '--multicluster=true' "${multicluster_render}")" -ne 1 ]] ||
+   [[ "$(grep -c -- '--multicluster-registration-namespace=keda' "${multicluster_render}")" -ne 1 ]]; then
+  echo "multicluster mode must configure the remote ScaledObject/ScaledJob operator" >&2
+  exit 1
+fi
+
+ruby -ryaml -e '
+  docs = YAML.load_stream(File.read(ARGV.fetch(0))).compact
+  role = docs.find { |doc| doc["kind"] == "Role" && doc.dig("metadata", "name") == "keda-operator-clusterregistrations" }
+  abort "multicluster ClusterRegistration Role is missing" unless role
+  rules = role.fetch("rules", [])
+  abort "ClusterRegistration watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("multicluster.kedify.io") && rule.fetch("resources", []).include?("clusterregistrations") }
+  abort "registration Secret watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("") && rule.fetch("resources", []).include?("secrets") }
+' "${multicluster_render}"

@@ -118,6 +118,10 @@ spec:
           - "--k8s-cluster-name={{ tpl .Values.clusterName . }}"
           - "--k8s-cluster-domain={{ .Values.clusterDomain }}"
           - "--enable-prometheus-metrics={{ .Values.prometheus.operator.enabled }}"
+          {{- if .Values.multicluster.enabled }}
+          - --multicluster=true
+          - --multicluster-registration-namespace={{ .Release.Namespace }}
+          {{- end }}
           {{- if .Values.kedify.kpa.enabled }}
           - --enable-kpa
           - --autoscaling-default-class={{ $kedifyKpaDefaultClass }}

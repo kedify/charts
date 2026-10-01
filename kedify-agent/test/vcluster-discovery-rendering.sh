@@ -58,4 +58,8 @@ helm template keda "$chart_dir/../keda" --namespace scaling-system \
   --set global.features.multicluster.enabled=true \
   --show-only templates/manager/deployment.yaml > "$render_dir/keda.yaml"
 grep -A1 'name: RAW_METRICS_GRPC_PROTOCOL' "$render_dir/keda.yaml" | grep -q 'value: enabled'
+if grep -qE -- '--multicluster=true|--multicluster-registration-namespace=' "$render_dir/keda.yaml"; then
+  echo 'The shared Agent DSO/DSJ switch must not enable KEDA remote reconciliation' >&2
+  exit 1
+fi
 echo 'vCluster discovery rendering passed'
