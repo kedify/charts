@@ -154,7 +154,7 @@ spec:
           - {{ printf "--vault-kubernetes-auth-token-file=%s" $tokenFile | quote }}
           {{- end }}
           {{- range $key, $value := .Values.extraArgs.keda }}
-          {{- if and (ne $key "autoscaling-default-class") (not (and $.Values.multicluster.enabled (has $key (list "multicluster" "multicluster-registration-namespace")))) }}
+          {{- if ne $key "autoscaling-default-class" }}
           - "--{{ $key }}={{ $value }}"
           {{- end }}
           {{- end }}
