@@ -126,10 +126,17 @@ jobs:
           additionalLabels:
             random: value
           images:
-            tag: "$(yq '.appVersion' http-add-on/Chart.yaml)"
+            operator: ghcr.io/kedify/http-add-on-operator
+            interceptor: ghcr.io/kedify/http-add-on-interceptor
+            scaler: ghcr.io/kedify/http-add-on-scaler
+            tag: kedify-main
           rbac:
             aggregateToDefaultRoles: true
           operator:
+            # The rolling image serves operator metrics over HTTP.
+            metrics:
+              secure: false
+              auth: false
             topologySpreadConstraints:
               - maxSkew: 1
                 topologyKey: "kubernetes.io/hostname"
