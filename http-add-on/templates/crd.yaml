@@ -95,17 +95,27 @@ spec:
                   If the headers can't be matched, then use first one without .spec.headers supplied
                   If that doesn't exist then routing will fail.
                 items:
-                  description: Header contains the definition for matching on header
-                    name and/or value
+                  description: Header matches a fixed header name and exactly one value selector.
                   properties:
                     name:
                       type: string
                     value:
+                      description: Value matches literally and is case-sensitive.
+                      type: string
+                    valueWildcard:
+                      description: ValueWildcard matches case-insensitively; * matches zero or more characters and ? matches one.
+                      minLength: 1
+                      type: string
+                    valueRegex:
+                      description: ValueRegex is a case-insensitive RE2 expression matching the entire value.
+                      minLength: 1
                       type: string
                   required:
                   - name
-                  - value
                   type: object
+                  x-kubernetes-validations:
+                  - message: exactly one of value, valueWildcard, or valueRegex is required
+                    rule: '(has(self.value) ? 1 : 0) + (has(self.valueWildcard) ? 1 : 0) + (has(self.valueRegex) ? 1 : 0) == 1'
                 type: array
               hosts:
                 description: |-
