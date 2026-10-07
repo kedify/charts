@@ -126,7 +126,7 @@ jobs:
           additionalLabels:
             random: value
           images:
-            tag: kedify-main
+            tag: "$(yq '.appVersion' http-add-on/Chart.yaml)"
           rbac:
             aggregateToDefaultRoles: true
           operator:
