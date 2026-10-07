@@ -59,12 +59,15 @@ jobs:
         run: helm lint http-add-on
 
   deploy-helm-3-x:
-    name: Deploy to Kubernetes ${{ matrix.kubernetesVersion }}
+    name: Deploy to Kubernetes ${{ matrix.kubernetesVersion }} (${{ matrix.distribution }})
     needs: lint-helm-3-x
     runs-on: ubuntu-latest
+    env:
+      HTTP_ADD_ON_CHART: ${{ matrix.distribution == 'kedify' && './.kedify-chart-ci/http-add-on' || './http-add-on' }}
     strategy:
       fail-fast: false
       matrix:
+        distribution: [upstream, kedify]
         kubernetesVersion: [v1.36, v1.35, v1.34]
         include:
           # Images are defined on every Kind release
@@ -81,6 +84,13 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+
+      - name: Check out Kedify release chart
+        if: matrix.distribution == 'kedify'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          ref: http-add-on/v0.11.1
+          path: .kedify-chart-ci
 
       - name: Helm install
         uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
@@ -122,21 +132,23 @@ jobs:
 
       - name: Generate values
         run: |
+          HTTP_ADD_ON_REPOSITORY=kedacore
+          HTTP_ADD_ON_TAG="$(yq '.appVersion' "$HTTP_ADD_ON_CHART/Chart.yaml")"
+          if [[ "${{ matrix.distribution }}" == "kedify" ]]; then
+            HTTP_ADD_ON_REPOSITORY=kedify
+            HTTP_ADD_ON_TAG=kedify-main
+          fi
           cat <<EOF > test-values.yaml
           additionalLabels:
             random: value
           images:
-            operator: ghcr.io/kedify/http-add-on-operator
-            interceptor: ghcr.io/kedify/http-add-on-interceptor
-            scaler: ghcr.io/kedify/http-add-on-scaler
-            tag: kedify-main
+            operator: ghcr.io/${HTTP_ADD_ON_REPOSITORY}/http-add-on-operator
+            interceptor: ghcr.io/${HTTP_ADD_ON_REPOSITORY}/http-add-on-interceptor
+            scaler: ghcr.io/${HTTP_ADD_ON_REPOSITORY}/http-add-on-scaler
+            tag: "${HTTP_ADD_ON_TAG}"
           rbac:
             aggregateToDefaultRoles: true
           operator:
-            # The rolling image serves operator metrics over HTTP.
-            metrics:
-              secure: false
-              auth: false
             topologySpreadConstraints:
               - maxSkew: 1
                 topologyKey: "kubernetes.io/hostname"
@@ -164,10 +176,10 @@ jobs:
           EOF
 
       - name: Template Helm chart
-        run: helm template http-add-on ./http-add-on/ --namespace keda --values test-values.yaml
+        run: helm template http-add-on "$HTTP_ADD_ON_CHART" --namespace keda --values test-values.yaml
 
       - name: Install Helm chart
-        run: helm install http-add-on ./http-add-on/ --namespace keda --values test-values.yaml --wait
+        run: helm install http-add-on "$HTTP_ADD_ON_CHART" --namespace keda --values test-values.yaml --wait
 
       - name: Show Kubernetes resources
         run: kubectl get all --namespace keda
@@ -180,9 +192,11 @@ jobs:
         run: kubectl get crds
 
       - name: Get InterceptorRoute CRD
+        if: matrix.distribution == 'upstream'
         run: kubectl get crds/interceptorroutes.http.keda.sh
 
       - name: Describe InterceptorRoute CRD
+        if: matrix.distribution == 'upstream'
         run: kubectl describe crds/interceptorroutes.http.keda.sh
 
       # TODO: Drop `HTTPScaledObject` specific steps after crd is DEPRECATED
