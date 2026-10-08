@@ -371,8 +371,7 @@
             },
             "required": [
                 "enabled",
-                "defaultClass",
-                "deploymentName"
+                "defaultClass"
             ]
         },
         "KedifyMultitenant": {

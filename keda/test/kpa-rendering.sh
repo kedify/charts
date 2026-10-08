@@ -62,6 +62,14 @@ for mode in default tenant; do
   fi
 done
 
+# Helm --reuse-values can omit the newly added field entirely.
+helm template test "${chart_dir}" --namespace keda \
+  --set kedify.kpa.deploymentName=null >"${legacy_render}"
+helm template test "${chart_dir}" --namespace keda \
+  --set kedify.kpa.enabled=true \
+  --set kedify.multitenant.mode=tenant \
+  --set kedify.kpa.deploymentName=null >"${legacy_render}"
+
 if helm template test "${chart_dir}" --namespace keda \
   --set kedify.kpa.enabled=true \
   --set kedify.kpa.defaultClass=kpa \
