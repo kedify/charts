@@ -28,7 +28,9 @@ data:
   shardId: {{ .Values.kedify.sharding.id | quote }}
   watchLabelSelector: {{ $shardSelector | quote }}
   {{- end }}
-  {{- if .Values.kedify.kpa.enabled }}
-  kpaDeploymentName: {{ required "kedify.kpa.deploymentName is required when KPA and multitenant mode are enabled" .Values.kedify.kpa.deploymentName | quote }}
+  {{- if and .Values.kedify.kpa.enabled $shardSelector }}
+  kpaDeploymentName: {{ required "kedify.kpa.deploymentName is required when KPA sharding is enabled" .Values.kedify.kpa.deploymentName | quote }}
+  {{- else if and .Values.kedify.kpa.enabled .Values.kedify.kpa.deploymentName }}
+  kpaDeploymentName: {{ .Values.kedify.kpa.deploymentName | quote }}
   {{- end }}
 {{- end }}
