@@ -45,6 +45,9 @@ jobs:
       - name: Test KPA rendering
         run: kedify-agent/test/kpa-rendering.sh
 
+      - name: Test label shard rendering
+        run: kedify-agent/test/sharding-rendering.sh
+
       - name: Test DaemonSet rendering
         run: kedify-agent/test/daemonset-rendering.sh
 

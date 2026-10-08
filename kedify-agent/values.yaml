@@ -28,6 +28,19 @@ global:
     kedifyPodAutoscalerEnabled: false
 agent:
   replicas: 1
+  # -- Label-shard pools assigned by this Agent. Requires multitenant KEDA and KPA features.
+  # Each tenantRef names a separately installed, selector-capable tenant KEDA/KPA pair;
+  # the bundled KEDA dependency remains the ordinary, unsharded default installation.
+  # Pools are additions-only after enrollment; create them before adding SO/SJ resources.
+  sharding:
+    pools: []
+    # - name: applications
+    #   namespaces: [app-a, app-b]
+    #   strategy: Rendezvous # or LoadAware
+    #   keyLabel: ""
+    #   shards:
+    #     - id: s0
+    #       tenantRef: operators/keda-s0
   # you should already have this
   orgId: ""
   # you should already have this

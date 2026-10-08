@@ -1,0 +1,73 @@
+{{- $pools := .Values.agent.sharding.pools | default (list) -}}
+{{- if $pools -}}
+{{- if not (and (eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true") (eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true")) -}}
+  {{- fail "agent.sharding.pools requires multitenantKEDAEnabled and kedifyPodAutoscalerEnabled" -}}
+{{- end -}}
+{{- $poolNames := dict -}}
+{{- $allNamespaces := dict -}}
+{{- $allTenantRefs := dict -}}
+{{- $rendered := list -}}
+{{- range $pool := $pools -}}
+  {{- if not (kindIs "map" $pool) -}}
+    {{- fail "agent.sharding.pools entries must be objects" -}}
+  {{- end -}}
+  {{- $name := required "agent.sharding.pools[].name is required" $pool.name -}}
+  {{- if or (gt (len $name) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $name)) -}}
+    {{- fail (printf "invalid shard pool name %q" $name) -}}
+  {{- end -}}
+  {{- if hasKey $poolNames $name -}}
+    {{- fail (printf "duplicate shard pool name %q" $name) -}}
+  {{- end -}}
+  {{- $_ := set $poolNames $name true -}}
+  {{- $strategy := default "Rendezvous" $pool.strategy -}}
+  {{- if not (has $strategy (list "Rendezvous" "LoadAware")) -}}
+    {{- fail (printf "pool %q strategy must be Rendezvous or LoadAware" $name) -}}
+  {{- end -}}
+  {{- $namespaces := required (printf "pool %q needs explicit namespaces" $name) $pool.namespaces -}}
+  {{- if not (kindIs "slice" $namespaces) -}}
+    {{- fail (printf "pool %q namespaces must be a list" $name) -}}
+  {{- end -}}
+  {{- range $namespace := $namespaces -}}
+    {{- if or (not (kindIs "string" $namespace)) (gt (len $namespace) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $namespace)) -}}
+      {{- fail (printf "pool %q has an invalid namespace" $name) -}}
+    {{- end -}}
+    {{- if hasKey $allNamespaces $namespace -}}
+      {{- fail (printf "namespace %q belongs to more than one shard pool" $namespace) -}}
+    {{- end -}}
+    {{- $_ := set $allNamespaces $namespace true -}}
+  {{- end -}}
+  {{- $shards := required (printf "pool %q needs shards" $name) $pool.shards -}}
+  {{- if not (kindIs "slice" $shards) -}}
+    {{- fail (printf "pool %q shards must be a list" $name) -}}
+  {{- end -}}
+  {{- $ids := dict -}}
+  {{- $renderedShards := list -}}
+  {{- range $shard := $shards -}}
+    {{- $id := required (printf "pool %q shard id is required" $name) $shard.id -}}
+    {{- $ref := required (printf "pool %q shard tenantRef is required" $name) $shard.tenantRef -}}
+    {{- if or (gt (len $id) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $id)) -}}
+      {{- fail (printf "pool %q has invalid shard id %q" $name $id) -}}
+    {{- end -}}
+    {{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?/[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $ref) -}}
+      {{- fail (printf "pool %q has invalid tenantRef %q" $name $ref) -}}
+    {{- end -}}
+    {{- if or (hasKey $ids $id) (hasKey $allTenantRefs $ref) -}}
+      {{- fail (printf "pool %q has duplicate shard id or tenantRef" $name) -}}
+    {{- end -}}
+    {{- $_ := set $ids $id true -}}
+    {{- $_ := set $allTenantRefs $ref true -}}
+    {{- $renderedShards = append $renderedShards (dict "id" $id "tenantRef" $ref) -}}
+  {{- end -}}
+  {{- $rendered = append $rendered (dict "name" $name "namespaces" $namespaces "strategy" $strategy "keyLabel" (default "" $pool.keyLabel) "shards" $renderedShards) -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kedify-agent-sharding
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kedify-agent.labels" . | nindent 4 }}
+data:
+  pools.yaml: |
+    {{- toYaml (dict "pools" $rendered) | nindent 4 }}
+{{- end -}}

@@ -58,10 +58,17 @@ spec:
           - --zap-log-level={{ default .Values.agent.logLevel .Values.agent.logging.level }}
           - --zap-encoder={{ .Values.agent.logging.format }}
           - --zap-time-encoding={{ .Values.agent.logging.timeEncoding }}
+          {{- if .Values.agent.sharding.pools }}
+          - --sharding-configmap-name=kedify-agent-sharding
+          - --sharding-configmap-namespace={{ .Release.Namespace }}
+          {{- end }}
           {{- if .Values.agent.logging.stackTracesEnabled }}
           - --zap-stacktrace-level=error
           {{- end }}
           {{- range $key, $value := .Values.agent.extraArgs }}
+          {{- if and $.Values.agent.sharding.pools (has $key (list "sharding-configmap-name" "sharding-configmap-namespace")) }}
+          {{- fail "agent.extraArgs cannot override sharding ConfigMap references" }}
+          {{- end }}
           - "--{{ $key }}={{ $value }}"
           {{- end }}
           command:

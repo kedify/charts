@@ -1,4 +1,5 @@
 {{- if and .Values.kedify.multitenant .Values.kedify.multitenant.mode }}
+{{- $shardSelector := include "keda.shardWatchLabelSelector" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -22,6 +23,11 @@ data:
   tlsSecretRef: {{ (include "keda.certificates.secretName" .) | quote }}
   isDefaultTenant: {{ eq .Values.kedify.multitenant.mode "default" | quote }}
   operatorDeploymentName: {{ (include "keda.operator.name" .) | quote }}
+  {{- if $shardSelector }}
+  shardPool: {{ .Values.kedify.sharding.pool | quote }}
+  shardId: {{ .Values.kedify.sharding.id | quote }}
+  watchLabelSelector: {{ $shardSelector | quote }}
+  {{- end }}
   {{- if .Values.kedify.kpa.enabled }}
   kpaDeploymentName: {{ required "kedify.kpa.deploymentName is required when KPA and multitenant mode are enabled" .Values.kedify.kpa.deploymentName | quote }}
   {{- end }}

@@ -10,6 +10,7 @@
 {{- $argoRolloutsEnabled := eq (include "kedify-agent.featureEnabled" (list . "argoRolloutsEnabled")) "true" -}}
 {{- $kedifyPodAutoscalerEnabled := eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true" -}}
 {{- $scaleAdaptersEnabled := eq (include "kedify-agent.featureEnabled" (list . "scaleAdaptersEnabled")) "true" -}}
+{{- $shardingEnabled := not (empty .Values.agent.sharding.pools) -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -68,6 +69,18 @@ metadata:
   name: kedify-manager-role
   namespace: {{ .Release.Namespace }}
 rules:
+{{- if .Values.agent.sharding.pools }}
+# Enrollment proof is an Agent-owned annotation on its Helm-managed pool ConfigMap.
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - kedify-agent-sharding
+  verbs:
+  - get
+  - patch
+{{- end }}
 
 {{- if .Values.agent.rbac.selfUpdates }}
 # Kedify agent needs to be able to update its own container image
@@ -411,7 +424,8 @@ rules:
   - get
 {{- end }}
 {{- end }}
-{{- if .Values.agent.rbac.readMetrics }}
+{{- if or .Values.agent.rbac.readMetrics (and $shardingEnabled (not $recommendationsForLabeledNamespaces)) }}
+# Shard enrollment watches namespace identity independently of telemetry.
 - apiGroups:
   - ""
   resources:
@@ -420,6 +434,8 @@ rules:
   - list
   - watch
   - get
+{{- end }}
+{{- if .Values.agent.rbac.readMetrics }}
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -436,7 +452,8 @@ rules:
   - list
   - watch
 {{- end }}
-{{- if .Values.agent.rbac.readDeploymentsClusterwide }}
+{{- if or .Values.agent.rbac.readDeploymentsClusterwide $shardingEnabled }}
+# Shard readiness validates the observed operator Deployments.
 - apiGroups:
   - apps
   resources:

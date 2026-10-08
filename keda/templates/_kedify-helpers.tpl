@@ -18,6 +18,44 @@ unique, non-colliding resource names. Unchanged in default / non-multitenant mod
 {{- end -}}
 {{- end -}}
 
+{{/* A shard's selector is fixed by its pool and id, never supplied independently. */}}
+{{- define "keda.shardWatchLabelSelector" -}}
+{{- $sharding := default (dict) .Values.kedify.sharding -}}
+{{- $pool := default "" $sharding.pool -}}
+{{- $id := default "" $sharding.id -}}
+{{- if ne (empty $pool) (empty $id) -}}
+  {{- fail "kedify.sharding.pool and kedify.sharding.id must be set together" -}}
+{{- end -}}
+{{- if $pool -}}
+  {{- if or (gt (len $pool) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $pool)) (gt (len $id) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $id)) -}}
+    {{- fail "kedify.sharding.pool and id must be valid Kubernetes label values" -}}
+  {{- end -}}
+  {{- if ne .Values.kedify.multitenant.mode "tenant" -}}
+    {{- fail "kedify.sharding requires kedify.multitenant.mode=tenant" -}}
+  {{- end -}}
+  {{- if not (trim .Values.watchNamespace) -}}
+    {{- fail "kedify.sharding requires explicit, nonempty watchNamespace" -}}
+  {{- end -}}
+  {{- if not (and .Values.kedify.kpa.enabled (eq (include "keda.kedifyKpaDefaultClass" .) "kpa") .Values.kedify.kpa.deploymentName) -}}
+    {{- fail "kedify.sharding requires enabled KPA, defaultClass=kpa and exact KPA deploymentName" -}}
+  {{- end -}}
+  {{- range $key := list "watch-label-selector" "enable-kpa" -}}
+    {{- if hasKey (default (dict) $.Values.extraArgs.keda) $key -}}
+      {{- fail (printf "extraArgs.keda.%s cannot override shard configuration" $key) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- range .Values.env -}}
+    {{- if has .name (list "WATCH_LABEL_SELECTOR" "WATCH_NAMESPACE") -}}
+      {{- fail "env cannot override the shard WATCH_LABEL_SELECTOR or WATCH_NAMESPACE" -}}
+    {{- end -}}
+    {{- if eq .name "KEDIFY_SCALINGGROUPS_ENABLED" -}}
+      {{- fail "env cannot override KEDIFY_SCALINGGROUPS_ENABLED for a shard" -}}
+    {{- end -}}
+  {{- end -}}
+{{- printf "kedify.io/shard-pool=%s,kedify.io/shard=%s" $pool $id -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Effective KEDA operator ServiceAccount name: the configured serviceAccount.operator.name
 (falling back to serviceAccount.name), suffixed with the Helm release name in multitenant

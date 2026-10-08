@@ -317,6 +317,9 @@
         "Kedify": {
             "type": "object",
             "properties": {
+                "sharding": {
+                    "$ref": "#/definitions/KedifySharding"
+                },
                 "kpa": {
                     "$ref": "#/definitions/KedifyKPA"
                 },
@@ -328,6 +331,21 @@
                 "kpa",
                 "multitenant"
             ]
+        },
+        "KedifySharding": {
+            "type": "object",
+            "properties": {
+                "pool": {
+                    "type": "string",
+                    "maxLength": 63,
+                    "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 63,
+                    "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+                }
+            }
         },
         "KedifyKPA": {
             "type": "object",
