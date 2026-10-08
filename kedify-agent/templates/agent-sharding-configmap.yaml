@@ -1,4 +1,5 @@
-{{- $pools := .Values.agent.sharding.pools | default (list) -}}
+{{- $sharding := .Values.agent.sharding | default (dict) -}}
+{{- $pools := $sharding.pools | default (list) -}}
 {{- if $pools -}}
 {{- if not (and (eq (include "kedify-agent.featureEnabled" (list . "multitenantKEDAEnabled")) "true") (eq (include "kedify-agent.featureEnabled" (list . "kedifyPodAutoscalerEnabled")) "true")) -}}
   {{- fail "agent.sharding.pools requires multitenantKEDAEnabled and kedifyPodAutoscalerEnabled" -}}

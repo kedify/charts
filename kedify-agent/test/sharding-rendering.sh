@@ -20,6 +20,12 @@ if grep -qF 'name: kedify-agent-sharding' "${test_dir}/default-agent.yaml" || \
   exit 1
 fi
 
+# Reused values from releases before sharding have no agent.sharding object.
+helm template test "${test_dir}/agent" --namespace keda \
+  --set agent.createApiKeySecret=false \
+  --set agent.sharding=null >"${test_dir}/legacy-agent.yaml"
+cmp "${test_dir}/default-agent.yaml" "${test_dir}/legacy-agent.yaml"
+
 cat >"${test_dir}/agent-values.yaml" <<'EOF'
 agent:
   createApiKeySecret: false
