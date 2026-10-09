@@ -80,6 +80,34 @@ Create the name of the service account to use
 {{- if or (index $agentMulticluster $feature) (index $globalMulticluster $feature) -}}true{{- else -}}false{{- end -}}
 {{- end }}
 
+{{/* Return and validate the globally selected multicluster scaling model. */}}
+{{- define "kedify-agent.multiclusterType" -}}
+{{- $globalFeatures := default (dict) .Values.global.features -}}
+{{- $multicluster := default (dict) (index $globalFeatures "multicluster") -}}
+{{- $type := default "distributed" (index $multicluster "type") -}}
+{{- if not (has $type (list "distributed" "dedicated")) -}}
+  {{- fail "global.features.multicluster.type must be distributed or dedicated" -}}
+{{- end -}}
+{{- $type -}}
+{{- end }}
+
+{{/* Existing global and Agent-scoped switches select distributed mode. */}}
+{{- define "kedify-agent.distributedMulticlusterEnabled" -}}
+{{- $globalFeatures := default (dict) .Values.global.features -}}
+{{- $global := default (dict) (index $globalFeatures "multicluster") -}}
+{{- $agentFeatures := default (dict) .Values.agent.features -}}
+{{- $agent := default (dict) (index $agentFeatures "multicluster") -}}
+{{- $globalDistributed := and (index $global "enabled") (eq (include "kedify-agent.multiclusterType" .) "distributed") -}}
+{{- if or $globalDistributed (index $agent "enabled") -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{/* Dedicated mode is global because KEDA and KPA consume the same value. */}}
+{{- define "kedify-agent.dedicatedMulticlusterEnabled" -}}
+{{- $globalFeatures := default (dict) .Values.global.features -}}
+{{- $global := default (dict) (index $globalFeatures "multicluster") -}}
+{{- if and (index $global "enabled") (eq (include "kedify-agent.multiclusterType" .) "dedicated") -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
 {{/*
 CRD installation labels
 */}}

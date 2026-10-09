@@ -27,6 +27,9 @@ unique, non-colliding resource names. Unchanged in default / non-multitenant mod
   {{- fail "kedify.sharding.pool and kedify.sharding.id must be set together" -}}
 {{- end -}}
 {{- if $pool -}}
+  {{- if eq (include "keda.dedicatedMulticlusterEnabled" .) "true" -}}
+    {{- fail "kedify.sharding cannot be combined with dedicated multicluster reconciliation in the same KEDA release" -}}
+  {{- end -}}
   {{- if or (gt (len $pool) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $pool)) (gt (len $id) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $id)) -}}
     {{- fail "kedify.sharding.pool and id must be valid Kubernetes label values" -}}
   {{- end -}}
@@ -84,12 +87,33 @@ so tenants sharing a namespace do not overwrite each other's certificates.
 {{- end -}}
 
 {{/*
+Return true only when this KEDA release owns dedicated remote-cluster
+reconciliation. Distributed mode belongs to the Agent DSO/DSJ workflow and
+must not start KEDA's ClusterRegistration provider.
+*/}}
+{{- define "keda.dedicatedMulticlusterEnabled" -}}
+{{- $globalFeatures := default (dict) .Values.global.features -}}
+{{- $multicluster := default (dict) (index $globalFeatures "multicluster") -}}
+{{- $type := default "distributed" (index $multicluster "type") -}}
+{{- if not (has $type (list "distributed" "dedicated")) -}}
+  {{- fail "global.features.multicluster.type must be distributed or dedicated" -}}
+{{- end -}}
+{{- $distributed := and (index $multicluster "enabled") (eq $type "distributed") -}}
+{{- $dedicated := and (index $multicluster "enabled") (eq $type "dedicated") -}}
+{{- if and .Values.multicluster.enabled $distributed -}}
+  {{- fail "multicluster.enabled=true enables dedicated KEDA reconciliation and cannot be combined with global.features.multicluster.type=distributed" -}}
+{{- end -}}
+{{- if or .Values.multicluster.enabled $dedicated -}}true{{- else -}}false{{- end -}}
+{{- end }}
+
+{{/*
 Return one validated autoscaling default for every KEDA process. The legacy
 extraArgs form remains accepted only when operator and webhook values match;
 this prevents admission and reconciliation from silently choosing different
 classes. New installations should use kedify.kpa.defaultClass.
 */}}
 {{- define "keda.kedifyKpaDefaultClass" -}}
+{{- $dedicatedMulticlusterEnabled := eq (include "keda.dedicatedMulticlusterEnabled" .) "true" -}}
 {{- $configured := default "hpa" .Values.kedify.kpa.defaultClass -}}
 {{- $operatorArgs := default (dict) .Values.extraArgs.keda -}}
 {{- $webhookArgs := default (dict) .Values.extraArgs.webhooks -}}
@@ -109,10 +133,16 @@ classes. New installations should use kedify.kpa.defaultClass.
   {{- end -}}
   {{- $configured = $operatorLegacy -}}
 {{- end -}}
+{{- if $dedicatedMulticlusterEnabled -}}
+  {{- if and $operatorHasLegacy (ne $configured "kpa") -}}
+    {{- fail "dedicated multicluster scaling requires autoscaling-default-class=kpa" -}}
+  {{- end -}}
+  {{- $configured = "kpa" -}}
+{{- end -}}
 {{- if not (has $configured (list "hpa" "kpa")) -}}
   {{- fail "kedify.kpa.defaultClass must be hpa or kpa" -}}
 {{- end -}}
-{{- if and (eq $configured "kpa") (not .Values.kedify.kpa.enabled) -}}
+{{- if and (eq $configured "kpa") (not (or .Values.kedify.kpa.enabled $dedicatedMulticlusterEnabled)) -}}
   {{- fail "kedify.kpa.defaultClass=kpa requires kedify.kpa.enabled=true" -}}
 {{- end -}}
 {{- $configured -}}

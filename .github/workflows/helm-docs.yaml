@@ -7,6 +7,7 @@ on:
     paths:
       - 'kedify-agent/values.yaml'
       - 'kedify-agent/Chart.yaml'
+      - 'kedify-agent/_helm-docs-template.gotmpl'
       - 'kedify-proxy/values.yaml'
       - 'kedify-proxy/Chart.yaml'
       - 'kedify-proxy/_helm-docs-template.gotmpl'
@@ -26,7 +27,7 @@ jobs:
       - name: Generate docs for kedify-agent chart
         uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
         with:
-          args: --chart-search-root=kedify-agent --sort-values-order=file --ignore-non-descriptions
+          args: --chart-search-root=kedify-agent --template-files=_helm-docs-template.gotmpl --sort-values-order=file --ignore-non-descriptions
       - name: Generate docs for kedify-proxy chart
         uses: docker://jnorwood/helm-docs@sha256:7e562b49ab6b1dbc50c3da8f2dd6ffa8a5c6bba327b1c6335cc15ce29267979c
         with:

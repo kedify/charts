@@ -39,6 +39,9 @@ jobs:
       - name: Build chart dependencies
         run: helm dependency build kedify-agent
 
+      - name: Package KEDA chart under test
+        run: helm package keda --destination kedify-agent/charts
+
       - name: Lint chart
         run: helm lint kedify-agent --values kedify-agent/test/test-values.yaml
 
