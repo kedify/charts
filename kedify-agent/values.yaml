@@ -35,6 +35,7 @@ agent:
   # the bundled KEDA dependency remains the ordinary, unsharded default installation.
   # Pools are additions-only after enrollment; create them before adding SO/SJ resources.
   sharding:
+    # -- Label-shard pools rendered in the Agent namespace as `kedify-agent-sharding` with a `pools.yaml` entry. Each pool has a name, explicit disjoint namespaces, optional `Rendezvous` or `LoadAware` strategy and `keyLabel`, and shards with unique `id` and `tenantRef` (`namespace/release`). Requires multi-tenant KEDA and KPA features. Create pools before adding SO/SJ resources; the Agent owns the enrollment annotation.
     pools: []
     # - name: applications
     #   namespaces: [app-a, app-b]
@@ -333,11 +334,7 @@ keda:
     webhooks:
       enabled: true
 kpa:
-  # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35.
-  # Enable this independently from multicluster mode. Dedicated mode configures
-  # an enabled KPA dependency for ClusterRegistration-based reconciliation.
-  # Also enable global.features.kedifyPodAutoscalerEnabled for Agent support and
-  # keda.kedify.kpa.enabled for a bundled single-cluster KEDA installation.
+  # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. This controls KPA installation independently from multicluster mode; dedicated mode configures remote reconciliation only when this dependency is enabled.
   enabled: false
   # For all available values: helm show values oci://ghcr.io/kedify/charts/kpa
   fullnameOverride: kpa

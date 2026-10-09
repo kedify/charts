@@ -1,0 +1,64 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Optional KPA installation
+
+Set `kpa.enabled=true` to install the Kedify Pod Autoscaler controller and CRD
+with the Agent chart on Kubernetes 1.33–1.35. KPA installation is independent
+from multicluster mode.
+
+For dedicated multicluster reconciliation, enable KPA and the dedicated mode:
+
+```yaml
+global:
+  features:
+    multicluster:
+      enabled: true
+      type: dedicated
+keda:
+  enabled: true
+kpa:
+  enabled: true
+```
+
+Enable `global.features.kedifyPodAutoscalerEnabled=true` separately when the
+Agent should collect KPA resource metrics and discover KPA metrics endpoints.
+For an ordinary single-cluster bundled KEDA installation, enable KPA support
+with `keda.kedify.kpa.enabled=true`.
+
+Existing separate KPA installations can keep `kpa.enabled=false`.
+
+The bundled KPA resolves the bundled KEDA endpoint in the Helm release
+namespace. Override `kpa.keda.metricsAddress`, `kpa.keda.metricsAuthority`, or
+`kpa.keda.certificateSecret` only when connecting KPA to a differently named
+or separately installed KEDA operator. Inspect the remaining controller
+settings with `helm show values oci://ghcr.io/kedify/charts/kpa`.
+
+Dedicated mode enables KEDA/KPA remote reconciliation and selects KPA as
+KEDA's default autoscaling class. The default distributed mode uses the
+Agent's DistributedScaledObject/DistributedScaledJob controllers and does not
+install KPA unless `kpa.enabled=true`. An explicitly enabled KPA remains in
+single-cluster mode with the distributed workflow.
+
+## Values
+
+Prefer `global.features` when this chart installs KEDA/KPA so settings are
+shared with the bundled controllers. `agent.features` configures only the
+Agent; dedicated multicluster mode requires the global settings.
+
+{{ template "chart.valuesTable" . }}
+
+{{ template "helm-docs.versionFooter" . }}
