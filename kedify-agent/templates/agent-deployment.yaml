@@ -5,6 +5,10 @@
 {{- if and $dedicatedMulticlusterEnabled (not .Values.keda.enabled) -}}
 {{- fail "dedicated multicluster scaling requires keda.enabled=true" -}}
 {{- end -}}
+{{- $kpa := .Values.kpa | default (dict) -}}
+{{- if and $dedicatedMulticlusterEnabled (not $kpa.enabled) -}}
+{{- fail "dedicated multicluster scaling requires kpa.enabled=true" -}}
+{{- end -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}

@@ -22,9 +22,8 @@ Kubernetes: `>=v1.23.0-0`
 | oci://ghcr.io/kedify/charts | autoscaling-checks | 0.0.2 |
 | oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.6 |
-| oci://ghcr.io/kedify/charts | kpa | 0.0.2 |
 | oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
-| oci://ghcr.io/kedify/charts | kpa | 0.1.0 |
+| oci://ghcr.io/kedify/charts | kpa | 0.2.0 |
 
 ## Optional KPA installation
 
@@ -39,6 +38,15 @@ KPA defaults to the KEDA operator in the `keda` namespace. Override
 `kpa.keda.metricsAddress` and `kpa.keda.metricsAuthority` when installing in
 another namespace or using a different operator Service. Inspect the other
 controller settings with `helm show values oci://ghcr.io/kedify/charts/kpa`.
+
+Dedicated multicluster scaling requires both bundled controllers. Set
+`global.features.multicluster.enabled=true`,
+`global.features.multicluster.type=dedicated`, `keda.enabled=true`, and
+`kpa.enabled=true`. This mode enables KEDA/KPA remote reconciliation and
+selects KPA as KEDA's default autoscaling class. The default distributed mode
+uses the Agent's DistributedScaledObject/DistributedScaledJob controllers and
+suppresses the bundled KPA resources. With multicluster scaling disabled,
+`kpa.enabled=true` installs KPA for single-cluster use.
 
 ## Values
 

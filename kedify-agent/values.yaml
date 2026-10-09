@@ -330,15 +330,6 @@ keda:
       enabled: true
     webhooks:
       enabled: true
-kpa:
-  # KPA is rendered automatically only when global multicluster type is dedicated.
-  fullnameOverride: kpa
-  crds:
-    install: false
-  keda:
-    metricsAddress: keda-operator.keda.svc:9666
-    metricsAuthority: keda-operator.keda.svc
-    certificateSecret: kedaorg-certs
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
@@ -349,6 +340,7 @@ kpa:
   # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35.
   # Also enable global.features.kedifyPodAutoscalerEnabled for Agent support and
   # keda.kedify.kpa.enabled for a bundled KEDA installation. KPA can be installed separately.
+  # Dedicated multicluster mode requires both kpa.enabled and keda.enabled.
   # For all available values: helm show values oci://ghcr.io/kedify/charts/kpa
   enabled: false
 otel-add-on:

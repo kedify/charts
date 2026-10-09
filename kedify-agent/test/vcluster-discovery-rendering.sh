@@ -38,7 +38,7 @@ cluster_role_rule_verbs() {
 render > "$render_dir/default.yaml"
 render --set agent.features.multicluster.enabled=true > "$render_dir/legacy-agent.yaml"
 render --set global.features.multicluster.enabled=true > "$render_dir/legacy-global.yaml"
-render --set keda.enabled=true \
+render --set keda.enabled=true --set kpa.enabled=true \
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > "$render_dir/dedicated-agent.yaml"
 for mode in agent global; do
@@ -111,7 +111,7 @@ for legacy_switch in \
   agent.features.multicluster.enabled \
   global.features.distributedScaledObjectsEnabled \
   agent.features.distributedScaledJobsEnabled; do
-  if render --set keda.enabled=true \
+  if render --set keda.enabled=true --set kpa.enabled=true \
     --set global.features.multicluster.enabled=true \
     --set global.features.multicluster.type=dedicated \
     --set "$legacy_switch=true" > "$render_dir/conflict.yaml" 2> "$render_dir/error"; then
@@ -120,7 +120,7 @@ for legacy_switch in \
   fi
   grep -q 'dedicated multicluster scaling is mutually exclusive with the Agent DistributedScaledObject/DistributedScaledJob controllers' "$render_dir/error"
 done
-render --set keda.enabled=true \
+render --set keda.enabled=true --set kpa.enabled=true \
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated \
   --set agent.multicluster.localCluster.enabled=true > "$render_dir/dedicated-local-agent.yaml"
@@ -144,12 +144,20 @@ if render --set global.features.multicluster.enabled=true \
 fi
 grep -q 'dedicated multicluster scaling requires keda.enabled=true' "$render_dir/error"
 
+if render --set keda.enabled=true \
+  --set global.features.multicluster.enabled=true \
+  --set global.features.multicluster.type=dedicated > /dev/null 2> "$render_dir/error"; then
+  echo 'dedicated multicluster mode must require bundled KPA' >&2
+  exit 1
+fi
+grep -q 'dedicated multicluster scaling requires kpa.enabled=true' "$render_dir/error"
+
 # The parent chart wires dedicated mode into both bundled consumers. The
 # default distributed type must retain DSO/DSJ and suppress KPA resources.
 helm template discovery "$chart_dir" --namespace scaling-system \
   --kube-version 1.35.5 \
   --values "$chart_dir/test/test-values.yaml" \
-  --set keda.enabled=true \
+  --set keda.enabled=true --set kpa.enabled=true \
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > "$render_dir/dedicated-full.yaml"
 test "$(grep -c -- '--multicluster=true' "$render_dir/dedicated-full.yaml")" = '2'
@@ -159,7 +167,7 @@ grep -q -- '--keda-metrics-address=keda-operator.scaling-system.svc:9666' "$rend
 helm template discovery "$chart_dir" --namespace scaling-system \
   --kube-version 1.35.5 \
   --values "$chart_dir/test/test-values.yaml" \
-  --set keda.enabled=true \
+  --set keda.enabled=true --set kpa.enabled=true \
   --set global.features.multicluster.enabled=true > "$render_dir/distributed-full.yaml"
 grep -A1 'name: DSO_ENABLED' "$render_dir/distributed-full.yaml" | grep -q 'value: "true"'
 grep -A1 'name: DSJ_ENABLED' "$render_dir/distributed-full.yaml" | grep -q 'value: "true"'
