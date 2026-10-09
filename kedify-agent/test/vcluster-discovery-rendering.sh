@@ -153,7 +153,7 @@ fi
 grep -q 'dedicated multicluster scaling requires kpa.enabled=true' "$render_dir/error"
 
 # The parent chart wires dedicated mode into both bundled consumers. The
-# default distributed type must retain DSO/DSJ and suppress KPA resources.
+# default distributed type must retain DSO/DSJ and leave the optional KPA off.
 helm template discovery "$chart_dir" --namespace scaling-system \
   --kube-version 1.35.5 \
   --values "$chart_dir/test/test-values.yaml" \
@@ -165,14 +165,28 @@ grep -q 'app.kubernetes.io/part-of: kedify-pod-autoscaler' "$render_dir/dedicate
 grep -q -- '--keda-metrics-address=keda-operator.scaling-system.svc:9666' "$render_dir/dedicated-full.yaml"
 
 helm template discovery "$chart_dir" --namespace scaling-system \
-  --kube-version 1.35.5 \
+  --kube-version 1.23.0 \
   --values "$chart_dir/test/test-values.yaml" \
-  --set keda.enabled=true --set kpa.enabled=true \
+  --set keda.enabled=true \
   --set global.features.multicluster.enabled=true > "$render_dir/distributed-full.yaml"
 grep -A1 'name: DSO_ENABLED' "$render_dir/distributed-full.yaml" | grep -q 'value: "true"'
 grep -A1 'name: DSJ_ENABLED' "$render_dir/distributed-full.yaml" | grep -q 'value: "true"'
 if grep -q 'app.kubernetes.io/part-of: kedify-pod-autoscaler' "$render_dir/distributed-full.yaml"; then
-  echo 'distributed mode must not render the KPA dependency' >&2
+  echo 'distributed mode must not install KPA without an explicit opt-in' >&2
+  exit 1
+fi
+
+# The dependency toggle may also install a local KPA with the DSO/DSJ workflow.
+helm template discovery "$chart_dir" --namespace scaling-system \
+  --kube-version 1.35.5 \
+  --values "$chart_dir/test/test-values.yaml" \
+  --set keda.enabled=true --set kpa.enabled=true \
+  --set global.features.multicluster.enabled=true > "$render_dir/distributed-kpa.yaml"
+grep -q 'app.kubernetes.io/part-of: kedify-pod-autoscaler' "$render_dir/distributed-kpa.yaml"
+grep -A1 'name: DSO_ENABLED' "$render_dir/distributed-kpa.yaml" | grep -q 'value: "true"'
+grep -A1 'name: DSJ_ENABLED' "$render_dir/distributed-kpa.yaml" | grep -q 'value: "true"'
+if grep -q -- '--multicluster=true' "$render_dir/distributed-kpa.yaml"; then
+  echo 'distributed mode must not enable dedicated remote reconciliation' >&2
   exit 1
 fi
 

@@ -45,7 +45,8 @@ Dedicated multicluster scaling requires both bundled controllers. Set
 `kpa.enabled=true`. This mode enables KEDA/KPA remote reconciliation and
 selects KPA as KEDA's default autoscaling class. The default distributed mode
 uses the Agent's DistributedScaledObject/DistributedScaledJob controllers and
-suppresses the bundled KPA resources. With multicluster scaling disabled,
+does not install KPA unless `kpa.enabled=true`. An explicitly enabled KPA stays
+in single-cluster mode with the distributed workflow. With multicluster scaling disabled,
 `kpa.enabled=true` installs KPA for single-cluster use.
 
 ## Values
