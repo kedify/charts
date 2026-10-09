@@ -162,6 +162,8 @@ agent:
   noColor: false
   nameOverride: ""
   fullnameOverride: ""
+  # Prefer global.features when this chart installs KEDA/KPA so settings are shared.
+  # Agent-scoped features configure only the Agent controllers.
   features:
     podResourceProfilesDownscaleGuardEnabled: true
     podResourceProfilesEnabled: true
@@ -170,10 +172,10 @@ agent:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
-    # -- Enable the existing Agent DistributedScaledObject and DistributedScaledJob controllers. This does not enable KEDA's dedicated remote ScaledObject/ScaledJob runtime.
+    # -- Enable distributed multicluster scaling (DSO/DSJ). Prefer global.features.multicluster when this chart installs KEDA/KPA. Dedicated mode requires the global settings.
     multicluster:
       enabled: false
-      # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. This is independent of the Agent DSO/DSJ controllers. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
+      # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
