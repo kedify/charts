@@ -332,8 +332,6 @@ keda:
       enabled: true
     webhooks:
       enabled: true
-<<<<<<< Updated upstream
-=======
 kpa:
   # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35.
   # Enable this independently from multicluster mode. Dedicated mode configures
@@ -347,23 +345,12 @@ kpa:
     metricsAddress: keda-operator.keda.svc:9666
     metricsAuthority: keda-operator.keda.svc
     certificateSecret: kedaorg-certs
->>>>>>> Stashed changes
 keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
   interceptor:
     scaledObject:
       waitForCrd: true
-<<<<<<< Updated upstream
-kpa:
-  # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35.
-  # Also enable global.features.kedifyPodAutoscalerEnabled for Agent support and
-  # keda.kedify.kpa.enabled for a bundled KEDA installation. KPA can be installed separately.
-  # Dedicated multicluster mode requires both kpa.enabled and keda.enabled.
-  # For all available values: helm show values oci://ghcr.io/kedify/charts/kpa
-  enabled: false
-=======
->>>>>>> Stashed changes
 otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false

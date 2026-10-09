@@ -22,13 +22,8 @@ Kubernetes: `>=v1.23.0-0`
 | oci://ghcr.io/kedify/charts | autoscaling-checks | 0.0.2 |
 | oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.6 |
-<<<<<<< Updated upstream
-| oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
-| oci://ghcr.io/kedify/charts | kpa | 0.2.0 |
-=======
 | oci://ghcr.io/kedify/charts | kpa | 0.2.1 |
 | oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
->>>>>>> Stashed changes
 
 ## Optional KPA installation
 
