@@ -5,6 +5,9 @@ dependencies:
 - name: keda-add-ons-http
   repository: https://kedify.github.io/charts
   version: v0.11.1-7
+- name: kpa
+  repository: oci://ghcr.io/kedify/charts
+  version: 0.1.0
 - name: otel-add-on
   repository: oci://ghcr.io/kedify/charts
   version: 0.1.4
@@ -17,5 +20,5 @@ dependencies:
 - name: kedify-observability
   repository: oci://ghcr.io/kedify/charts
   version: 0.0.4
-digest: sha256:0db0e11efdcbbbb43ea8020fa637daff73819635244823bd958dfc0f1677e6b6
-generated: "2026-10-09T08:54:57.069866676Z"
+digest: sha256:1506a123b3d42a5eb7655d48e6473de9f9a7808cd1bb98c10c2a761a9214ae32
+generated: "2026-10-09T09:09:36.764188347Z"

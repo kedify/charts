@@ -335,6 +335,12 @@ keda-add-ons-http:
   interceptor:
     scaledObject:
       waitForCrd: true
+kpa:
+  # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35.
+  # Also enable global.features.kedifyPodAutoscalerEnabled for Agent support and
+  # keda.kedify.kpa.enabled for a bundled KEDA installation. KPA can be installed separately.
+  # For all available values: helm show values oci://ghcr.io/kedify/charts/kpa
+  enabled: false
 otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false
