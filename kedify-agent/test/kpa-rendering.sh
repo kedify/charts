@@ -18,6 +18,7 @@ if grep -q '^# Source: kedify-agent/charts/kpa/' "${dependency_render}"; then
   exit 1
 fi
 
+<<<<<<< Updated upstream
 for multicluster_type in distributed dedicated; do
   helm template test "${chart_dir}" --namespace keda --kube-version 1.34.0 \
     --values "${chart_dir}/test/test-values.yaml" \
@@ -33,9 +34,23 @@ for multicluster_type in distributed dedicated; do
   done
   if grep -q -- '--multicluster=true' "${dependency_render}"; then
     echo "Single-cluster KPA must not enable remote reconciliation" >&2
+=======
+helm template test "${chart_dir}" --namespace keda --kube-version 1.34.0 \
+  --values "${chart_dir}/test/test-values.yaml" \
+  --set kpa.enabled=true \
+  --set kpa.fullnameOverride=custom-kpa \
+  --set kpa.controller.syncPeriod=7s >"${dependency_render}"
+for expected in 'name: custom-kpa' 'name: kedifypodautoscalers.autoscaling.kedify.io' '--sync-period=7s'; do
+  if ! grep -qF -- "${expected}" "${dependency_render}"; then
+    echo "Enabled KPA dependency is missing ${expected}" >&2
+>>>>>>> Stashed changes
     exit 1
   fi
 done
+if grep -q -- '--multicluster=true' "${dependency_render}"; then
+  echo "kpa.enabled=true must not enable multicluster configuration by itself" >&2
+  exit 1
+fi
 
 helm template test "${chart_dir}" \
   --namespace keda \

@@ -18,21 +18,45 @@ Kubernetes: `>=v1.23.0-0`
 | Repository | Name | Version |
 |------------|------|---------|
 | https://kedify.github.io/charts | keda | v2.21.0-0 |
-| https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-6 |
+| https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-7 |
 | oci://ghcr.io/kedify/charts | autoscaling-checks | 0.0.2 |
 | oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.6 |
+<<<<<<< Updated upstream
 | oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
 | oci://ghcr.io/kedify/charts | kpa | 0.2.0 |
+=======
+| oci://ghcr.io/kedify/charts | kpa | 0.2.1 |
+| oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
+>>>>>>> Stashed changes
 
 ## Optional KPA installation
 
 Set `kpa.enabled=true` to install the Kedify Pod Autoscaler controller and CRD
-with the Agent chart on Kubernetes 1.33–1.35. Enable
-`global.features.kedifyPodAutoscalerEnabled=true` for Agent support and
-`keda.kedify.kpa.enabled=true` when using the bundled KEDA dependency. These
-settings are disabled by default. Existing separate KPA installations can keep
-`kpa.enabled=false`.
+with the Agent chart on Kubernetes 1.33–1.35. KPA installation is independent
+from multicluster mode. Also set
+`global.features.kedifyPodAutoscalerEnabled=true` for Agent-side KPA discovery
+and RBAC, and `keda.kedify.kpa.enabled=true` when enabling KPA in the bundled
+single-cluster KEDA installation.
+
+For dedicated multicluster reconciliation, enable KPA and the dedicated mode:
+
+```yaml
+global:
+  features:
+    multicluster:
+      enabled: true
+      type: dedicated
+keda:
+  enabled: true
+kpa:
+  enabled: true
+```
+
+Enable `global.features.kedifyPodAutoscalerEnabled=true` separately when the
+Agent should collect KPA resource metrics and discover KPA metrics endpoints.
+
+Existing separate KPA installations can keep `kpa.enabled=false`.
 
 KPA defaults to the KEDA operator in the `keda` namespace. Override
 `kpa.keda.metricsAddress` and `kpa.keda.metricsAuthority` when installing in
@@ -57,7 +81,7 @@ dedicated multicluster mode requires the global settings.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| kpa.enabled | bool | `false` | Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. Enable Agent and KEDA KPA support separately. |
+| kpa.enabled | bool | `false` | Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. Enable this independently from multicluster mode; Agent and bundled single-cluster KEDA support use their respective feature values. |
 | global.features.argoRolloutsEnabled | bool | `false` | Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC. |
 | global.features.multicluster | object | `{"enabled":false,"type":"distributed","vClusterDiscoveryEnabled":false}` | Enable multicluster scaling |
 | global.features.multicluster.type | string | `"distributed"` | Scaling model, either "distributed" or "dedicated". Distributed spreads global DSO/DSJ demand across clusters; Dedicated scales each registered cluster separately through KEDA/KPA. |

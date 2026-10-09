@@ -38,7 +38,12 @@ cluster_role_rule_verbs() {
 render > "$render_dir/default.yaml"
 render --set agent.features.multicluster.enabled=true > "$render_dir/legacy-agent.yaml"
 render --set global.features.multicluster.enabled=true > "$render_dir/legacy-global.yaml"
+<<<<<<< Updated upstream
 render --set keda.enabled=true --set kpa.enabled=true \
+=======
+render --set keda.enabled=true \
+  --set kpa.enabled=true \
+>>>>>>> Stashed changes
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > "$render_dir/dedicated-agent.yaml"
 for mode in agent global; do
@@ -111,7 +116,12 @@ for legacy_switch in \
   agent.features.multicluster.enabled \
   global.features.distributedScaledObjectsEnabled \
   agent.features.distributedScaledJobsEnabled; do
+<<<<<<< Updated upstream
   if render --set keda.enabled=true --set kpa.enabled=true \
+=======
+  if render --set keda.enabled=true \
+    --set kpa.enabled=true \
+>>>>>>> Stashed changes
     --set global.features.multicluster.enabled=true \
     --set global.features.multicluster.type=dedicated \
     --set "$legacy_switch=true" > "$render_dir/conflict.yaml" 2> "$render_dir/error"; then
@@ -120,7 +130,12 @@ for legacy_switch in \
   fi
   grep -q 'dedicated multicluster scaling is mutually exclusive with the Agent DistributedScaledObject/DistributedScaledJob controllers' "$render_dir/error"
 done
+<<<<<<< Updated upstream
 render --set keda.enabled=true --set kpa.enabled=true \
+=======
+render --set keda.enabled=true \
+  --set kpa.enabled=true \
+>>>>>>> Stashed changes
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated \
   --set agent.multicluster.localCluster.enabled=true > "$render_dir/dedicated-local-agent.yaml"
@@ -136,14 +151,22 @@ if render --set global.features.multicluster.type=invalid > /dev/null 2> "$rende
   echo 'invalid multicluster type must be rejected' >&2
   exit 1
 fi
-grep -q 'global.features.multicluster.type must be distributed or dedicated' "$render_dir/error"
+grep -Eq 'global.features.multicluster.type must be distributed or dedicated|value must be one of.*distributed.*dedicated' "$render_dir/error"
 if render --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > /dev/null 2> "$render_dir/error"; then
   echo 'dedicated multicluster mode must require bundled KEDA' >&2
   exit 1
 fi
 grep -q 'dedicated multicluster scaling requires keda.enabled=true' "$render_dir/error"
+if render --set keda.enabled=true \
+  --set global.features.multicluster.enabled=true \
+  --set global.features.multicluster.type=dedicated > /dev/null 2> "$render_dir/error"; then
+  echo 'dedicated multicluster mode must require bundled KPA' >&2
+  exit 1
+fi
+grep -q 'dedicated multicluster scaling requires kpa.enabled=true' "$render_dir/error"
 
+<<<<<<< Updated upstream
 if render --set keda.enabled=true \
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > /dev/null 2> "$render_dir/error"; then
@@ -158,9 +181,26 @@ helm template discovery "$chart_dir" --namespace scaling-system \
   --kube-version 1.35.5 \
   --values "$chart_dir/test/test-values.yaml" \
   --set keda.enabled=true --set kpa.enabled=true \
+=======
+# Dedicated mode configures both explicitly enabled bundled consumers. The
+# default distributed type must retain DSO/DSJ without implicitly enabling KPA.
+helm template discovery "$chart_dir" --namespace scaling-system \
+  --kube-version 1.35.5 \
+  --values "$chart_dir/test/test-values.yaml" \
+  --set keda.enabled=true \
+  --set kpa.enabled=true \
+>>>>>>> Stashed changes
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated > "$render_dir/dedicated-full.yaml"
-test "$(grep -c -- '--multicluster=true' "$render_dir/dedicated-full.yaml")" = '2'
+# The packaged KEDA dependency may predate the stacked KEDA chart under test;
+# its dedicated-mode flags are verified against ../keda above. The parent
+# render must always include a multicluster-enabled KPA dependency.
+awk '
+  /^# Source: kedify-agent\/charts\/kpa\/templates\/deployment.yaml$/ { kpa = 1; next }
+  kpa && /^# Source:/ { exit }
+  kpa { print }
+' "$render_dir/dedicated-full.yaml" > "$render_dir/dedicated-kpa-deployment.yaml"
+grep -q -- '--multicluster=true' "$render_dir/dedicated-kpa-deployment.yaml"
 grep -q 'app.kubernetes.io/part-of: kedify-pod-autoscaler' "$render_dir/dedicated-full.yaml"
 grep -q -- '--keda-metrics-address=keda-operator.scaling-system.svc:9666' "$render_dir/dedicated-full.yaml"
 
