@@ -51,10 +51,33 @@ if helm template test "${chart_dir}" --namespace keda \
   exit 1
 fi
 
+# Existing unsharded tenants did not configure a KPA Deployment name.
+for mode in default tenant; do
+  helm template test "${chart_dir}" --namespace keda \
+    --set kedify.kpa.enabled=true \
+    --set "kedify.multitenant.mode=${mode}" >"${legacy_render}"
+  if grep -q -- 'kpaDeploymentName:' "${legacy_render}"; then
+    echo "unconfigured KPA Deployment names must be omitted for unsharded tenants" >&2
+    exit 1
+  fi
+done
+
+# Helm --reuse-values can omit the newly added field entirely.
+helm template test "${chart_dir}" --namespace keda \
+  --set kedify.kpa.deploymentName=null >"${legacy_render}"
+helm template test "${chart_dir}" --namespace keda \
+  --set kedify.kpa.enabled=true \
+  --set kedify.multitenant.mode=tenant \
+  --set kedify.kpa.deploymentName=null >"${legacy_render}"
+
 if helm template test "${chart_dir}" --namespace keda \
   --set kedify.kpa.enabled=true \
-  --set kedify.multitenant.mode=tenant >/dev/null 2>&1; then
-  echo "multitenant KPA must require an exact KPA Deployment name" >&2
+  --set kedify.kpa.defaultClass=kpa \
+  --set kedify.multitenant.mode=tenant \
+  --set watchNamespace=tenant-a \
+  --set kedify.sharding.pool=applications \
+  --set kedify.sharding.id=s0 >/dev/null 2>&1; then
+  echo "KPA shards must require an exact KPA Deployment name" >&2
   exit 1
 fi
 

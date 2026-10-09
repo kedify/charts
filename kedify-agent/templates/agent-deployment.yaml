@@ -1,3 +1,4 @@
+{{- $sharding := .Values.agent.sharding | default (dict) -}}
 {{- $multiclusterEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "enabled")) "true" -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
@@ -58,7 +59,7 @@ spec:
           - --zap-log-level={{ default .Values.agent.logLevel .Values.agent.logging.level }}
           - --zap-encoder={{ .Values.agent.logging.format }}
           - --zap-time-encoding={{ .Values.agent.logging.timeEncoding }}
-          {{- if .Values.agent.sharding.pools }}
+          {{- if $sharding.pools }}
           - --sharding-configmap-name=kedify-agent-sharding
           - --sharding-configmap-namespace={{ .Release.Namespace }}
           {{- end }}
@@ -66,7 +67,7 @@ spec:
           - --zap-stacktrace-level=error
           {{- end }}
           {{- range $key, $value := .Values.agent.extraArgs }}
-          {{- if and $.Values.agent.sharding.pools (has $key (list "sharding-configmap-name" "sharding-configmap-namespace")) }}
+          {{- if and $sharding.pools (has $key (list "sharding-configmap-name" "sharding-configmap-namespace")) }}
           {{- fail "agent.extraArgs cannot override sharding ConfigMap references" }}
           {{- end }}
           - "--{{ $key }}={{ $value }}"
