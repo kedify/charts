@@ -23,11 +23,27 @@ Kubernetes: `>=v1.23.0-0`
 | oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
 | oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.6 |
 | oci://ghcr.io/kedify/charts | otel-add-on | 0.1.4 |
+| oci://ghcr.io/kedify/charts | kpa | 0.1.0 |
+
+## Optional KPA installation
+
+Set `kpa.enabled=true` to install the Kedify Pod Autoscaler controller and CRD
+with the Agent chart on Kubernetes 1.33–1.35. Enable
+`global.features.kedifyPodAutoscalerEnabled=true` for Agent support and
+`keda.kedify.kpa.enabled=true` when using the bundled KEDA dependency. These
+settings are disabled by default. Existing separate KPA installations can keep
+`kpa.enabled=false`.
+
+KPA defaults to the KEDA operator in the `keda` namespace. Override
+`kpa.keda.metricsAddress` and `kpa.keda.metricsAuthority` when installing in
+another namespace or using a different operator Service. Inspect the other
+controller settings with `helm show values oci://ghcr.io/kedify/charts/kpa`.
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| kpa.enabled | bool | `false` | Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. Enable Agent and KEDA KPA support separately. |
 | global.features.argoRolloutsEnabled | bool | `false` | Enable Argo Rollout targets for Pod Resource Profiles and Pod Resource Autoscalers by granting read-only Rollout RBAC. |
 | global.features.multicluster | object | `{"enabled":false,"vClusterDiscoveryEnabled":false}` | Enable DistributedScaledObject and DistributedScaledJob controllers and bundled KEDA raw metrics gRPC. |
 | global.features.multicluster.vClusterDiscoveryEnabled | bool | `false` | Discover shared-node vClusters from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services. |

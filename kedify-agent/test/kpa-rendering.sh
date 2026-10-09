@@ -7,7 +7,27 @@ default_render="$(mktemp)"
 enabled_render="$(mktemp)"
 restricted_render="$(mktemp)"
 multitenant_render="$(mktemp)"
-trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}" "${multitenant_render}"' EXIT
+dependency_render="$(mktemp)"
+trap 'rm -f "${default_render}" "${enabled_render}" "${restricted_render}" "${multitenant_render}" "${dependency_render}"' EXIT
+
+# A disabled KPA dependency must preserve the Agent's older Kubernetes support.
+helm template test "${chart_dir}" --namespace keda --kube-version 1.23.0 \
+  --values "${chart_dir}/test/test-values.yaml" >"${dependency_render}"
+if grep -q '^# Source: kedify-agent/charts/kpa/' "${dependency_render}"; then
+  echo "KPA resources must not be installed by default" >&2
+  exit 1
+fi
+
+helm template test "${chart_dir}" --namespace keda --kube-version 1.34.0 \
+  --values "${chart_dir}/test/test-values.yaml" \
+  --set kpa.enabled=true --set kpa.fullnameOverride=custom-kpa \
+  --set kpa.controller.syncPeriod=7s >"${dependency_render}"
+for expected in 'name: custom-kpa' 'name: kedifypodautoscalers.autoscaling.kedify.io' '--sync-period=7s'; do
+  if ! grep -qF -- "${expected}" "${dependency_render}"; then
+    echo "Enabled KPA dependency is missing ${expected}" >&2
+    exit 1
+  fi
+done
 
 helm template test "${chart_dir}" \
   --namespace keda \
