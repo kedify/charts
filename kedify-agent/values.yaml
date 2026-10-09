@@ -72,7 +72,7 @@ agent:
     # otherwise it will be dynamically deployed in each namespace with HTTPScaledObject
     clusterWide: false
     chart: /helm/kedify/kedify-proxy.tgz
-    chartVersion: v0.0.12
+    chartVersion: v0.0.13
     # if enabled, the Kedify agent will watch for ConfigMaps with name pattern: <namespace>-kedify-proxy-configmap and will update the Kedify proxy configuration accordingly
     proxyConfigmapWatcherEnabled: true
     # this will override the defaults defined in https://github.com/kedify/charts/blob/main/kedify-proxy/values.yaml
