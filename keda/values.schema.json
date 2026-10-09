@@ -177,7 +177,6 @@
                 "clusterDomain",
                 "crds",
                 "watchNamespace",
-                "multicluster",
                 "kedify",
                 "imagePullSecrets",
                 "networkPolicy",

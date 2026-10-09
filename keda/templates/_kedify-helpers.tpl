@@ -100,10 +100,11 @@ must not start KEDA's ClusterRegistration provider.
 {{- end -}}
 {{- $distributed := and (index $multicluster "enabled") (eq $type "distributed") -}}
 {{- $dedicated := and (index $multicluster "enabled") (eq $type "dedicated") -}}
-{{- if and .Values.multicluster.enabled $distributed -}}
+{{- $kedaMulticluster := default (dict) .Values.multicluster -}}
+{{- if and (index $kedaMulticluster "enabled") $distributed -}}
   {{- fail "multicluster.enabled=true enables dedicated KEDA reconciliation and cannot be combined with global.features.multicluster.type=distributed" -}}
 {{- end -}}
-{{- if or .Values.multicluster.enabled $dedicated -}}true{{- else -}}false{{- end -}}
+{{- if or (index $kedaMulticluster "enabled") $dedicated -}}true{{- else -}}false{{- end -}}
 {{- end }}
 
 {{/*

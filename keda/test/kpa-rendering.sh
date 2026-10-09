@@ -150,6 +150,24 @@ if grep -q -- '--multicluster=true' "${distributed_render}" ||
 fi
 grep -A1 'name: RAW_METRICS_GRPC_PROTOCOL' "${distributed_render}" | grep -q 'value: enabled'
 
+# Releases predating multicluster.enabled omit this map with --reuse-values.
+helm template test "${chart_dir}" --namespace keda \
+  --set multicluster=null >"${legacy_render}"
+if grep -q -- '--multicluster=true' "${legacy_render}" || \
+   grep -q -- '--enable-kpa=true' "${legacy_render}"; then
+  echo "missing multicluster values must retain the default HPA mode" >&2
+  exit 1
+fi
+helm template test "${chart_dir}" --namespace keda \
+  --set multicluster=null \
+  --set global.features.multicluster.enabled=true >"${legacy_render}"
+if grep -q -- '--multicluster=true' "${legacy_render}" || \
+   grep -q -- '--enable-kpa=true' "${legacy_render}"; then
+  echo "legacy distributed mode must not enable dedicated reconciliation" >&2
+  exit 1
+fi
+grep -A1 'name: RAW_METRICS_GRPC_PROTOCOL' "${legacy_render}" | grep -q 'value: enabled'
+
 render_error="$(helm template test "${chart_dir}" --namespace keda \
   --set global.features.multicluster.enabled=true \
   --set global.features.multicluster.type=dedicated \
