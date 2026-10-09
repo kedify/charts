@@ -10,7 +10,7 @@ global:
     argoRolloutsEnabled: false
     prpRequiresAnnotatedPods: true
     praRequiresAnnotatedPods: false
-    # -- Enable multicluster scaling. The default distributed type preserves the existing Agent DSO/DSJ workflow; dedicated delegates each registered cluster to KEDA/KPA with its own replica target.
+    # -- Enable multicluster scaling
     multicluster:
       enabled: false
       # -- Scaling model, either "distributed" or "dedicated". Distributed spreads global DSO/DSJ demand across clusters; Dedicated scales each registered cluster separately through KEDA/KPA.
