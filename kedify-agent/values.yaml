@@ -13,7 +13,7 @@ global:
     # -- Enable multicluster scaling. The default distributed type preserves the existing Agent DSO/DSJ workflow; dedicated delegates each registered cluster to KEDA/KPA with its own replica target.
     multicluster:
       enabled: false
-      # -- Scaling model. distributed spreads global DSO/DSJ demand across clusters; dedicated scales each registered cluster separately through KEDA/KPA.
+      # -- Scaling model, either "distributed" or "dedicated". Distributed spreads global DSO/DSJ demand across clusters; Dedicated scales each registered cluster separately through KEDA/KPA.
       type: distributed
       # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
