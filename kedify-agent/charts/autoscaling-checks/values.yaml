@@ -1,0 +1,172 @@
+image:
+  repository: ghcr.io/kedify/autoscaling-checks
+  tag: ""
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+rbac:
+  create: true
+
+common:
+  checkInterval: 5m
+  checkTimeout: 12m
+  metricTimeout: 90s
+  scaleUpTimeout: 3m
+  scaleDownTimeout: 5m
+  runnerResources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+monitoring:
+  scrapeAnnotations: true
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+
+http:
+  enabled: true
+  host: autoscaling-checks-http.local
+  runner:
+    concurrency: 8
+    targetURL: ""
+  target:
+    image: ghcr.io/kedify/sample-http-server:latest
+    imagePullPolicy: Always
+    replicas: 1
+    idleReplicas: 1
+    scaleUpReplicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  scaledObject:
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    cooldownPeriod: 0
+    targetValue: "5"
+    granularity: 1s
+    window: 10s
+
+prometheus:
+  enabled: false
+  serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+  sourceQuery: sum(work_simulator_inprogress_tasks)
+  runner:
+    concurrency: 12
+    expectedMinMetric: "1"
+  target:
+    image: ghcr.io/kedify/sample-work-simulator:latest
+    imagePullPolicy: Always
+    replicas: 1
+    idleReplicas: 1
+    scaleUpReplicas: 2
+    minSleepMs: "100"
+    maxSleepMs: "600"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+  scaledObject:
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    pollingInterval: 5
+    threshold: "5"
+  targetServiceMonitor:
+    enabled: false
+    interval: 15s
+
+otel:
+  enabled: false
+  addonNamespace: ""
+  addonServiceName: kedify-otel-scaler
+  runner:
+    otlpEndpoint: ""
+    restURL: ""
+    expectedMinMetric: "10"
+    operationOverTime: ""
+    pushInterval: 1s
+  target:
+    image: ghcr.io/kedify/sample-http-server:latest
+    imagePullPolicy: Always
+    replicas: 1
+    idleReplicas: 1
+    scaleUpReplicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  scaledObject:
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    pollingInterval: 5
+    scalerAddress: ""
+    metricQuery: ""
+    targetValue: "5"
+    operationOverTime: last_one
+    clampMin: "0"
+    clampMax: "10"
+
+cpu:
+  enabled: true
+  runner:
+    useProfileHigh: true
+    cpuMillicores: "900"
+    sourceThresholdMillicores: "150"
+  target:
+    image: ghcr.io/kedify/sample-load-generator:latest
+    imagePullPolicy: Always
+    replicas: 1
+    idleReplicas: 1
+    scaleUpReplicas: 2
+    resources:
+      requests:
+        cpu: 200m
+        memory: 96Mi
+      limits:
+        cpu: 1200m
+        memory: 600Mi
+  scaledObject:
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    pollingInterval: 5
+    utilization: "60"
+
+memory:
+  enabled: false
+  runner:
+    memoryMiB: "650"
+    sourceThresholdMiB: "300"
+  target:
+    image: ghcr.io/kedify/sample-load-generator:latest
+    imagePullPolicy: Always
+    replicas: 1
+    idleReplicas: 1
+    scaleUpReplicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+  scaledObject:
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    pollingInterval: 5
+    utilization: "60"
