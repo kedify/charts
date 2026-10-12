@@ -218,7 +218,7 @@ grep -q 'kubectl get crd clusterregistrations.multicluster.kedify.io.*Establishe
 grep -q 'multicluster.kedify.io/local-cluster: "true"' "$render_dir/local-registration.yaml"
 grep -q 'clusterName: "management"' "$render_dir/local-registration.yaml"
 grep -q 'context: "kedify-agent@management"' "$render_dir/local-registration.yaml"
-grep -A2 'kubeconfigSecretRef:' "$render_dir/local-registration.yaml" | grep -q 'name: management'
+grep -A2 'kubeconfigSecretRef:' "$render_dir/local-registration.yaml" | grep -Eq 'name: "?management"?$'
 if grep -q '^kind: Secret$' "$render_dir/local-registration.yaml"; then
   echo 'the local connection Secret must be materialized by the Agent, not contain file references rendered by Helm' >&2
   exit 1
