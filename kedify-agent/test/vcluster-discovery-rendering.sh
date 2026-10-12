@@ -210,6 +210,10 @@ if grep -q '^kind: ClusterRegistration$' "$render_dir/local-registration.yaml"; 
   echo 'Helm mode must create the local ClusterRegistration through a hook job after its CRD is established' >&2
   exit 1
 fi
+if grep -q 'argocd.argoproj.io/sync-wave' "$render_dir/local-registration.yaml"; then
+  echo 'Helm mode must not render Argo CD sync-wave annotations' >&2
+  exit 1
+fi
 grep -q '^kind: ConfigMap$' "$render_dir/local-registration.yaml"
 grep -q '^kind: Job$' "$render_dir/local-registration.yaml"
 grep -q 'helm.sh/hook-weight: "1"' "$render_dir/local-registration.yaml"
