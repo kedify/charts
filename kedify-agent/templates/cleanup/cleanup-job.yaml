@@ -1,5 +1,5 @@
 {{- if eq .Values.hooks "helm" }}
-{{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration }}
+{{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration .Values.agent.multicluster.localCluster.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -62,6 +62,17 @@ spec:
                 echo "warn: some KedifyConfigurations remain after finalizer purge"
             fi
           fi
+          {{- end }}
+          {{- if .Values.agent.multicluster.localCluster.enabled }}
+          # The local registration is created by a hook job and is therefore
+          # not part of Helm's ordinary release inventory.
+          for registration in $(kubectl get clusterregistrations -n {{ .Release.Namespace }} -o name 2>/dev/null || true); do
+            local_cluster=$(kubectl get -n {{ .Release.Namespace }} "$registration" -o jsonpath='{.metadata.annotations.multicluster\.kedify\.io/local-cluster}' 2>/dev/null || true)
+            owner_release=$(kubectl get -n {{ .Release.Namespace }} "$registration" -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}' 2>/dev/null || true)
+            if [ "$local_cluster" = "true" ] && [ "$owner_release" = {{ .Release.Name | quote }} ]; then
+              kubectl delete -n {{ .Release.Namespace }} "$registration" --ignore-not-found --timeout=30s 2>&1 || true
+            fi
+          done
           {{- end }}
           {{- if .Values.agent.createCrds }}
           # delete kedify CRDs (ignore if not found)

@@ -1,18 +1,302 @@
-{{- if .Values.agent.multicluster.localCluster.enabled }}
 {{- $localCluster := .Values.agent.multicluster.localCluster }}
+{{- $enabled := $localCluster.enabled }}
+{{- $name := "" }}
+{{- if $enabled }}
+{{- $name = required "agent.multicluster.localCluster.name is required when local-cluster registration is enabled" $localCluster.name }}
+{{- end }}
+{{/*
+Argo applies the ClusterRegistration CRD at sync wave -5, so it can own and
+prune the custom resource normally at the following wave.
+*/}}
+{{- if and $enabled (eq .Values.hooks "argo") }}
 apiVersion: multicluster.kedify.io/v1alpha1
 kind: ClusterRegistration
 metadata:
-  name: {{ $localCluster.name }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+    multicluster.kedify.io/local-cluster: "true"
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
     multicluster.kedify.io/local-cluster: "true"
 spec:
   provider: kubeconfig
-  clusterName: {{ $localCluster.name | quote }}
-  displayName: {{ $localCluster.name | quote }}
-  context: {{ printf "kedify-agent@%s" $localCluster.name | quote }}
+  clusterName: {{ $name | quote }}
+  displayName: {{ $name | quote }}
+  context: {{ printf "kedify-agent@%s" $name | quote }}
   kubeconfigSecretRef:
-    name: {{ $localCluster.name }}
+    name: {{ $name | quote }}
     key: kubeconfig
+{{/*
+In Helm mode the CRD is installed by a pre-install hook. Helm performs REST
+mapping before it executes that hook, so exposing a ClusterRegistration in the
+ordinary manifest would make a clean install fail. Store the desired resource
+in a ConfigMap and apply it from a later hook instead.
+
+The upgrade-only branch remains rendered when the feature is disabled so the
+Job can remove a registration created by an earlier revision.
+*/}}
+{{- else if or $enabled .Release.IsUpgrade }}
+{{- if $enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+data:
+  registration.yaml: |
+    apiVersion: multicluster.kedify.io/v1alpha1
+    kind: ClusterRegistration
+    metadata:
+      name: {{ $name | quote }}
+      namespace: {{ .Release.Namespace | quote }}
+      annotations:
+        meta.helm.sh/release-name: {{ .Release.Name | quote }}
+        meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+        multicluster.kedify.io/local-cluster: "true"
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        multicluster.kedify.io/local-cluster: "true"
+    spec:
+      provider: kubeconfig
+      clusterName: {{ $name | quote }}
+      displayName: {{ $name | quote }}
+      context: {{ printf "kedify-agent@%s" $name | quote }}
+      kubeconfigSecretRef:
+        name: {{ $name | quote }}
+        key: kubeconfig
+---
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+rules:
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+{{- if eq .Values.hooks "jobs" }}
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  resourceNames:
+  - {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  verbs:
+  - delete
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  resourceNames:
+  - {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  verbs:
+  - delete
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+subjects:
+- kind: ServiceAccount
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  resourceNames:
+  - clusterregistrations.multicluster.kedify.io
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "0"
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+subjects:
+- kind: ServiceAccount
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+  namespace: {{ .Release.Namespace | quote }}
+  {{- if eq .Values.hooks "helm" }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+    helm.sh/hook-weight: "1"
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 43200
+  backoffLimit: 2
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+      {{- with .Values.agent.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: reconcile
+        image: "{{ .Values.agent.kubectlImage.repository }}:{{ .Values.agent.kubectlImage.tag }}"
+        imagePullPolicy: {{ .Values.agent.kubectlImage.pullPolicy }}
+        command:
+        - sh
+        - -c
+        - |
+          set -o errexit
+          set -o nounset
+          {{- if $enabled }}
+          echo "Waiting for ClusterRegistration CRD to become available..."
+          attempts=0
+          until [ "$(kubectl get crd clusterregistrations.multicluster.kedify.io -o jsonpath='{.status.conditions[?(@.type=="Established")].status}' 2>/dev/null || true)" = "True" ]; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge 600 ]; then
+              echo "ClusterRegistration CRD did not become established within 300 seconds" >&2
+              exit 1
+            fi
+            sleep .5
+          done
+          {{- else }}
+          if ! kubectl get crd clusterregistrations.multicluster.kedify.io >/dev/null 2>&1; then
+            exit 0
+          fi
+          {{- end }}
+          for registration in $(kubectl get clusterregistrations -n {{ .Release.Namespace | quote }} -o name); do
+            # Match both the feature marker and Helm ownership. The ownership
+            # check prevents one release from deleting another release's local
+            # registration in a shared namespace.
+            local_cluster=$(kubectl get -n {{ .Release.Namespace | quote }} "$registration" -o jsonpath='{.metadata.annotations.multicluster\.kedify\.io/local-cluster}')
+            owner_release=$(kubectl get -n {{ .Release.Namespace | quote }} "$registration" -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}')
+            if [ "$local_cluster" = "true" ] && [ "$owner_release" = {{ .Release.Name | quote }} ]; then
+              {{- if $enabled }}
+              if [ "$registration" != "clusterregistration.multicluster.kedify.io/{{ $name }}" ]; then
+                kubectl delete -n {{ .Release.Namespace | quote }} "$registration"
+              fi
+              {{- else }}
+              kubectl delete -n {{ .Release.Namespace | quote }} "$registration"
+              {{- end }}
+            fi
+          done
+          {{- if $enabled }}
+          kubectl apply -f /data/registration.yaml
+          {{- end }}
+          {{- if eq .Values.hooks "jobs" }}
+          echo "Deleting completed local-registration job resources in 10 seconds..."
+          sleep 10
+          kubectl delete -n {{ .Release.Namespace | quote }} --ignore-not-found \
+            serviceaccount/{{ include "kedify-agent.fullname" . }}-local-cluster-registration \
+            job/{{ include "kedify-agent.fullname" . }}-local-cluster-registration
+          {{- end }}
+        {{- with .Values.agent.securityContext }}
+        securityContext:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if $enabled }}
+        volumeMounts:
+        - name: registration
+          mountPath: /data/registration.yaml
+          subPath: registration.yaml
+        {{- end }}
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+      {{- if $enabled }}
+      volumes:
+      - name: registration
+        configMap:
+          name: {{ include "kedify-agent.fullname" . }}-local-cluster-registration
+      {{- end }}
+      {{- with .Values.agent.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}
