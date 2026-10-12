@@ -206,13 +206,56 @@ helm template discovery "$chart_dir" --namespace scaling-system \
   --set agent.multicluster.localCluster.enabled=true \
   --set agent.multicluster.localCluster.name=management \
   --show-only templates/local-cluster-registration.yaml > "$render_dir/local-registration.yaml"
-grep -q '^kind: ClusterRegistration$' "$render_dir/local-registration.yaml"
+if grep -q '^kind: ClusterRegistration$' "$render_dir/local-registration.yaml"; then
+  echo 'Helm mode must create the local ClusterRegistration through a hook job after its CRD is established' >&2
+  exit 1
+fi
+grep -q '^kind: ConfigMap$' "$render_dir/local-registration.yaml"
+grep -q '^kind: Job$' "$render_dir/local-registration.yaml"
+grep -q 'helm.sh/hook-weight: "1"' "$render_dir/local-registration.yaml"
+grep -q 'kind: ClusterRegistration' "$render_dir/local-registration.yaml"
+grep -q 'kubectl get crd clusterregistrations.multicluster.kedify.io.*Established' "$render_dir/local-registration.yaml"
 grep -q 'multicluster.kedify.io/local-cluster: "true"' "$render_dir/local-registration.yaml"
 grep -q 'clusterName: "management"' "$render_dir/local-registration.yaml"
 grep -q 'context: "kedify-agent@management"' "$render_dir/local-registration.yaml"
 grep -A2 'kubeconfigSecretRef:' "$render_dir/local-registration.yaml" | grep -q 'name: management'
 if grep -q '^kind: Secret$' "$render_dir/local-registration.yaml"; then
   echo 'the local connection Secret must be materialized by the Agent, not contain file references rendered by Helm' >&2
+  exit 1
+fi
+
+helm template discovery "$chart_dir" --namespace scaling-system \
+  --values "$chart_dir/test/test-values.yaml" \
+  --set hooks=argo \
+  --set agent.multicluster.localCluster.enabled=true \
+  --set agent.multicluster.localCluster.name=management \
+  --show-only templates/local-cluster-registration.yaml > "$render_dir/local-registration-argo.yaml"
+grep -q '^kind: ClusterRegistration$' "$render_dir/local-registration-argo.yaml"
+grep -q 'argocd.argoproj.io/sync-wave: "-4"' "$render_dir/local-registration-argo.yaml"
+if grep -q '^kind: Job$' "$render_dir/local-registration-argo.yaml"; then
+  echo 'Argo mode must use sync waves instead of a local-registration job' >&2
+  exit 1
+fi
+
+if helm template discovery "$chart_dir" --namespace scaling-system \
+  --values "$chart_dir/test/test-values.yaml" \
+  --set agent.multicluster.localCluster.enabled=true \
+  --set-string agent.multicluster.localCluster.name= \
+  --show-only templates/local-cluster-registration.yaml > /dev/null 2> "$render_dir/error"; then
+  echo 'local-cluster registration must reject an empty name' >&2
+  exit 1
+fi
+grep -q 'agent.multicluster.localCluster.name is required when local-cluster registration is enabled' "$render_dir/error"
+
+helm template discovery "$chart_dir" --namespace scaling-system --is-upgrade \
+  --values "$chart_dir/test/test-values.yaml" \
+  --set agent.multicluster.localCluster.enabled=false \
+  --show-only templates/local-cluster-registration.yaml > "$render_dir/local-registration-disabled-upgrade.yaml"
+grep -q '^kind: Job$' "$render_dir/local-registration-disabled-upgrade.yaml"
+grep -q 'annotations.meta\\.helm\\.sh/release-name' "$render_dir/local-registration-disabled-upgrade.yaml"
+grep -q 'kubectl delete.*"$registration"' "$render_dir/local-registration-disabled-upgrade.yaml"
+if grep -q 'registration.yaml:' "$render_dir/local-registration-disabled-upgrade.yaml"; then
+  echo 'disabling local-cluster registration must render cleanup without a replacement registration' >&2
   exit 1
 fi
 echo 'vCluster discovery rendering passed'

@@ -1,5 +1,5 @@
 {{- if eq .Values.hooks "helm" }}
-{{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration }}
+{{- if or .Values.agent.createCrds .Values.agent.createKedifyConfiguration .Values.agent.multicluster.localCluster.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -10,7 +10,7 @@ metadata:
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
     helm.sh/hook-weight: "-2"
 ---
-{{- if .Values.agent.createKedifyConfiguration }}
+{{- if or .Values.agent.createKedifyConfiguration .Values.agent.multicluster.localCluster.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -21,6 +21,7 @@ metadata:
     helm.sh/hook-delete-policy: "before-hook-creation,hook-succeeded,hook-failed"
     helm.sh/hook-weight: "-2"
 rules:
+{{- if .Values.agent.createKedifyConfiguration }}
 - apiGroups:
   - install.kedify.io
   resources:
@@ -31,6 +32,17 @@ rules:
   - list
   - patch
   - watch
+{{- end }}
+{{- if .Values.agent.multicluster.localCluster.enabled }}
+- apiGroups:
+  - multicluster.kedify.io
+  resources:
+  - clusterregistrations
+  verbs:
+  - delete
+  - get
+  - list
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -50,7 +62,7 @@ subjects:
   name: kedify-cleanup
   namespace: {{ .Release.Namespace }}
 ---
-{{- if not .Values.agent.createCrds }}
+{{- if and .Values.agent.createKedifyConfiguration (not .Values.agent.createCrds) }}
 # when createCrds is disabled, the job still needs to check if the KC CRD exists
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
