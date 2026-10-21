@@ -123,7 +123,15 @@ loki:
   enabled: true
   namespaceOverride: ""
   fullnameOverride: loki
+  lokiCanary:
+    image:
+      tag: "3.7.9"
+      digest: sha256:affa9bbdd475832d38d4d774dbefcccd946bd42bf05011174de33f454e8aa3e4
   loki:
+    # Loki 3.7.9 is rebuilt with Go 1.26.10 for CVE-2026-111943.
+    image:
+      tag: "3.7.9"
+      digest: sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
     auth_enabled: false
     commonConfig:
       replication_factor: 1
