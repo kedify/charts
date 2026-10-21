@@ -34,6 +34,14 @@
     },
     {
       "packageNames": [
+        "ghcr.io/kedify/charts/kpa",
+        "ghcr.io/kedify/charts/autoscaling-checks",
+        "ghcr.io/kedify/charts/kedify-observability",
+      ],
+      "enabled": true,
+    },
+    {
+      "packageNames": [
         "envoyproxy/envoy", // docker img, kedify-proxy is a wrapper around it
       ],
       "enabled": true,
@@ -65,6 +73,15 @@
       "depNameTemplate": "ghcr.io/kedify/charts/kedify-predictor",
       "matchStrings": [
         "name:\\s+kedify-predictor\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
+      ],
+    },
+    {
+      // OCI chart dependencies not covered by the release-triggered updater.
+      "fileMatch": ["^kedify-agent/Chart.yaml$"],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/kedify/charts/{{{depName}}}",
+      "matchStrings": [
+        "name:\\s+(?<depName>kpa|autoscaling-checks|kedify-observability)\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\\s]+)\"?",
       ],
     },
     {
