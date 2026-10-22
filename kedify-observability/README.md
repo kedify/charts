@@ -14,8 +14,22 @@ kubectl port-forward -nobs svc/grafana 3000:80
 open http://localhost:3000/dashboards
 ```
 
+OTel scaler metrics are discovered from Services labelled
+`app.kubernetes.io/name: otel-add-on` on their `internal-metrics` port. This
+includes `kedify-otel-scaler` from the Agent chart and standalone add-on
+installations with custom service names. The scrape job and `release` label stay
+`keda-otel-scaler` for existing dashboard filters.
+
 ### Logging Infrastructure
 consult [Kedify Logs with Loki and OpenTelemetry Collector](./kedify-loki-opentelemetry-logs.md)
+
+OTel scaler log collection recognizes both `keda-otel-scaler-*` and
+`kedify-otel-scaler-*` pods in the `keda` namespace and assigns their logs the
+`kedify_otel_scaler` component.
+
+Collector containers are excluded from every log receiver. This also prevents
+an Agent-prefixed collector pod from matching the Agent log rule and ingesting
+its own parsing errors.
 
 ### DEBUG
 To get all the logs kedify component logs:

@@ -229,8 +229,10 @@ collector:
           - /var/log/pods/*_kedify-proxy-*_*/*/*.log
         exclude:
           - /var/log/pods/*/opentelemetry-collector/*.log
+          - /var/log/pods/*/collector/*.log
           - /var/log/pods/keda_kedify-agent-*_*/*/*.log
           - /var/log/pods/keda_keda-otel-scaler-*_*/*/*.log
+          - /var/log/pods/keda_kedify-otel-scaler-*_*/*/*.log
         include_file_path: true
         include_file_name: false
         attributes:
@@ -241,6 +243,9 @@ collector:
       file_log/kedify_agent:
         include:
           - /var/log/pods/keda_kedify-agent-*_*/*/*.log
+        exclude:
+          - /var/log/pods/*/opentelemetry-collector/*.log
+          - /var/log/pods/*/collector/*.log
         include_file_path: true
         include_file_name: false
         attributes:
@@ -276,6 +281,10 @@ collector:
       file_log/kedify_otel_scaler:
         include:
           - /var/log/pods/keda_keda-otel-scaler-*_*/*/*.log
+          - /var/log/pods/keda_kedify-otel-scaler-*_*/*/*.log
+        exclude:
+          - /var/log/pods/*/opentelemetry-collector/*.log
+          - /var/log/pods/*/collector/*.log
         include_file_path: true
         include_file_name: false
         attributes:
@@ -401,12 +410,22 @@ prometheus:
         - __name__
       metrics_path: /metrics
       scrape_interval: 15s
-      static_configs:
-      - labels:
-          kubernetes_namespace: keda
-          release: keda-otel-scaler
-        targets:
-        - keda-otel-scaler.keda.svc.cluster.local:8080
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - action: keep
+        regex: otel-add-on
+        source_labels:
+        - __meta_kubernetes_service_label_app_kubernetes_io_name
+      - action: keep
+        regex: internal-metrics
+        source_labels:
+        - __meta_kubernetes_endpoint_port_name
+      - source_labels:
+        - __meta_kubernetes_namespace
+        target_label: kubernetes_namespace
+      - target_label: release
+        replacement: keda-otel-scaler
     autoscaling-check-runners:
       honor_labels: true
       kubernetes_sd_configs:
