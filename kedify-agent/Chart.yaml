@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kedify-agent
+name: kedify-eks-addon-chart
 description: Kedify agent - Helm Chart
 kubeVersion: ">=v1.23.0-0"
 type: application
