@@ -2534,6 +2534,51 @@ entries:
     version: 0.7.0
   kedify-agent:
   - apiVersion: v2
+    appVersion: v0.8.3
+    created: "2026-10-22T18:15:57.763314078Z"
+    dependencies:
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedify.github.io/charts
+      version: v2.21.0-3
+    - condition: kedaAddOnsHttp.enabled,keda-add-ons-http.enabled
+      name: keda-add-ons-http
+      repository: https://kedify.github.io/charts
+      version: v0.11.1-8
+    - condition: kpa.enabled
+      name: kpa
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.3.1
+    - condition: otelAddOn.enabled,otel-add-on.enabled
+      name: otel-add-on
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.1.5
+    - condition: kedifyPredictor.enabled,kedify-predictor.enabled
+      name: kedify-predictor
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.1.9
+    - condition: autoscalingChecks.enabled,autoscaling-checks.enabled
+      name: autoscaling-checks
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.1.0
+    - condition: kedifyObservability.enabled,kedify-observability.enabled
+      name: kedify-observability
+      repository: oci://ghcr.io/kedify/charts
+      version: 0.0.4
+    description: Kedify agent - Helm Chart
+    digest: 9be99abe9d03dcb052e040143ec049978bb75f8b58637a2c5346b7a8650c2b84
+    home: https://github.com/kedify/charts
+    icon: https://github.com/kedify/marketing/raw/refs/heads/main/public/assets/images/logo.svg
+    kubeVersion: '>=v1.23.0-0'
+    name: kedify-agent
+    sources:
+    - https://github.com/kedify/agent
+    - https://github.com/kedify/charts
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-agent-v0.8.3.tgz
+    version: v0.8.3
+  - apiVersion: v2
     appVersion: v0.8.2
     created: "2026-10-13T09:42:06.132368738Z"
     dependencies:
@@ -5067,4 +5112,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2026-10-22T15:34:54.821762868Z"
+generated: "2026-10-22T18:15:57.706250975Z"
