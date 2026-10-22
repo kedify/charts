@@ -1,6 +1,6 @@
 # kedify-proxy
 
-![Version: v0.0.13](https://img.shields.io/badge/Version-v0.0.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.39.3](https://img.shields.io/badge/AppVersion-v1.39.3-informational?style=flat-square)
+![Version: v0.0.13](https://img.shields.io/badge/Version-v0.0.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.40.0](https://img.shields.io/badge/AppVersion-v1.40.0-informational?style=flat-square)
 
 A Helm chart for Kedify proxy
 
