@@ -191,3 +191,40 @@ ruby -ryaml -e '
   abort "ClusterRegistration watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("multicluster.kedify.io") && rule.fetch("resources", []).include?("clusterregistrations") }
   abort "registration Secret watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("") && rule.fetch("resources", []).include?("secrets") }
 ' "${multicluster_render}"
+
+# Performance defaults belong only to the dedicated operator. Explicit env
+# entries (including Secret references) must suppress the corresponding default.
+for mode in default distributed tenant multicluster dedicated; do
+  render_var="${mode}_render"
+  ruby -ryaml -e '
+    docs = YAML.load_stream(File.read(ARGV[0])).compact
+    expected = {"KEDA_SCALEDOBJECT_CTRL_MAX_RECONCILES" => "20", "KEDA_MULTICLUSTER_KUBE_API_QPS" => "20", "KEDA_MULTICLUSTER_KUBE_API_BURST" => "40"}
+    docs.each do |doc|
+      doc.dig("spec", "template", "spec", "containers")&.each do |container|
+        expected.each do |name, value|
+          entries = container.fetch("env", []).select { |env| env["name"] == name }
+          dedicated = %w[multicluster dedicated].include?(ARGV[1]) && container.fetch("command", []).include?("/keda")
+          abort "incorrect performance env #{name} in #{ARGV[1]}: #{entries}" unless dedicated ? entries == [{"name" => name, "value" => value}] : entries.empty?
+        end
+      end
+    end
+  ' "${!render_var}" "$mode"
+done
+
+helm template test "${chart_dir}" --namespace keda \
+  --set multicluster.enabled=true \
+  --set 'env[0].name=KEDA_MULTICLUSTER_KUBE_API_QPS' \
+  --set-string 'env[0].value=7' \
+  --set 'operator.env[0].name=KEDA_SCALEDOBJECT_CTRL_MAX_RECONCILES' \
+  --set-string 'operator.env[0].value=9' \
+  --set 'operator.env[1].name=KEDA_MULTICLUSTER_KUBE_API_BURST' \
+  --set 'operator.env[1].valueFrom.secretKeyRef.name=limits' \
+  --set 'operator.env[1].valueFrom.secretKeyRef.key=burst' >"${legacy_render}"
+ruby -ryaml -e '
+  docs = YAML.load_stream(File.read(ARGV[0])).compact
+  operator = docs.find { |doc| doc.dig("spec", "template", "spec", "containers")&.any? { |c| c.fetch("command", []).include?("/keda") } }
+  env = operator.dig("spec", "template", "spec", "containers").find { |c| c.fetch("command", []).include?("/keda") }.fetch("env")
+  {"KEDA_MULTICLUSTER_KUBE_API_QPS" => {"value" => "7"}, "KEDA_SCALEDOBJECT_CTRL_MAX_RECONCILES" => {"value" => "9"}, "KEDA_MULTICLUSTER_KUBE_API_BURST" => {"valueFrom" => {"secretKeyRef" => {"name" => "limits", "key" => "burst"}}}}.each do |name, fields|
+    abort "explicit env override lost for #{name}" unless env.select { |e| e["name"] == name } == [fields.merge("name" => name)]
+  end
+' "${legacy_render}"

@@ -244,6 +244,18 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.opentelemetry.collector.uri | quote }}
             {{- end }}
+            {{- if eq (include "keda.dedicatedMulticlusterEnabled" .) "true" }}
+            {{- $explicitEnv := dict }}
+            {{- range concat (default (list) .Values.env) (default (list) .Values.operator.env) }}
+            {{- $_ := set $explicitEnv (tpl .name $) true }}
+            {{- end }}
+            {{- range $name, $value := dict "KEDA_SCALEDOBJECT_CTRL_MAX_RECONCILES" "20" "KEDA_MULTICLUSTER_KUBE_API_QPS" "20" "KEDA_MULTICLUSTER_KUBE_API_BURST" "40" }}
+            {{- if not (hasKey $explicitEnv $name) }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 }}
             {{- end }}
