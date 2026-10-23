@@ -59,7 +59,19 @@ or separately installed KEDA operator. Inspect the remaining controller
 settings with `helm show values oci://ghcr.io/kedify/charts/kpa`.
 
 Dedicated mode enables KEDA/KPA remote reconciliation and selects KPA as
-KEDA's default autoscaling class. The default distributed mode uses the
+KEDA's default autoscaling class. It also defaults the KEDA operator to
+20 ScaledObject reconciliation workers (`KEDA_SCALEDOBJECT_CTRL_MAX_RECONCILES`),
+remote-member API QPS 20 (`KEDA_MULTICLUSTER_KUBE_API_QPS`), and burst 40
+(`KEDA_MULTICLUSTER_KUBE_API_BURST`). Explicit entries in `keda.operator.env`
+or `keda.env`, including `valueFrom`, override each default independently.
+These limits apply per remote client, not as an aggregate installation budget.
+Use a KEDA image supporting these environment variables. KPA retains its
+5-worker concurrency and 15-second sync period; explicit KPA settings remain
+available. vCluster discovery remains separately opt-in through
+`global.features.multicluster.vClusterDiscoveryEnabled=true`; discovery grants
+name-restricted CRD get/list/watch access for the five propagated KEDA/KPA CRDs.
+
+ The default distributed mode uses the
 Agent's DistributedScaledObject/DistributedScaledJob controllers and does not
 install KPA unless `kpa.enabled=true`. An explicitly enabled KPA remains in
 single-cluster mode with the distributed workflow.

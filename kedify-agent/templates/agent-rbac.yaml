@@ -252,7 +252,7 @@ rules:
   - triggerauthentications.keda.sh
   - clustertriggerauthentications.keda.sh
   - kedifypodautoscalers.autoscaling.kedify.io
-  verbs: ["get"]
+  verbs: ["get", "list", "watch"]
 {{- end }}
 # to get kube-system UUID for self-registration in fleet installation
 - apiGroups:
