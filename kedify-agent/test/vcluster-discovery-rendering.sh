@@ -64,6 +64,13 @@ for mode in agent global; do
   grep -A1 'name: MULTICLUSTER_VCLUSTER_DISCOVERY_ENABLED' "$render_dir/$mode.yaml" | grep -q 'value: "true"'
   grep -A3 '# Discover native vCluster exports' "$render_dir/$mode.yaml" | grep -q '"get", "list", "watch"'
   grep -A12 '# Copy the exact KEDA and KPA CRD schemas' "$render_dir/$mode.yaml" | grep -q 'kedifypodautoscalers.autoscaling.kedify.io'
+  ruby -ryaml -e '
+    docs = YAML.load_stream(File.read(ARGV[0])).compact
+    rules = docs.select { |d| d["kind"] == "ClusterRole" }.flat_map { |d| d.fetch("rules", []) }
+    rule = rules.find { |r| r.fetch("resources", []).include?("customresourcedefinitions") && r.key?("resourceNames") }
+    expected = %w[scaledobjects.keda.sh scaledjobs.keda.sh triggerauthentications.keda.sh clustertriggerauthentications.keda.sh kedifypodautoscalers.autoscaling.kedify.io]
+    abort "CRD watch must be restricted to the propagated names" unless rule && rule["resourceNames"].sort == expected.sort && rule["verbs"].sort == %w[get list watch]
+  ' "$render_dir/$mode.yaml"
   awk '/^kind: Role$/{role=1} role{print} /^---$/{role=0}' "$render_dir/$mode.yaml" > "$render_dir/$mode-roles.yaml"
   test "$(role_rule_verbs "$render_dir/$mode.yaml" multicluster.kedify.io clusterregistrations)" = 'create delete get list patch update watch'
   test "$(role_rule_verbs "$render_dir/$mode.yaml" '' secrets)" = 'create delete get list patch update watch'
