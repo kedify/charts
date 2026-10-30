@@ -59,3 +59,6 @@ jobs:
 
       - name: Test vCluster discovery rendering
         run: kedify-agent/test/vcluster-discovery-rendering.sh
+
+      - name: Test rotating vCluster export discovery
+        run: kedify-agent/test/vcluster-secret-discovery-rendering.sh

@@ -1,6 +1,7 @@
 {{- if .Values.agent.rbac.create }}
 {{- $distributedMulticlusterEnabled := eq (include "kedify-agent.distributedMulticlusterEnabled" .) "true" -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
+{{- $vClusterSecretDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterSecretDiscoveryEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
 {{- $distributedScaledObjectsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
 {{- $recommendationsForLabeledNamespaces := eq (include "kedify-agent.featureEnabled" (list . "recommendationsForLabeledNamespaces")) "true" -}}
@@ -88,7 +89,7 @@ rules:
   resources:
   - clusterregistrations
   verbs:
-{{- if $vClusterDiscoveryEnabled }}
+{{- if or $vClusterDiscoveryEnabled $vClusterSecretDiscoveryEnabled }}
   - create
   - delete
   - patch

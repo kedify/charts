@@ -1,0 +1,23 @@
+# Requires the chart and runtime implementing loft-sh/vcluster#4227.
+controlPlane:
+  distro:
+    k8s:
+      enabled: true
+      image:
+        tag: v1.34.7
+exportKubeConfig:
+  additionalSecrets:
+    - name: vcluster-tenant-a
+      namespace: keda
+      server: https://tenant-a.vcluster-tenant-a:443
+      labels:
+        sigs.k8s.io/multicluster-runtime-kubeconfig: "vcluster"
+      serviceAccount:
+        name: kedify-runtime
+        namespace: default
+        clusterRole: kedify-runtime
+        tokenRotation:
+          expiration: 10m
+          renewBeforePercentage: 33
+telemetry:
+  enabled: false
