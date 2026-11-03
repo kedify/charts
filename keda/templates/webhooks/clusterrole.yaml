@@ -18,7 +18,7 @@ rules:
   verbs:
   - list
   - watch
-{{- if or .Values.kedify.kpa.enabled (eq (include "keda.dedicatedMulticlusterEnabled" .) "true") }}
+{{- if or .Values.kedify.kpa.enabled .Values.kedify.kpa.webhookEnabled (eq (include "keda.dedicatedMulticlusterEnabled" .) "true") }}
 - apiGroups:
   - autoscaling.kedify.io
   resources:
