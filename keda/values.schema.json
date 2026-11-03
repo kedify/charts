@@ -366,6 +366,10 @@
         "KedifyKPA": {
             "type": "object",
             "properties": {
+                "webhookEnabled": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "enabled": {
                     "type": "boolean",
                     "default": false

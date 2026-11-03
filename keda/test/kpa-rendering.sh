@@ -3,6 +3,7 @@
 set -euo pipefail
 
 chart_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+webhook_render="$(mktemp)"
 default_render="$(mktemp)"
 enabled_render="$(mktemp)"
 kpa_default_render="$(mktemp)"
@@ -11,7 +12,7 @@ tenant_render="$(mktemp)"
 multicluster_render="$(mktemp)"
 dedicated_render="$(mktemp)"
 distributed_render="$(mktemp)"
-trap 'rm -f "${default_render}" "${enabled_render}" "${kpa_default_render}" "${legacy_render}" "${tenant_render}" "${multicluster_render}" "${dedicated_render}" "${distributed_render}"' EXIT
+trap 'rm -f "${webhook_render}" "${default_render}" "${enabled_render}" "${kpa_default_render}" "${legacy_render}" "${tenant_render}" "${multicluster_render}" "${dedicated_render}" "${distributed_render}"' EXIT
 
 helm template test "${chart_dir}" --namespace keda >"${default_render}"
 helm template test "${chart_dir}" --namespace keda \
@@ -191,3 +192,22 @@ ruby -ryaml -e '
   abort "ClusterRegistration watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("multicluster.kedify.io") && rule.fetch("resources", []).include?("clusterregistrations") }
   abort "registration Secret watch permission is missing" unless rules.any? { |rule| rule.fetch("apiGroups", []).include?("") && rule.fetch("resources", []).include?("secrets") }
 ' "${multicluster_render}"
+
+
+# Tenant-only KPA needs both admission support and its permissions on the shared webhook.
+helm template test "${chart_dir}" --namespace keda \
+  --set kedify.multitenant.mode=default \
+  --set watchNamespace=primary \
+  --set kedify.kpa.webhookEnabled=true >"${webhook_render}"
+ruby -ryaml -e '
+  docs = YAML.load_stream(File.read(ARGV.fetch(0))).compact
+  webhook = docs.find { |doc| doc["kind"] == "Deployment" && doc.dig("metadata", "name") == "keda-admission-webhooks" }
+  args = webhook.fetch("spec").fetch("template").fetch("spec").fetch("containers").first.fetch("args")
+  abort "shared webhook KPA validation missing" unless args.include?("--enable-kpa=true") && args.include?("--autoscaling-default-class=hpa")
+  operator = docs.find { |doc| doc["kind"] == "Deployment" && doc.dig("metadata", "name") == "keda-operator" }
+  operator_args = operator.fetch("spec").fetch("template").fetch("spec").fetch("containers").first.fetch("args")
+  abort "webhook-only KPA must not enable the primary operator" if operator_args.any? { |arg| arg.start_with?("--enable-kpa") }
+  role = docs.find { |doc| doc["kind"] == "ClusterRole" && doc.dig("metadata", "name") == "keda-operator-webhook" }
+  rule = role.fetch("rules").find { |r| r.fetch("apiGroups", []).include?("autoscaling.kedify.io") }
+  abort "shared webhook KPA read permissions missing" unless rule && rule.fetch("resources") == ["kedifypodautoscalers"] && rule.fetch("verbs").sort == ["get", "list", "watch"]
+' "${webhook_render}"
