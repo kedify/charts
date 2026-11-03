@@ -5,12 +5,14 @@ on:
     branches:
       - main
     paths:
+      - "scripts/kubernetes*"
       - ".github/workflows/ci-kedify-proxy.yml"
       - "kedify-proxy/**"
   pull_request:
     branches:
       - main
     paths:
+      - "scripts/kubernetes*"
       - ".github/workflows/ci-kedify-proxy.yml"
       - "kedify-proxy/**"
 
@@ -22,6 +24,32 @@ permissions:
   contents: read
 
 jobs:
+  kubernetes:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.matrix.outputs.versions }}
+      keda: ${{ steps.charts.outputs.keda }}
+      http: ${{ steps.charts.outputs.http }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - name: Select Kubernetes versions
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          bash scripts/kubernetes_test.sh
+          versions="$(bash scripts/kubernetes.sh matrix "$EVENT_NAME")"
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+      - name: Resolve released chart versions once
+        id: charts
+        run: |
+          helm repo add kedifykeda https://kedify.github.io/charts
+          helm repo update kedifykeda
+          keda="$(helm search repo kedifykeda/keda --versions --devel -o json | jq -er '[.[] | select(.name == "kedifykeda/keda")][0].version')"
+          http="$(helm search repo kedifykeda/keda-add-ons-http --versions --devel -o json | jq -er '.[0].version')"
+          echo "keda=$keda" >> "$GITHUB_OUTPUT"
+          echo "http=$http" >> "$GITHUB_OUTPUT"
+
   lint-helm-3-x:
     name: Lint Helm Chart
     runs-on: ubuntu-latest
@@ -76,9 +104,13 @@ jobs:
           docker run --rm -v "${PWD}:/config" "envoyproxy/envoy:${APP_VERSION}" --mode validate -c /config/envoy-bootstrap.yaml
 
   smoke-xds-e2e:
-    name: xDS smoke test with interceptor on Kind
-    needs: lint-helm-3-x
+    name: xDS smoke test on ${{ matrix.kubernetes.kubernetesVersion }}
+    needs: [lint-helm-3-x, kubernetes]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kubernetes: ${{ fromJSON(needs.kubernetes.outputs.versions) }}
     steps:
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
@@ -89,7 +121,15 @@ jobs:
       - name: Create Kind Cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
         with:
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+          version: v0.33.0
+          node_image: ${{ matrix.kubernetes.kindImage }}
+          kubectl_version: ${{ matrix.kubernetes.kubectlVersion }}
+
+      - name: Verify cluster version
+        env:
+          KUBERNETES_VERSION: ${{ matrix.kubernetes.kubectlVersion }}
+        run: bash scripts/kubernetes.sh verify "$KUBERNETES_VERSION"
 
       - name: Create KEDA namespace
         run: kubectl create ns keda
@@ -102,7 +142,7 @@ jobs:
         run: |
           helm repo add kedifykeda https://kedify.github.io/charts
           helm repo update kedifykeda
-          KEDA_VERSION=$(helm search repo kedifykeda/keda --versions --devel -o json | jq -r '[.[] | select(.name == "kedifykeda/keda")][0].version')
+          KEDA_VERSION="${{ needs.kubernetes.outputs.keda }}"
           if [[ -z "${KEDA_VERSION}" || "${KEDA_VERSION}" == "null" ]]; then
             echo "::error::could not resolve latest kedifykeda/keda chart version"
             exit 1
@@ -112,7 +152,7 @@ jobs:
 
       - name: Install released kedify HTTP add-on chart (interceptor = Envoy control plane)
         run: |
-          HTTP_ADD_ON_VERSION=$(helm search repo kedifykeda/keda-add-ons-http --versions --devel -o json | jq -r '.[0].version')
+          HTTP_ADD_ON_VERSION="${{ needs.kubernetes.outputs.http }}"
           if [[ -z "${HTTP_ADD_ON_VERSION}" || "${HTTP_ADD_ON_VERSION}" == "null" ]]; then
             echo "::error::could not resolve latest kedifykeda/keda-add-ons-http chart version"
             exit 1
