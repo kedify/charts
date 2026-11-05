@@ -1,11 +1,13 @@
 name: Helm Chart CI (Core)
 on:
+  workflow_dispatch:
   # Trigger the workflow on push or pull request,
   # but only for the main branch
   push:
     branches:
       - main
     paths:
+      - 'scripts/kubernetes*'
       - '.github/workflows/ci-core.yml'
       - 'keda/**'
   pull_request:
@@ -13,6 +15,7 @@ on:
       - main
       - release/*
     paths:
+      - 'scripts/kubernetes*'
       - '.github/workflows/ci-core.yml'
       - 'keda/**'
 
@@ -21,6 +24,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  kubernetes:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.matrix.outputs.versions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - name: Select Kubernetes versions
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          bash scripts/kubernetes_test.sh
+          versions="$(bash scripts/kubernetes.sh matrix "$EVENT_NAME")"
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+
   lint-helm-3-x:
     name: Lint Helm Chart
     runs-on: ubuntu-latest
@@ -41,14 +59,14 @@ jobs:
       run: ./kedify-agent/test/sharding-rendering.sh
 
   deploy-helm-3-x:
-    name: Deploy to Kubernetes ${{ matrix.kubernetesVersion }} in '${{matrix.namespace}}' namespace (${{ (matrix.enableAzureWorkloadIdentity == true && 'With Azure Workload Identity') || 'Without Azure Workload Identity' }} | ${{ (matrix.enableCertManager == true && 'With cert-manager') || 'Without cert-manager' }})
-    needs: lint-helm-3-x
+    name: Deploy to Kubernetes ${{ matrix.kubernetes.kubernetesVersion }} in '${{matrix.namespace}}' namespace (${{ (matrix.enableAzureWorkloadIdentity == true && 'With Azure Workload Identity') || 'Without Azure Workload Identity' }} | ${{ (matrix.enableCertManager == true && 'With cert-manager') || 'Without cert-manager' }})
+    needs: [lint-helm-3-x, kubernetes]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         enableAzureWorkloadIdentity: [false, true]
-        kubernetesVersion: [v1.36, v1.35, v1.34]
+        kubernetes: ${{ fromJSON(needs.kubernetes.outputs.versions) }}
         namespace: ["keda", "not-keda"]
         enableCertManager: [false, true]
         include:
@@ -59,17 +77,6 @@ jobs:
         - enableAzureWorkloadIdentity: false
           tenantId: ""
           clientId: ""
-          # Images are defined on every Kind release
-          # See https://github.com/kubernetes-sigs/kind/releases
-        - kubernetesVersion: v1.36
-          kindImage: kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
-          kubectlVersion: v1.36.4
-        - kubernetesVersion: v1.35
-          kindImage: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
-          kubectlVersion: v1.35.8
-        - kubernetesVersion: v1.34
-          kindImage: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d
-          kubectlVersion: v1.34.11
     steps:
     - name: Check out code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
@@ -77,11 +84,18 @@ jobs:
     - name: Helm install
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
 
-    - name: Create k8s ${{ matrix.kubernetesVersion }} Kind Cluster
+    - name: Create k8s ${{ matrix.kubernetes.kubernetesVersion }} Kind Cluster
       uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
       with:
-        node_image: ${{ matrix.kindImage }}
-        kubectl_version: ${{ matrix.kubectlVersion }}
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: v0.33.0
+        node_image: ${{ matrix.kubernetes.kindImage }}
+        kubectl_version: ${{ matrix.kubernetes.kubectlVersion }}
+
+    - name: Verify cluster version
+      env:
+        KUBERNETES_VERSION: ${{ matrix.kubernetes.kubectlVersion }}
+      run: bash scripts/kubernetes.sh verify "$KUBERNETES_VERSION"
 
     - name: Show Kubernetes version
       run: |

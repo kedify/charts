@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - '.github/workflows/ci-kedify-agent.yml'
+      - '.github/workflows/milestones-tracker.yaml'
+      - 'scripts/kubernetes*'
+      - 'scripts/update-supported-kubernetes*'
+      - 'scripts/test_update_supported_kubernetes.py'
       - 'kedify-agent/**'
   pull_request:
     branches:
@@ -13,6 +17,10 @@ on:
       - release/*
     paths:
       - '.github/workflows/ci-kedify-agent.yml'
+      - '.github/workflows/milestones-tracker.yaml'
+      - 'scripts/kubernetes*'
+      - 'scripts/update-supported-kubernetes*'
+      - 'scripts/test_update_supported_kubernetes.py'
       - 'kedify-agent/**'
 
 concurrency:
@@ -29,6 +37,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+
+      - name: Check Kubernetes release automation
+        run: |
+          bash scripts/kubernetes_test.sh
+          python3 scripts/test_update_supported_kubernetes.py
 
       - name: Install Helm
         uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0

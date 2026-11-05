@@ -37,6 +37,8 @@ jobs:
       merge_commit_sha: ${{ steps.merge_commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Get merge commit SHA
         id: merge_commit
         env:
@@ -113,11 +115,35 @@ jobs:
           release_tag=${milestone#*/}
           pr_body="$(gh pr view $PR_NUMBER --json 'body' --jq '.body')"
 
-          if gh release view $milestone > /dev/null; then
+          # Read pins from the exact chart release commit, rather than moving main.
+          compatibility=''
+          if git cat-file -e "${{ steps.merge_commit.outputs.sha }}:scripts/kubernetes-versions.json"; then
+            git show "${{ steps.merge_commit.outputs.sha }}:scripts/kubernetes-versions.json" > "$RUNNER_TEMP/kubernetes-versions.json"
+            versions="$(jq -er '
+              map(capture("^kindest/node:v(?<minor>1\\.[0-9]+)\\.[0-9]+@sha256:[0-9a-f]{64}$").minor // error("invalid Kubernetes image")) |
+              sort_by(split(".")[1] | tonumber) | reverse |
+              map(split(".")[1] | tonumber) as $minors |
+              if $minors == [$minors[0], $minors[0]-1, $minors[0]-2]
+              then join(", ") else error("expected three consecutive Kubernetes minors") end
+            ' "$RUNNER_TEMP/kubernetes-versions.json")"
+            printf -v compatibility '\n<!-- kubernetes-compatibility -->\n## Compatibility\n\n| Chart | Kubernetes CI targets |\n| --- | --- |\n| %s %s | %s |\n' "${{ inputs.chart }}" "$release_tag" "$versions"
+
+          else
+              echo "::notice::This release revision has no Kubernetes compatibility manifest; omitting the table."
+          fi
+
+          if gh release view "$milestone" > /dev/null; then
               echo "release $milestone already exists"
+              if [[ -n "$compatibility" ]]; then
+                  gh release view "$milestone" --json body --jq '.body' > "$RUNNER_TEMP/release-notes.md"
+                  if ! grep -Fq '<!-- kubernetes-compatibility -->' "$RUNNER_TEMP/release-notes.md"; then
+                      printf '%s' "$compatibility" >> "$RUNNER_TEMP/release-notes.md"
+                      gh release edit "$milestone" --notes-file "$RUNNER_TEMP/release-notes.md"
+                  fi
+              fi
           else
               echo "creating release $milestone"
-              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}" --target "${{ steps.merge_commit.outputs.sha }}"
+              gh release create -R kedify/charts "$milestone" --latest --title "${{ inputs.chart }}: $release_tag" --notes "${pr_body}${compatibility}" --target "${{ steps.merge_commit.outputs.sha }}"
           fi
           echo "should_release=true" >> $GITHUB_OUTPUT
           echo "version=$release_tag" >> $GITHUB_OUTPUT
@@ -150,33 +176,90 @@ jobs:
           registry_username: kedify
           registry_password: ${{ secrets.GITHUB_TOKEN }}
 
+  kubernetes:
+    needs: milestone_tracker
+    if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      versions: ${{ steps.matrix.outputs.versions }}
+      minors: ${{ steps.matrix.outputs.minors }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+          persist-credentials: false
+      - name: Select the released chart's Kubernetes versions
+        id: matrix
+        run: |
+          set -euo pipefail
+          versions="$(bash scripts/kubernetes.sh matrix release)"
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+          echo "minors=$(jq -c 'map(.kubernetesVersion | ltrimstr("v"))' <<< "$versions")" >> "$GITHUB_OUTPUT"
+          echo "Release compatibility checks: $(jq -r 'map(.kubernetesVersion) | join(", ")' <<< "$versions")" >> "$GITHUB_STEP_SUMMARY"
+
   autoscaling_smoke:
-    needs: [milestone_tracker, release]
+    name: Agent release smoke / Kubernetes ${{ matrix.kubernetes.kubernetesVersion }}
+    needs: [milestone_tracker, release, kubernetes]
     if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        kubernetes: ${{ fromJSON(needs.kubernetes.outputs.versions) }}
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: checks
     steps:
+      - name: Check out the released chart
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+          path: release
+          persist-credentials: false
+
       - name: Check out autoscaling checks
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: kedify/autoscaling-checks
           ref: a62945310e320de97ce4526194eaaa2a323ba6f8 # v0.0.2
+          path: checks
           token: ${{ secrets.PAT_TOKEN }}
           persist-credentials: false
 
       - name: Set up Helm
         uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
 
-      - name: Create k3d cluster
-        uses: AbsaOSS/k3d-action@4e8b3239042be1dc0aed6c5eb80c13b18200fc79 # v2
+      - name: Create pinned Kubernetes cluster
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
         with:
-          cluster-name: autoscaling-checks
-          k3d-version: v5.9.0
-          args: >-
-            --agents 1
-            --wait
+          # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+          version: v0.33.0
+          node_image: ${{ matrix.kubernetes.kindImage }}
+          kubectl_version: ${{ matrix.kubernetes.kubectlVersion }}
+
+      - name: Verify cluster version
+        env:
+          KUBERNETES_VERSION: ${{ matrix.kubernetes.kubectlVersion }}
+        run: bash ../release/scripts/kubernetes.sh verify "$KUBERNETES_VERSION"
+
+      # K3s bundled Metrics Server; kind needs it for the existing CPU check.
+      - name: Install resource metrics for the test cluster
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.1/components.yaml \
+            --output "$RUNNER_TEMP/metrics-server.yaml"
+          echo "3c7f57cdbee0f57fb0259a150e8f6d6cb4f29d72d1aa5dce8803151dd6d4c2a1  $RUNNER_TEMP/metrics-server.yaml" | sha256sum --check
+          kubectl apply -f "$RUNNER_TEMP/metrics-server.yaml"
+          kubectl -n kube-system patch deployment metrics-server --type=json \
+            -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+          kubectl -n kube-system rollout status deployment/metrics-server --timeout=180s
+          kubectl wait --for=condition=Available apiservice/v1beta1.metrics.k8s.io --timeout=180s
 
       - name: Wait for the released chart
         env:
@@ -221,6 +304,41 @@ jobs:
           kubectl get pods -A -o wide || true
           kubectl get events -A --sort-by=.lastTimestamp || true
           kubectl -n keda logs deploy/kedify-agent --tail=200 || true
+
+  update_supported_kubernetes:
+    needs: [milestone_tracker, release, kubernetes, autoscaling_smoke]
+    if: needs.milestone_tracker.outputs.should_release == 'true' && inputs.chart == 'kedify-agent'
+    runs-on: ubuntu-latest
+    # Only serialize docs writers; release publication/testing can run concurrently.
+    concurrency:
+      group: supported-kubernetes-docs
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the released chart's updater
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+          path: release
+          persist-credentials: false
+      - name: Check out Marketing
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: kedify/marketing
+          ref: main
+          # Existing release PAT also needs Marketing contents/PR write access.
+          token: ${{ secrets.PAT_TOKEN }}
+          path: marketing
+          fetch-depth: 0
+      - name: Propose the validated Kubernetes support list
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          SUPPORTED_KUBERNETES_VERSIONS: ${{ needs.kubernetes.outputs.minors }}
+          CHART_VERSION: ${{ needs.milestone_tracker.outputs.version }}
+          SOURCE_SHA: ${{ needs.milestone_tracker.outputs.merge_commit_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash release/scripts/update-supported-kubernetes.sh marketing
 
   notify_autoscaling_smoke_failure:
     needs: [milestone_tracker, autoscaling_smoke]
