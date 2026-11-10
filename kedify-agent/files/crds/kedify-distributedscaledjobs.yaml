@@ -10545,10 +10545,11 @@ spec:
             - message: memberClusters[].scheduling.priority is required when clusterScheduling.strategy=priorityFailover
               rule: self.clusterScheduling.strategy != 'priorityFailover' || (has(self.memberClusters)
                 && self.memberClusters.all(c, has(c.scheduling) && has(c.scheduling.priority)))
-            - message: scaledJobSpec.scalingStrategy.strategy must be pendingAware
-                (or omitted) when clusterScheduling.strategy=priorityFailover
-              rule: self.clusterScheduling.strategy != 'priorityFailover' || self.scaledJobSpec.scalingStrategy.strategy
-                == '' || self.scaledJobSpec.scalingStrategy.strategy == 'pendingAware'
+            - message: scaledJobSpec.scalingStrategy.strategy must be pendingAware,
+                custom (or omitted) when clusterScheduling.strategy=priorityFailover
+              rule: self.clusterScheduling.strategy != 'priorityFailover' || !has(self.scaledJobSpec.scalingStrategy)
+                || !has(self.scaledJobSpec.scalingStrategy.strategy) || self.scaledJobSpec.scalingStrategy.strategy
+                in ['', 'pendingAware', 'custom']
           status:
             description: DistributedScaledJobStatus defines the observed state of
               DistributedScaledJob
