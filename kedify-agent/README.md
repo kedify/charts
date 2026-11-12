@@ -64,6 +64,24 @@ Agent's DistributedScaledObject/DistributedScaledJob controllers and does not
 install KPA unless `kpa.enabled=true`. An explicitly enabled KPA remains in
 single-cluster mode with the distributed workflow.
 
+## Distributed scaling cache namespace
+
+For distributed scaling, optionally limit the Agent's remote cluster caches
+and watches to one namespace:
+
+```yaml
+agent:
+  multicluster:
+    distributed:
+      remoteTargetNamespace: workloads
+```
+
+This sets `REMOTE_TARGET_NAMESPACE` on the Agent when its DSO or DSJ controller
+is enabled and applies to every remote cluster. Dedicated mode does not use
+this setting. Leave it empty to watch all namespaces. DSO/DSJ target namespaces
+remain controlled by their resource specifications; this value does not
+override them.
+
 ## Values
 
 Prefer `global.features` when this chart installs KEDA/KPA so settings are
@@ -88,6 +106,7 @@ Agent; dedicated multicluster mode requires the global settings.
 | agent.features.distributedScaledJobsEnabled | bool | `false` | Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller during the compatibility period. |
 | agent.features.scaleAdaptersEnabled | bool | `false` | Enable the ScaleAdapter controller that bridges HPA/KEDA to resources with an incomplete /scale subresource (e.g. Agones Fleet), or without one at all (spec.desiredReplicasPath). The agent additionally needs RBAC via agent.extraRbacRules: get + update on the target kinds' /scale subresource, or get, list, watch + update on the whole resource for targets adapted through replica field paths. |
 | agent.features.kedifyPodAutoscalerEnabled | bool | `false` | Enable resource metrics collection and Prometheus endpoint discovery for Kedify Pod Autoscaler (KPA). KPA can be installed separately; leave disabled when its CRD/controller is not present |
+| agent.multicluster.distributed.remoteTargetNamespace | string | `""` | Optional namespace for the Agent's distributed scaling caches and watches (REMOTE_TARGET_NAMESPACE). Empty watches all namespaces. Applies to every remote cluster when DSO/DSJ is enabled; does not override resource target namespaces. |
 | agent.multicluster.localCluster.enabled | bool | `false` | Register the management cluster through a ClusterRegistration. The Agent materializes and rotates its self-contained kubeconfig Secret. The registration can be consumed by dedicated KEDA/KPA mode or the existing Agent DSO/DSJ workflow and grants the Agent identity the required local scaling permissions. |
 | agent.multicluster.localCluster.name | string | `"multicluster-local"` | Human-readable member-cluster identity. This is also the name of the generated ClusterRegistration and kubeconfig Secret. |
 | kpa.enabled | bool | `false` | Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. This controls KPA installation independently from multicluster mode; dedicated mode configures remote reconciliation only when this dependency is enabled. |

@@ -196,6 +196,9 @@ agent:
     # KPA can be installed separately; leave disabled when its CRD/controller is not present
     kedifyPodAutoscalerEnabled: false
   multicluster:
+    distributed:
+      # -- Optional namespace for the Agent's distributed scaling caches and watches (REMOTE_TARGET_NAMESPACE). Empty watches all namespaces. Applies to every remote cluster when DSO/DSJ is enabled; does not override resource target namespaces.
+      remoteTargetNamespace: ""
     localCluster:
       # -- Register the management cluster through a ClusterRegistration. The Agent materializes and rotates its self-contained kubeconfig Secret. The registration can be consumed by dedicated KEDA/KPA mode or the existing Agent DSO/DSJ workflow and grants the Agent identity the required local scaling permissions.
       enabled: false

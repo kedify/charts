@@ -53,6 +53,24 @@ Agent's DistributedScaledObject/DistributedScaledJob controllers and does not
 install KPA unless `kpa.enabled=true`. An explicitly enabled KPA remains in
 single-cluster mode with the distributed workflow.
 
+## Distributed scaling cache namespace
+
+For distributed scaling, optionally limit the Agent's remote cluster caches
+and watches to one namespace:
+
+```yaml
+agent:
+  multicluster:
+    distributed:
+      remoteTargetNamespace: workloads
+```
+
+This sets `REMOTE_TARGET_NAMESPACE` on the Agent when its DSO or DSJ controller
+is enabled and applies to every remote cluster. Dedicated mode does not use
+this setting. Leave it empty to watch all namespaces. DSO/DSJ target namespaces
+remain controlled by their resource specifications; this value does not
+override them.
+
 ## Values
 
 Prefer `global.features` when this chart installs KEDA/KPA so settings are

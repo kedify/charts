@@ -133,6 +133,12 @@ spec:
             {{- end }}
             - name: DSO_ENABLED
               value: {{ $distributedScaledObjectsEnabled | quote }}
+            {{- if or $distributedScaledJobsEnabled $distributedScaledObjectsEnabled }}
+            {{- with .Values.agent.multicluster.distributed.remoteTargetNamespace }}
+            - name: REMOTE_TARGET_NAMESPACE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
             - name: SCALE_ADAPTER_ENABLED
               value: {{ $scaleAdaptersEnabled | quote }}
             {{- if $podResourceProfilesEnabled }}
