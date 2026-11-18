@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
       - run: |
           git config --global user.email "github-actions@github.com"
@@ -45,7 +45,7 @@ jobs:
       #   id: cpr
       #   uses: peter-evans/create-pull-request@v6
       #   with:
-      #     token: ${{ secrets.PAT_TOKEN }}
+      #     token: ${{ secrets.GH_PAT }}
       #     push-to-fork: ${{ env.DOWNSTREAM_REPO }}
       #     commit-message: Syncing upstream helm charts
       #     title: Syncing upstream helm charts
