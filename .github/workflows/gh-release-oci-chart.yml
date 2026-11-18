@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Build Helm chart dependencies
         run: helm dependency build ./${{ inputs.chart }}
@@ -66,7 +66,7 @@ jobs:
           path: ${{ inputs.chart }}
           registry: ghcr.io
           registry_username: kedify
-          registry_password: ${{ secrets.PAT_TOKEN }}
+          registry_password: ${{ secrets.GH_PAT }}
 
       - name: Print Summary
         run: |

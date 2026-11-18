@@ -118,7 +118,7 @@ on:
     secrets:
       AWS_GITHUB_ROLE_ARN:
         required: true
-      PAT_TOKEN:
+      GH_PAT:
         required: true
 
 permissions:
@@ -176,7 +176,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs['source-ref'] || github.sha }}
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Helm
         uses: Azure/setup-helm@v4

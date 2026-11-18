@@ -22,6 +22,6 @@ jobs:
       chart: kedify-agent
       prNumber: ${{ github.event.pull_request.number }}
     secrets:
-      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
       AWS_GITHUB_ROLE_ARN: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

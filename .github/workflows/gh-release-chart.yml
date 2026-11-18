@@ -116,7 +116,7 @@ jobs:
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@master
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
           linting: "off"
           dependencies: "kedify,https://kedify.github.io/charts"
           charts_dir: "."
@@ -124,7 +124,7 @@ jobs:
         id: push_tag
         uses: mathieudutour/github-tag-action@v6.2
         with:
-          github_token: ${{ secrets.PAT_TOKEN }}
+          github_token: ${{ secrets.GH_PAT }}
           create_annotated_tag: true
           tag_prefix: ""
           custom_tag: ${{ inputs.chart }}-${{ steps.version.outputs.newVersion }}
@@ -143,7 +143,7 @@ jobs:
       - name: Upload image digest asset to existing GitHub release
         if: inputs.chart == 'kedify-agent'
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           set -euo pipefail
           gh release upload "${{ steps.push_tag.outputs.new_tag }}" ./artifacts/generated-images.json --repo kedify/charts --clobber
@@ -241,7 +241,7 @@ jobs:
       - name: Trigger Openshift Operator release
         if: inputs.chart == 'kedify-agent'
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           set -euo pipefail
           chart_version="${{ steps.version.outputs.newVersion }}"
