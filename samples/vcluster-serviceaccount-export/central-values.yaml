@@ -1,0 +1,18 @@
+global:
+  features:
+    multicluster:
+      enabled: true
+      type: dedicated
+      vClusterSecretDiscoveryEnabled: true
+agent:
+  rbac:
+    selfUpdates: false
+    shouldBeAbleToInstallKeda: false
+    shouldBeAbleToInstallHttpAddon: false
+  multicluster:
+    localCluster:
+      enabled: false
+keda:
+  enabled: true
+kpa:
+  enabled: true

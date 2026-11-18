@@ -17,6 +17,8 @@ global:
       type: distributed
       # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
+      # -- Discover labeled ServiceAccount exports in the installation namespace. Requires dedicated multicluster scaling; tenants are provisioned separately.
+      vClusterSecretDiscoveryEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller and KEDA raw metrics gRPC during the compatibility period.
@@ -178,6 +180,8 @@ agent:
       enabled: false
       # -- Discover shared-node vClusters, install the live KEDA/KPA CRDs, and materialize ClusterRegistrations from native kubeconfig Secrets. Grants cluster-wide read access to Secrets and Services and read-only access to the required source CRDs.
       vClusterDiscoveryEnabled: false
+      # -- Enable namespaced ServiceAccount export discovery. The Agent-local switch also requires keda.permissions.operator.restrict.secret=true and keda.rbac.enabledCustomScaledRefKinds=false. Prefer the global switch.
+      vClusterSecretDiscoveryEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledObject controller during the compatibility period.
     distributedScaledObjectsEnabled: false
     # -- Deprecated: use multicluster.enabled. Enables only the DistributedScaledJob controller during the compatibility period.
