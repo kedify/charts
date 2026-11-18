@@ -24,6 +24,25 @@ entries:
     version: 0.1.0
   keda:
   - apiVersion: v2
+    appVersion: v2.21.1-0
+    created: "2026-11-18T10:40:14.080152597Z"
+    description: Event-based autoscaler for workloads on Kubernetes
+    digest: 4390585784bf6cf5bdcd0f034f0483914d1495a34329261df346a3935d8ea901
+    home: https://github.com/kedacore/keda
+    icon: https://raw.githubusercontent.com/kedacore/keda/main/images/keda-logo-500x500-white.png
+    kubeVersion: '>=v1.23.0-0'
+    maintainers:
+    - email: zbynek@kedify.io
+      name: Zbynek Roubalik
+    - email: jan@kedify.io
+      name: Jan Wozniak
+    name: keda
+    sources:
+    - https://github.com/kedacore/keda
+    urls:
+    - https://kedify.github.io/charts/keda-v2.21.1-0.tgz
+    version: v2.21.1-0
+  - apiVersion: v2
     appVersion: v2.21.0-3
     created: "2026-10-22T13:33:25.507635791Z"
     description: Event-based autoscaler for workloads on Kubernetes
@@ -5122,4 +5141,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2026-11-18T10:27:04.997131531Z"
+generated: "2026-11-18T10:40:14.075611705Z"
