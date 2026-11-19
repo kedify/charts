@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: nginx
+        image: nginx:1.30.7
         resources:
           requests:
             memory: {{ .Values.optionalResources.prp.initialMemoryRequest }}
