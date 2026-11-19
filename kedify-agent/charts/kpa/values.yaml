@@ -1,0 +1,131 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/kedify/kpa
+  tag: ""
+  pullPolicy: IfNotPresent
+  hardened: false
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+crds:
+  # Exactly one KPA release in a cluster should own CRD installation/upgrades.
+  install: true
+
+# Empty watches every namespace. A comma-separated list creates namespaced
+# Roles and limits the controller cache to those namespaces.
+watchNamespace: ""
+# Optional KPA label selector within watchNamespace. For same-namespace shards,
+# use a distinct value per release, such as kedify.io/shard-pool=jobs,kedify.io/shard=0.
+watchLabelSelector: ""
+
+multicluster:
+  # When enabled, discover ClusterRegistrations in this release namespace.
+  enabled: false
+
+# Global values are normally absent for a standalone KPA installation. When
+# KPA is used as a kedify-agent dependency, the parent chart supplies
+# global.features.multicluster and KPA renders only for dedicated mode.
+global: {}
+
+controller:
+  syncPeriod: 15s
+  minimumSyncPeriod: 5s
+  infrastructureRetryMax: 30s
+  maxConcurrentReconciles: 5
+  downscaleStabilization: 5m
+  tolerance: 0.1
+  cpuInitializationPeriod: 5m
+  initialReadinessDelay: 30s
+  kubeAPIQPS: 20
+  kubeAPIBurst: 30
+  kedaRequestTimeout: 3s
+  leaderElect: true
+  leaderElectionID: ""
+  logLevel: info
+  extraArgs: []
+
+keda:
+  metricsAddress: keda-operator.keda.svc:9666
+  metricsAuthority: keda-operator.keda.svc
+  certificateSecret: kedaorg-certs
+  certificateMountPath: /certs
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: /metrics
+podLabels:
+  app.kubernetes.io/part-of: kedify-pod-autoscaler
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+service:
+  annotations: {}
+  metricsPort: 8080
+
+serviceMonitor:
+  enabled: false
+  labels: {}
+  interval: 30s
+  scrapeTimeout: 10s
+
+prometheusRule:
+  # The supplied rules select the ServiceMonitor-generated service label.
+  # Enabling rules without the ServiceMonitor is rejected during rendering.
+  enabled: false
+  labels: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: false
+  # Set at least one Prometheus selector before enabling the policy. Leaving
+  # both selectors empty would allow every Pod in every namespace to reach the
+  # metrics port, so the chart rejects that configuration.
+  # Most CNIs enforce egress after kubernetes.default is translated to the
+  # control-plane endpoint. Keep both the Service and common endpoint ports.
+  apiServerPorts: [443, 6443]
+  prometheusNamespaceSelector: {}
+  prometheusPodSelector: {}
+  kedaNamespaceSelector: {}
+  kedaPodSelector:
+    matchLabels:
+      app.kubernetes.io/name: keda-operator
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+# An empty list uses the chart's hostname spread default when replicaCount > 1.
+# Set a non-empty list to replace that default.
+topologySpreadConstraints: []
+priorityClassName: ""
+terminationGracePeriodSeconds: 10
