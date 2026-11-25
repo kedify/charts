@@ -466,8 +466,8 @@ kedifyProxy:
 
 # container image for {post,pre}-install helm hooks that help with CR(D) installation
 kubectlImage:
-  tag: "v1.36.6-hooks.1"
-  repository: ghcr.io/kedify/kubectl
+  tag: "v1.36.6"
+  repository: ghcr.io/kedify/kubectl-hooks
   pullPolicy: Always
   pullSecrets: []
 
