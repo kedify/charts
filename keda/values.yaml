@@ -10,6 +10,9 @@ global:
   dnsConfig: {}
   features:
     # -- Enable multicluster scaling. distributed enables raw metrics for the Agent DSO/DSJ workflow; dedicated enables KEDA remote reconciliation through ClusterRegistrations.
+    # Dedicated mode defaults the operator to 20 ScaledObject workers and remote-member
+    # API QPS/burst 20/40. Override individual defaults through operator.env or env,
+    # including valueFrom. Requires a KEDA image supporting the multicluster API env vars.
     multicluster:
       enabled: false
       # -- Scaling model. Defaults to distributed for compatibility with existing DSO/DSJ installations.
