@@ -86,22 +86,14 @@ jobs:
 
       - name: Extract rendered Envoy bootstrap
         run: |
-          helm template kedify-proxy ./kedify-proxy --namespace demo | \
-            yq 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "ENVOY_CONFIG") | .value' > envoy-bootstrap.yaml
+          helm template kedify-proxy ./kedify-proxy --namespace demo --show-only templates/envoy-deployment.yaml > proxy-deployment.yaml
+          yq -er '.spec.template.spec.containers[0].env[] | select(.name == "ENVOY_CONFIG") | .value' proxy-deployment.yaml > envoy-bootstrap.yaml
           test -s envoy-bootstrap.yaml
-          cat envoy-bootstrap.yaml
 
-      # runs the exact Envoy version the chart ships (appVersion) in validate mode,
-      # so an Envoy bump that drops or changes bootstrap config fields fails here
-      - name: Validate bootstrap with Envoy from appVersion
+      - name: Validate bootstrap with the deployed image
         run: |
-          APP_VERSION=$(yq '.appVersion' kedify-proxy/Chart.yaml)
-          if [[ -z "${APP_VERSION}" || "${APP_VERSION}" == "null" ]]; then
-            echo "::error::could not read appVersion from kedify-proxy/Chart.yaml"
-            exit 1
-          fi
-          echo "Validating bootstrap against envoyproxy/envoy:${APP_VERSION}"
-          docker run --rm -v "${PWD}:/config" "envoyproxy/envoy:${APP_VERSION}" --mode validate -c /config/envoy-bootstrap.yaml
+          image="$(yq -er '.spec.template.spec.containers[0].image' proxy-deployment.yaml)"
+          docker run --rm -v "${PWD}:/config:ro" "$image" --mode validate -c /config/envoy-bootstrap.yaml
 
   smoke-xds-e2e:
     name: xDS smoke test on ${{ matrix.kubernetes.kubernetesVersion }}

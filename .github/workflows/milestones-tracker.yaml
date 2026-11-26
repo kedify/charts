@@ -52,6 +52,34 @@ jobs:
               exit 1
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Prepare proxy release when the merged chart version changes
+        if: inputs.chart == 'kedify-proxy'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          MERGE_SHA: ${{ steps.merge_commit.outputs.sha }}
+        run: |
+          set -euo pipefail
+          base=$(gh pr view "$PR_NUMBER" -R kedify/charts --json baseRefName --jq .baseRefName)
+          if [[ "$base" != main ]]; then exit 0; fi
+          # A rebase merge can leave the version bump several commits behind MERGE_SHA.
+          patch=$(gh api --paginate "repos/kedify/charts/pulls/$PR_NUMBER/files" \
+            --jq '.[] | select(.filename == "kedify-proxy/Chart.yaml") | .patch')
+          previous=$(sed -n 's/^-version: //p' <<< "$patch")
+          version=$(sed -n 's/^+version: //p' <<< "$patch")
+          if [[ "$version" == "$previous" ]]; then exit 0; fi
+          [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$version" == "$(git show "${MERGE_SHA}:kedify-proxy/Chart.yaml" | yq -er '.version')" ]]
+          printf '%s\n' "$previous" "$version" | sort -VC
+          milestone="kedify-proxy/$version"
+          if git rev-parse --verify --quiet "refs/tags/$milestone" >/dev/null; then
+            [[ "$(git rev-list -n 1 "refs/tags/$milestone")" == "$MERGE_SHA" ]]
+          fi
+          milestones=$(gh api --paginate 'repos/kedify/charts/milestones?state=all' --jq '.[].title')
+          if ! grep -Fxq "$milestone" <<< "$milestones"; then
+            gh api repos/kedify/charts/milestones -f title="$milestone" >/dev/null
+          fi
+          gh pr edit "$PR_NUMBER" -R kedify/charts --milestone "$milestone" --add-label release/kedify-proxy
       - name: Ensure correct milestone
         id: milestone_tracking
         env:

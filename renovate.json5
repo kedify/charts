@@ -70,10 +70,16 @@
       "enabled": true,
     },
     {
-      "packageNames": [
-        "envoyproxy/envoy", // docker img, kedify-proxy is a wrapper around it
-      ],
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["ghcr.io/kedify/envoy"],
+      "matchFileNames": ["kedify-proxy/Chart.yaml"],
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?<build>\\d+))?$",
       "enabled": true,
+      "bumpVersions": [{
+        "filePatterns": ["kedify-proxy/Chart.yaml"],
+        "matchStrings": ["\\nversion: v(?<version>\\d+\\.\\d+\\.\\d+)\\n"],
+        "bumpType": "patch",
+      }],
     },
     {
       "matchManagers": ["custom.regex"],
@@ -150,10 +156,10 @@
       ],
     },
     {
-      // Envoy proxy (kedify-proxy appVersion doubles as the envoyproxy/envoy image tag)
+      // Envoy proxy (kedify-proxy appVersion tracks the published runtime image tag)
       "fileMatch": ["^kedify-proxy/Chart.yaml$"],
       "datasourceTemplate": "docker",
-      "depNameTemplate": "envoyproxy/envoy",
+      "depNameTemplate": "ghcr.io/kedify/envoy",
       "matchStrings": [
         "appVersion:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
       ],

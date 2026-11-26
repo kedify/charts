@@ -1,6 +1,6 @@
 image:
   # -- Image to use for the Deployment
-  repository: envoyproxy/envoy
+  repository: ghcr.io/kedify/envoy
   # -- Image pull policy, consult [docs](https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy)
   pullPolicy: IfNotPresent
   # -- Image version to use for the Deployment, if not specified, it defaults to `.Chart.AppVersion`
@@ -57,6 +57,8 @@ config:
   bootstrap: {}
 
 pod:
+  # -- Optional Kubernetes container lifecycle for custom proxy images. By default the chart executes /usr/local/bin/envoy-drain from the proxy image.
+  lifecycle: {}
   # -- custom annotations that should be added to the Kedify proxy pod
   annotations: {}
   # -- custom labels that should be added to the Kedify proxy pod
