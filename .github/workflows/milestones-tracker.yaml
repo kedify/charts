@@ -60,13 +60,16 @@ jobs:
           MERGE_SHA: ${{ steps.merge_commit.outputs.sha }}
         run: |
           set -euo pipefail
-          chart=kedify-proxy/Chart.yaml
-          previous=$(git show "${MERGE_SHA}^1:$chart" | yq -er '.version')
-          version=$(git show "${MERGE_SHA}:$chart" | yq -er '.version')
-          if [[ "$version" == "$previous" ]]; then exit 0; fi
           base=$(gh pr view "$PR_NUMBER" -R kedify/charts --json baseRefName --jq .baseRefName)
           if [[ "$base" != main ]]; then exit 0; fi
+          # A rebase merge can leave the version bump several commits behind MERGE_SHA.
+          patch=$(gh api --paginate "repos/kedify/charts/pulls/$PR_NUMBER/files" \
+            --jq '.[] | select(.filename == "kedify-proxy/Chart.yaml") | .patch')
+          previous=$(sed -n 's/^-version: //p' <<< "$patch")
+          version=$(sed -n 's/^+version: //p' <<< "$patch")
+          if [[ "$version" == "$previous" ]]; then exit 0; fi
           [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$version" == "$(git show "${MERGE_SHA}:kedify-proxy/Chart.yaml" | yq -er '.version')" ]]
           printf '%s\n' "$previous" "$version" | sort -VC
           milestone="kedify-proxy/$version"
           if git rev-parse --verify --quiet "refs/tags/$milestone" >/dev/null; then
