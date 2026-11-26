@@ -5078,6 +5078,16 @@ entries:
   kedify-proxy:
   - apiVersion: v2
     appVersion: v1.40.2
+    created: "2026-11-26T16:23:58.476260886Z"
+    description: A Helm chart for Kedify proxy
+    digest: 415bb80722db38f7c9b06e9e5d4d98e9416079fb1f2054df12e72b554255d7a4
+    name: kedify-proxy
+    type: application
+    urls:
+    - https://kedify.github.io/charts/kedify-proxy-v0.0.16.tgz
+    version: v0.0.16
+  - apiVersion: v2
+    appVersion: v1.40.2
     created: "2026-11-18T10:27:04.99785565Z"
     description: A Helm chart for Kedify proxy
     digest: e86944aa1216c3022d15b244ec506ebd4bd7ddcd1144da3d745db4073176a423
@@ -5186,4 +5196,4 @@ entries:
     urls:
     - https://kedify.github.io/charts/kedify-proxy-v0.0.2.tgz
     version: v0.0.2
-generated: "2026-11-19T16:11:03.515322322Z"
+generated: "2026-11-26T16:23:58.475344639Z"
