@@ -71,17 +71,10 @@ print_images_by_helm_template() {
 }
 
 print_kedify_proxy_images() {
-  local repo_root envoy_tag
-
+  local repo_root
   repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  envoy_tag="$(yq -r '.appVersion // ""' "$repo_root/kedify-proxy/Chart.yaml")"
-
-  if [[ -z "$envoy_tag" || "$envoy_tag" == "null" ]]; then
-    echo "Failed to read appVersion from $repo_root/kedify-proxy/Chart.yaml" >&2
-    return 1
-  fi
-
-  printf 'envoyproxy/envoy:%s\n' "$envoy_tag"
+  helm template "$RELEASE_NAME" "$repo_root/kedify-proxy" --show-only templates/envoy-deployment.yaml |
+    yq -er '.spec.template.spec | (.containers[], .initContainers[]?) | .image'
 }
 
 resolve_amd64_digest() {

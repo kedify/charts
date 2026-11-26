@@ -1,3 +1,6 @@
+{{- $image := printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) -}}
+{{- $helper := .Values.image.drainHelperImage | default (printf "ghcr.io/kedify/envoy:%s" .Chart.AppVersion) -}}
+{{- $copyHelper := ne $image $helper -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,9 +33,23 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if $copyHelper }}
+      initContainers:
+        - name: install-envoy-drain
+          image: {{ $helper | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/envoy-drain", "-install=/var/run/kedify-drain/envoy-drain"]
+          securityContext:
+            {{- include "kedify-proxy.containerSecurityContext" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: kedify-drain
+              mountPath: /var/run/kedify-drain
+      {{- end }}
       containers:
         - name: envoy
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: {{ $image | quote }}
           args:
             {{- if eq .Values.logging.format "json" }}
             - "--log-format"
@@ -49,37 +66,10 @@ spec:
             preStop:
               exec:
                 command:
-                  - /bin/bash
-                  - -c
-                  - |
-                    function log() {
-                      echo "[$(date -u +'%Y-%m-%d %T.%3N')][1][info][prestop-hook] $1" > /proc/1/fd/1
-                    }
-                    log "Gracefully shutting down kedify-proxy"
-                    exec 3<>/dev/tcp/localhost/{{ .Values.service.adminPort }}
-                    echo -e 'POST /healthcheck/fail HTTP/1.1\r\nHost: preStopHook\r\nContent-Length:0\r\nConnection: close\r\n\r\n' >&3
-                    response=$(cat <&3)
-
-                    timeout={{ .Values.pod.terminationGracePeriodSeconds }}
-                    interval=1
-                    elapsed=0
-
-                    while [[ "$elapsed" -lt "$timeout" ]]; do
-                      exec 3<>/dev/tcp/localhost/{{ .Values.service.adminPort }}
-                      echo -e 'GET /stats?filter=http.kedify-proxy.downstream_cx_active HTTP/1.1\r\nHost: preStopHook\r\nConnection: close\r\n\r\n' >&3
-                      response=$(cat <&3)
-                      active_connections=$(echo "$response" | awk '/http.kedify-proxy.downstream_cx_active:/{print $2}')
-                      log "Try $elapsed/$timeout; active connections: $active_connections"
-                      if [[ "$active_connections" -eq 0 ]]; then
-                        log "No active connections, terminating in {{ .Values.pod.preStopHookWaitSeconds }} seconds"
-                        sleep {{ .Values.pod.preStopHookWaitSeconds }}
-                        exit 0
-                      fi
-                      sleep $interval
-                      elapsed=$((elapsed + interval))
-                    done
-                    log "Timeout reached with active connections: $active_connections, terminating anyway"
-                    exit 1
+                  - {{ ternary "/var/run/kedify-drain/envoy-drain" "/usr/local/bin/envoy-drain" $copyHelper }}
+                  - "-admin-port={{ .Values.service.adminPort }}"
+                  - "-timeout={{ .Values.pod.terminationGracePeriodSeconds }}s"
+                  - "-wait={{ .Values.pod.preStopHookWaitSeconds }}s"
           env:
             {{- if and .Values.pod.containerSecurityContext.runAsUser (not .Values.openshift) }}
             - name: ENVOY_UID
@@ -91,11 +81,7 @@ spec:
 {{ tpl ($.Files.Get "files/envoy-config.yaml") $ | indent 16 }}
 
           securityContext:
-            {{- if .Values.openshift }}
-            {{- toYaml (omit .Values.pod.containerSecurityContext "runAsUser") | nindent 12 }}
-            {{- else }}
-            {{- toYaml .Values.pod.containerSecurityContext | nindent 12 }}
-            {{- end }}
+            {{- include "kedify-proxy.containerSecurityContext" . | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.service.httpPort }}
@@ -119,13 +105,26 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+          {{- if or $copyHelper .Values.volumeMounts }}
           volumeMounts:
+            {{- if $copyHelper }}
+            - name: kedify-drain
+              mountPath: /var/run/kedify-drain
+              readOnly: true
+            {{- end }}
+            {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
-      {{- with .Values.volumes }}
+      {{- if or $copyHelper .Values.volumes }}
       volumes:
+        {{- if $copyHelper }}
+        - name: kedify-drain
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
       securityContext:

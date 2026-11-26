@@ -56,7 +56,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                <td>
                     <div style="max-width: 200px;">
 <pre lang="json">
-"envoyproxy/envoy"
+"ghcr.io/kedify/envoy"
 </pre>
 </div>
                </td>
@@ -94,8 +94,24 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                </td>
           </tr>
           <tr>
+               <td id="image--drainHelperImage">
+               <a href="./values.yaml#L9">image.drainHelperImage</a><br/>
+               (string)
+               </td>
+               <td>
+               Full image reference providing /usr/local/bin/envoy-drain. Defaults to ghcr.io/kedify/envoy at the chart appVersion. When it differs from the proxy image, an init container copies the helper into a shared volume. Set this to the mirrored Kedify image in air-gapped installations.
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+""
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
                <td id="imagePullSecrets">
-               <a href="./values.yaml#L10">imagePullSecrets</a><br/>
+               <a href="./values.yaml#L12">imagePullSecrets</a><br/>
                (list)
                </td>
                <td>
@@ -111,7 +127,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="logging--format">
-               <a href="./values.yaml#L16">logging.format</a><br/>
+               <a href="./values.yaml#L18">logging.format</a><br/>
                (string)
                </td>
                <td>
@@ -127,7 +143,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="extraArgs">
-               <a href="./values.yaml#L19">extraArgs</a><br/>
+               <a href="./values.yaml#L21">extraArgs</a><br/>
                (object)
                </td>
                <td>
@@ -143,7 +159,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedaNamespace">
-               <a href="./values.yaml#L26">config.kedaNamespace</a><br/>
+               <a href="./values.yaml#L28">config.kedaNamespace</a><br/>
                (string)
                </td>
                <td>
@@ -159,7 +175,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyEnvoyCP">
-               <a href="./values.yaml#L30">config.kedifyEnvoyCP</a><br/>
+               <a href="./values.yaml#L32">config.kedifyEnvoyCP</a><br/>
                (string)
                </td>
                <td>
@@ -175,7 +191,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyEnvoyCPPort">
-               <a href="./values.yaml#L32">config.kedifyEnvoyCPPort</a><br/>
+               <a href="./values.yaml#L34">config.kedifyEnvoyCPPort</a><br/>
                (int)
                </td>
                <td>
@@ -191,7 +207,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyMetricsSinkPort">
-               <a href="./values.yaml#L34">config.kedifyMetricsSinkPort</a><br/>
+               <a href="./values.yaml#L36">config.kedifyMetricsSinkPort</a><br/>
                (int)
                </td>
                <td>
@@ -207,7 +223,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--overloadManager">
-               <a href="./values.yaml#L38">config.overloadManager</a><br/>
+               <a href="./values.yaml#L40">config.overloadManager</a><br/>
                (object)
                </td>
                <td>
@@ -227,7 +243,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--overloadManager--enabled">
-               <a href="./values.yaml#L40">config.overloadManager.enabled</a><br/>
+               <a href="./values.yaml#L42">config.overloadManager.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -243,7 +259,7 @@ false
           </tr>
           <tr>
                <td id="config--overloadManager--refreshInterval">
-               <a href="./values.yaml#L42">config.overloadManager.refreshInterval</a><br/>
+               <a href="./values.yaml#L44">config.overloadManager.refreshInterval</a><br/>
                (string)
                </td>
                <td>
@@ -259,7 +275,7 @@ false
           </tr>
           <tr>
                <td id="config--overloadManager--maxActiveDownstreamConnections">
-               <a href="./values.yaml#L44">config.overloadManager.maxActiveDownstreamConnections</a><br/>
+               <a href="./values.yaml#L46">config.overloadManager.maxActiveDownstreamConnections</a><br/>
                (int)
                </td>
                <td>
@@ -275,7 +291,7 @@ false
           </tr>
           <tr>
                <td id="config--xds">
-               <a href="./values.yaml#L46">config.xds</a><br/>
+               <a href="./values.yaml#L48">config.xds</a><br/>
                (object)
                </td>
                <td>
@@ -296,7 +312,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--apiType">
-               <a href="./values.yaml#L48">config.xds.apiType</a><br/>
+               <a href="./values.yaml#L50">config.xds.apiType</a><br/>
                (string)
                </td>
                <td>
@@ -312,7 +328,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--keepaliveInterval">
-               <a href="./values.yaml#L50">config.xds.keepaliveInterval</a><br/>
+               <a href="./values.yaml#L52">config.xds.keepaliveInterval</a><br/>
                (string)
                </td>
                <td>
@@ -328,7 +344,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--connectTimeout">
-               <a href="./values.yaml#L53">config.xds.connectTimeout</a><br/>
+               <a href="./values.yaml#L55">config.xds.connectTimeout</a><br/>
                (string)
                </td>
                <td>
@@ -344,7 +360,7 @@ false
           </tr>
           <tr>
                <td id="pod--annotations">
-               <a href="./values.yaml#L61">pod.annotations</a><br/>
+               <a href="./values.yaml#L63">pod.annotations</a><br/>
                (object)
                </td>
                <td>
@@ -360,7 +376,7 @@ false
           </tr>
           <tr>
                <td id="pod--labels">
-               <a href="./values.yaml#L63">pod.labels</a><br/>
+               <a href="./values.yaml#L65">pod.labels</a><br/>
                (object)
                </td>
                <td>
@@ -376,7 +392,7 @@ false
           </tr>
           <tr>
                <td id="pod--securityContext">
-               <a href="./values.yaml#L65">pod.securityContext</a><br/>
+               <a href="./values.yaml#L67">pod.securityContext</a><br/>
                (object)
                </td>
                <td>
@@ -392,7 +408,7 @@ false
           </tr>
           <tr>
                <td id="pod--containerSecurityContext">
-               <a href="./values.yaml#L67">pod.containerSecurityContext</a><br/>
+               <a href="./values.yaml#L69">pod.containerSecurityContext</a><br/>
                (object)
                </td>
                <td>
@@ -421,7 +437,7 @@ false
           </tr>
           <tr>
                <td id="pod--priorityClassName">
-               <a href="./values.yaml#L78">pod.priorityClassName</a><br/>
+               <a href="./values.yaml#L80">pod.priorityClassName</a><br/>
                (string)
                </td>
                <td>
@@ -437,7 +453,7 @@ false
           </tr>
           <tr>
                <td id="pod--livenessProbe">
-               <a href="./values.yaml#L80">pod.livenessProbe</a><br/>
+               <a href="./values.yaml#L82">pod.livenessProbe</a><br/>
                (object)
                </td>
                <td>
@@ -461,7 +477,7 @@ false
           </tr>
           <tr>
                <td id="pod--readinessProbe">
-               <a href="./values.yaml#L88">pod.readinessProbe</a><br/>
+               <a href="./values.yaml#L90">pod.readinessProbe</a><br/>
                (object)
                </td>
                <td>
@@ -485,7 +501,7 @@ false
           </tr>
           <tr>
                <td id="pod--preStopHookWaitSeconds">
-               <a href="./values.yaml#L96">pod.preStopHookWaitSeconds</a><br/>
+               <a href="./values.yaml#L98">pod.preStopHookWaitSeconds</a><br/>
                (int)
                </td>
                <td>
@@ -501,7 +517,7 @@ false
           </tr>
           <tr>
                <td id="pod--terminationGracePeriodSeconds">
-               <a href="./values.yaml#L98">pod.terminationGracePeriodSeconds</a><br/>
+               <a href="./values.yaml#L100">pod.terminationGracePeriodSeconds</a><br/>
                (int)
                </td>
                <td>
@@ -517,7 +533,7 @@ false
           </tr>
           <tr>
                <td id="deployment--replicas">
-               <a href="./values.yaml#L102">deployment.replicas</a><br/>
+               <a href="./values.yaml#L104">deployment.replicas</a><br/>
                (int)
                </td>
                <td>
@@ -533,7 +549,7 @@ false
           </tr>
           <tr>
                <td id="deployment--rollingUpdate">
-               <a href="./values.yaml#L104">deployment.rollingUpdate</a><br/>
+               <a href="./values.yaml#L106">deployment.rollingUpdate</a><br/>
                (object)
                </td>
                <td>
@@ -549,7 +565,7 @@ false
           </tr>
           <tr>
                <td id="service--enabled">
-               <a href="./values.yaml#L111">service.enabled</a><br/>
+               <a href="./values.yaml#L113">service.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -565,7 +581,7 @@ true
           </tr>
           <tr>
                <td id="service--type">
-               <a href="./values.yaml#L113">service.type</a><br/>
+               <a href="./values.yaml#L115">service.type</a><br/>
                (string)
                </td>
                <td>
@@ -581,7 +597,7 @@ true
           </tr>
           <tr>
                <td id="service--annotations">
-               <a href="./values.yaml#L115">service.annotations</a><br/>
+               <a href="./values.yaml#L117">service.annotations</a><br/>
                (object)
                </td>
                <td>
@@ -597,7 +613,7 @@ true
           </tr>
           <tr>
                <td id="service--labels">
-               <a href="./values.yaml#L117">service.labels</a><br/>
+               <a href="./values.yaml#L119">service.labels</a><br/>
                (object)
                </td>
                <td>
@@ -613,7 +629,7 @@ true
           </tr>
           <tr>
                <td id="service--httpPort">
-               <a href="./values.yaml#L119">service.httpPort</a><br/>
+               <a href="./values.yaml#L121">service.httpPort</a><br/>
                (int)
                </td>
                <td>
@@ -629,7 +645,7 @@ true
           </tr>
           <tr>
                <td id="service--tlsPort">
-               <a href="./values.yaml#L121">service.tlsPort</a><br/>
+               <a href="./values.yaml#L123">service.tlsPort</a><br/>
                (int)
                </td>
                <td>
@@ -645,7 +661,7 @@ true
           </tr>
           <tr>
                <td id="service--inferencePort">
-               <a href="./values.yaml#L123">service.inferencePort</a><br/>
+               <a href="./values.yaml#L125">service.inferencePort</a><br/>
                (int)
                </td>
                <td>
@@ -661,7 +677,7 @@ true
           </tr>
           <tr>
                <td id="service--exposeAdminInterface">
-               <a href="./values.yaml#L125">service.exposeAdminInterface</a><br/>
+               <a href="./values.yaml#L127">service.exposeAdminInterface</a><br/>
                (bool)
                </td>
                <td>
@@ -677,7 +693,7 @@ true
           </tr>
           <tr>
                <td id="service--adminSvcType">
-               <a href="./values.yaml#L127">service.adminSvcType</a><br/>
+               <a href="./values.yaml#L129">service.adminSvcType</a><br/>
                (string)
                </td>
                <td>
@@ -693,7 +709,7 @@ true
           </tr>
           <tr>
                <td id="service--adminPort">
-               <a href="./values.yaml#L129">service.adminPort</a><br/>
+               <a href="./values.yaml#L131">service.adminPort</a><br/>
                (int)
                </td>
                <td>
@@ -709,7 +725,7 @@ true
           </tr>
           <tr>
                <td id="resources">
-               <a href="./values.yaml#L132">resources</a><br/>
+               <a href="./values.yaml#L134">resources</a><br/>
                (object)
                </td>
                <td>
@@ -734,7 +750,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling">
-               <a href="./values.yaml#L142">autoscaling</a><br/>
+               <a href="./values.yaml#L144">autoscaling</a><br/>
                (object)
                </td>
                <td>
@@ -756,7 +772,7 @@ true
           </tr>
           <tr>
                <td id="autoscaling--enabled">
-               <a href="./values.yaml#L144">autoscaling.enabled</a><br/>
+               <a href="./values.yaml#L146">autoscaling.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -772,7 +788,7 @@ false
           </tr>
           <tr>
                <td id="autoscaling--scaledObjectName">
-               <a href="./values.yaml#L146">autoscaling.scaledObjectName</a><br/>
+               <a href="./values.yaml#L148">autoscaling.scaledObjectName</a><br/>
                (string)
                </td>
                <td>
@@ -788,7 +804,7 @@ false
           </tr>
           <tr>
                <td id="volumes">
-               <a href="./values.yaml#L161">volumes</a><br/>
+               <a href="./values.yaml#L163">volumes</a><br/>
                (list)
                </td>
                <td>
@@ -804,7 +820,7 @@ false
           </tr>
           <tr>
                <td id="volumeMounts">
-               <a href="./values.yaml#L168">volumeMounts</a><br/>
+               <a href="./values.yaml#L170">volumeMounts</a><br/>
                (list)
                </td>
                <td>
@@ -820,7 +836,7 @@ false
           </tr>
           <tr>
                <td id="nodeSelector">
-               <a href="./values.yaml#L174">nodeSelector</a><br/>
+               <a href="./values.yaml#L176">nodeSelector</a><br/>
                (object)
                </td>
                <td>
@@ -836,7 +852,7 @@ false
           </tr>
           <tr>
                <td id="tolerations">
-               <a href="./values.yaml#L176">tolerations</a><br/>
+               <a href="./values.yaml#L178">tolerations</a><br/>
                (list)
                </td>
                <td>
@@ -852,7 +868,7 @@ false
           </tr>
           <tr>
                <td id="topologySpreadConstraints">
-               <a href="./values.yaml#L178">topologySpreadConstraints</a><br/>
+               <a href="./values.yaml#L180">topologySpreadConstraints</a><br/>
                (list)
                </td>
                <td>
@@ -868,7 +884,7 @@ false
           </tr>
           <tr>
                <td id="affinity">
-               <a href="./values.yaml#L180">affinity</a><br/>
+               <a href="./values.yaml#L182">affinity</a><br/>
                (object)
                </td>
                <td>
@@ -884,7 +900,7 @@ false
           </tr>
           <tr>
                <td id="podDisruptionBudget">
-               <a href="./values.yaml#L183">podDisruptionBudget</a><br/>
+               <a href="./values.yaml#L185">podDisruptionBudget</a><br/>
                (object)
                </td>
                <td>
@@ -903,7 +919,7 @@ false
           </tr>
           <tr>
                <td id="noBanner">
-               <a href="./values.yaml#L194">noBanner</a><br/>
+               <a href="./values.yaml#L196">noBanner</a><br/>
                (bool)
                </td>
                <td>
@@ -919,7 +935,7 @@ false
           </tr>
           <tr>
                <td id="extraObjects">
-               <a href="./values.yaml#L197">extraObjects</a><br/>
+               <a href="./values.yaml#L199">extraObjects</a><br/>
                (list)
                </td>
                <td>
