@@ -1,6 +1,6 @@
 # kedify-agent
 
-![Version: v0.8.3](https://img.shields.io/badge/Version-v0.8.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.8.3](https://img.shields.io/badge/AppVersion-v0.8.3-informational?style=flat-square)
+![Version: v0.8.4](https://img.shields.io/badge/Version-v0.8.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.8.4](https://img.shields.io/badge/AppVersion-v0.8.4-informational?style=flat-square)
 
 Kedify agent - Helm Chart
 
@@ -17,13 +17,13 @@ Kubernetes: `>=v1.23.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://kedify.github.io/charts | keda | v2.21.0-3 |
+| https://kedify.github.io/charts | keda | v2.21.1-0 |
 | https://kedify.github.io/charts | keda-add-ons-http | v0.11.1-8 |
-| oci://ghcr.io/kedify/charts | autoscaling-checks | 0.1.0 |
+| oci://ghcr.io/kedify/charts | autoscaling-checks | 0.2.0 |
 | oci://ghcr.io/kedify/charts | kedify-observability | 0.0.4 |
-| oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.9 |
+| oci://ghcr.io/kedify/charts | kedify-predictor | 0.1.10 |
 | oci://ghcr.io/kedify/charts | kpa | 0.3.1 |
-| oci://ghcr.io/kedify/charts | otel-add-on | 0.1.5 |
+| oci://ghcr.io/kedify/charts | otel-add-on | 0.1.6 |
 
 ## Optional KPA installation
 
