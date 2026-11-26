@@ -50,19 +50,11 @@
       "enabled": false,
     },
     {
-      "packageNames": [
-        "ghcr.io/kedify/charts/otel-add-on", // OCI helm chart
-      ],
-      "enabled": true,
-    },
-    {
-      "packageNames": [
-        "ghcr.io/kedify/charts/kedify-predictor", // OCI helm chart
-      ],
-      "enabled": true,
-    },
-    {
-      "packageNames": [
+      // Helm v3 tracks OCI chart versions and regenerates Chart.lock.
+      "matchManagers": ["helmv3"],
+      "matchPackageNames": [
+        "ghcr.io/kedify/charts/otel-add-on",
+        "ghcr.io/kedify/charts/kedify-predictor",
         "ghcr.io/kedify/charts/kpa",
         "ghcr.io/kedify/charts/autoscaling-checks",
         "ghcr.io/kedify/charts/kedify-observability",
@@ -126,33 +118,6 @@
       "depNameTemplate": "ghcr.io/kedify/agent",
       "matchStrings": [
         "tag:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
-      ],
-    },
-    {
-      // kedify OTel Addon
-      "fileMatch": ["^kedify-agent/Chart.yaml$"],
-      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
-      "depNameTemplate": "ghcr.io/kedify/charts/otel-add-on",
-      "matchStrings": [
-        "name:\\s+otel-add-on\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
-      ],
-    },
-    {
-      // kedify Predictor
-      "fileMatch": ["^kedify-agent/Chart.yaml$"],
-      "datasourceTemplate": "docker", // not a typo, OCI helm charts use 'docker' template
-      "depNameTemplate": "ghcr.io/kedify/charts/kedify-predictor",
-      "matchStrings": [
-        "name:\\s+kedify-predictor\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\n]+)\"?\\s*\n",
-      ],
-    },
-    {
-      // OCI chart dependencies not covered by the release-triggered updater.
-      "fileMatch": ["^kedify-agent/Chart.yaml$"],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "ghcr.io/kedify/charts/{{{depName}}}",
-      "matchStrings": [
-        "name:\\s+(?<depName>kpa|autoscaling-checks|kedify-observability)\\s*\n\\s*repository:\\s+oci://ghcr.io/kedify/charts\\s*\n\\s+version:\\s+\"?(?<currentValue>[^\"\\s]+)\"?",
       ],
     },
     {
