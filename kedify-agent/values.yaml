@@ -151,7 +151,7 @@ agent:
   imagePullSecrets: []
   # container image for {post,pre}-install helm hooks that help with CR(D) installation
   kubectlImage:
-    tag: "v1.36.6"
+    tag: "v1.37.2"
     repository: ghcr.io/kedify/kubectl
     pullPolicy: Always
   # comma-separated list of namespaces where pod utilization metrics should be collected
@@ -346,7 +346,7 @@ keda-add-ons-http:
   # for all available values, check: https://github.com/kedify/charts/blob/main/http-add-on/values.yaml
   enabled: false
   kubectlImage:
-    tag: "v1.36.6"
+    tag: "v1.37.2"
   interceptor:
     scaledObject:
       waitForCrd: true
@@ -354,7 +354,7 @@ otel-add-on:
   # for all available values, check: https://github.com/kedify/otel-add-on/blob/main/helmchart/otel-add-on/values.yaml
   enabled: false
   kubectlImage:
-    tag: "v1.36.6"
+    tag: "v1.37.2"
   fullnameOverride: kedify-otel-scaler
   otelOperator:
     enabled: true
@@ -363,7 +363,7 @@ kedify-predictor:
   # helm show values oci://ghcr.io/kedify/charts/kedify-predictor
   enabled: false
   kubectlImage:
-    tag: "v1.36.6"
+    tag: "v1.37.2"
   fullnameOverride: kedify-predictor
 autoscaling-checks:
   # Optionally install set of small check runner apps that validate KEDA/Kedify autoscaling end to end
