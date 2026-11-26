@@ -5,8 +5,6 @@ image:
   pullPolicy: IfNotPresent
   # -- Image version to use for the Deployment, if not specified, it defaults to `.Chart.AppVersion`
   tag: ""
-  # -- Full image reference providing /usr/local/bin/envoy-drain. Defaults to ghcr.io/kedify/envoy at the chart appVersion. When it differs from the proxy image, an init container copies the helper into a shared volume. Set this to the mirrored Kedify image in air-gapped installations.
-  drainHelperImage: ""
 
 # -- Required for private image registries, consult [docs](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
 imagePullSecrets: []
@@ -59,6 +57,8 @@ config:
   bootstrap: {}
 
 pod:
+  # -- Optional Kubernetes container lifecycle for custom proxy images. By default the chart executes /usr/local/bin/envoy-drain from the proxy image.
+  lifecycle: {}
   # -- custom annotations that should be added to the Kedify proxy pod
   annotations: {}
   # -- custom labels that should be added to the Kedify proxy pod

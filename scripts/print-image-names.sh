@@ -71,10 +71,12 @@ print_images_by_helm_template() {
 }
 
 print_kedify_proxy_images() {
-  local repo_root
-  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  helm template "$RELEASE_NAME" "$repo_root/kedify-proxy" --show-only templates/envoy-deployment.yaml |
-    yq -er '.spec.template.spec | (.containers[], .initContainers[]?) | .image'
+  local version
+  version="$(yq -er '.agent.kedifyProxy.chartVersion' "$CHART_DIR/values.yaml")"
+  yq '.agent.kedifyProxy.globalValues // {}' "$CHART_DIR/values.yaml" > "$TMP_DIR/proxy-values.yaml"
+  helm template "$RELEASE_NAME" oci://ghcr.io/kedify/charts/kedify-proxy --version "$version" \
+    -f "$TMP_DIR/proxy-values.yaml" --show-only templates/envoy-deployment.yaml |
+    yq -er '.spec.template.spec.containers[].image'
 }
 
 resolve_amd64_digest() {
@@ -98,14 +100,11 @@ resolve_amd64_digest() {
 
 main() {
   local image
+  print_images_by_helm_template "$CHART_DIR" > "$TMP_DIR/images"
+  print_kedify_proxy_images >> "$TMP_DIR/images"
   while IFS= read -r image; do
     resolve_amd64_digest "$image"
-  done < <(
-    {
-      print_images_by_helm_template "$CHART_DIR"
-      print_kedify_proxy_images
-    } | sort -u
-  )
+  done < <(sort -u "$TMP_DIR/images")
 }
 
 main

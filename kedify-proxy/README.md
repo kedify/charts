@@ -1,6 +1,6 @@
 # kedify-proxy
 
-![Version: v0.0.14](https://img.shields.io/badge/Version-v0.0.14-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.40.2](https://img.shields.io/badge/AppVersion-v1.40.2-informational?style=flat-square)
+![Version: v0.0.15](https://img.shields.io/badge/Version-v0.0.15-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.40.2](https://img.shields.io/badge/AppVersion-v1.40.2-informational?style=flat-square)
 
 A Helm chart for Kedify proxy
 
@@ -94,24 +94,8 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
                </td>
           </tr>
           <tr>
-               <td id="image--drainHelperImage">
-               <a href="./values.yaml#L9">image.drainHelperImage</a><br/>
-               (string)
-               </td>
-               <td>
-               Full image reference providing /usr/local/bin/envoy-drain. Defaults to ghcr.io/kedify/envoy at the chart appVersion. When it differs from the proxy image, an init container copies the helper into a shared volume. Set this to the mirrored Kedify image in air-gapped installations.
-               </td>
-               <td>
-                    <div style="max-width: 200px;">
-<pre lang="json">
-""
-</pre>
-</div>
-               </td>
-          </tr>
-          <tr>
                <td id="imagePullSecrets">
-               <a href="./values.yaml#L12">imagePullSecrets</a><br/>
+               <a href="./values.yaml#L10">imagePullSecrets</a><br/>
                (list)
                </td>
                <td>
@@ -127,7 +111,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="logging--format">
-               <a href="./values.yaml#L18">logging.format</a><br/>
+               <a href="./values.yaml#L16">logging.format</a><br/>
                (string)
                </td>
                <td>
@@ -143,7 +127,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="extraArgs">
-               <a href="./values.yaml#L21">extraArgs</a><br/>
+               <a href="./values.yaml#L19">extraArgs</a><br/>
                (object)
                </td>
                <td>
@@ -159,7 +143,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedaNamespace">
-               <a href="./values.yaml#L28">config.kedaNamespace</a><br/>
+               <a href="./values.yaml#L26">config.kedaNamespace</a><br/>
                (string)
                </td>
                <td>
@@ -175,7 +159,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyEnvoyCP">
-               <a href="./values.yaml#L32">config.kedifyEnvoyCP</a><br/>
+               <a href="./values.yaml#L30">config.kedifyEnvoyCP</a><br/>
                (string)
                </td>
                <td>
@@ -191,7 +175,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyEnvoyCPPort">
-               <a href="./values.yaml#L34">config.kedifyEnvoyCPPort</a><br/>
+               <a href="./values.yaml#L32">config.kedifyEnvoyCPPort</a><br/>
                (int)
                </td>
                <td>
@@ -207,7 +191,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--kedifyMetricsSinkPort">
-               <a href="./values.yaml#L36">config.kedifyMetricsSinkPort</a><br/>
+               <a href="./values.yaml#L34">config.kedifyMetricsSinkPort</a><br/>
                (int)
                </td>
                <td>
@@ -223,7 +207,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--overloadManager">
-               <a href="./values.yaml#L40">config.overloadManager</a><br/>
+               <a href="./values.yaml#L38">config.overloadManager</a><br/>
                (object)
                </td>
                <td>
@@ -243,7 +227,7 @@ helm upgrade -i keda-add-ons-http kedifykeda/keda-add-ons-http --nkeda --version
           </tr>
           <tr>
                <td id="config--overloadManager--enabled">
-               <a href="./values.yaml#L42">config.overloadManager.enabled</a><br/>
+               <a href="./values.yaml#L40">config.overloadManager.enabled</a><br/>
                (bool)
                </td>
                <td>
@@ -259,7 +243,7 @@ false
           </tr>
           <tr>
                <td id="config--overloadManager--refreshInterval">
-               <a href="./values.yaml#L44">config.overloadManager.refreshInterval</a><br/>
+               <a href="./values.yaml#L42">config.overloadManager.refreshInterval</a><br/>
                (string)
                </td>
                <td>
@@ -275,7 +259,7 @@ false
           </tr>
           <tr>
                <td id="config--overloadManager--maxActiveDownstreamConnections">
-               <a href="./values.yaml#L46">config.overloadManager.maxActiveDownstreamConnections</a><br/>
+               <a href="./values.yaml#L44">config.overloadManager.maxActiveDownstreamConnections</a><br/>
                (int)
                </td>
                <td>
@@ -291,7 +275,7 @@ false
           </tr>
           <tr>
                <td id="config--xds">
-               <a href="./values.yaml#L48">config.xds</a><br/>
+               <a href="./values.yaml#L46">config.xds</a><br/>
                (object)
                </td>
                <td>
@@ -312,7 +296,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--apiType">
-               <a href="./values.yaml#L50">config.xds.apiType</a><br/>
+               <a href="./values.yaml#L48">config.xds.apiType</a><br/>
                (string)
                </td>
                <td>
@@ -328,7 +312,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--keepaliveInterval">
-               <a href="./values.yaml#L52">config.xds.keepaliveInterval</a><br/>
+               <a href="./values.yaml#L50">config.xds.keepaliveInterval</a><br/>
                (string)
                </td>
                <td>
@@ -344,7 +328,7 @@ false
           </tr>
           <tr>
                <td id="config--xds--connectTimeout">
-               <a href="./values.yaml#L55">config.xds.connectTimeout</a><br/>
+               <a href="./values.yaml#L53">config.xds.connectTimeout</a><br/>
                (string)
                </td>
                <td>
@@ -354,6 +338,22 @@ false
                     <div style="max-width: 200px;">
 <pre lang="json">
 "2s"
+</pre>
+</div>
+               </td>
+          </tr>
+          <tr>
+               <td id="pod--lifecycle">
+               <a href="./values.yaml#L61">pod.lifecycle</a><br/>
+               (object)
+               </td>
+               <td>
+               Optional Kubernetes container lifecycle for custom proxy images. By default the chart executes /usr/local/bin/envoy-drain from the proxy image.
+               </td>
+               <td>
+                    <div style="max-width: 200px;">
+<pre lang="json">
+{}
 </pre>
 </div>
                </td>

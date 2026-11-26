@@ -50,11 +50,3 @@ app: kedify-proxy
 app.kubernetes.io/name: {{ include "kedify-proxy.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
-
-{{- define "kedify-proxy.containerSecurityContext" -}}
-{{- if .Values.openshift -}}
-{{- toYaml (omit .Values.pod.containerSecurityContext "runAsUser") -}}
-{{- else -}}
-{{- toYaml .Values.pod.containerSecurityContext -}}
-{{- end -}}
-{{- end -}}

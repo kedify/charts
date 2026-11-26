@@ -70,10 +70,16 @@
       "enabled": true,
     },
     {
-      "packageNames": [
-        "ghcr.io/kedify/envoy", // kedify-proxy runtime image
-      ],
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["ghcr.io/kedify/envoy"],
+      "matchFileNames": ["kedify-proxy/Chart.yaml"],
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?<build>\\d+))?$",
       "enabled": true,
+      "bumpVersions": [{
+        "filePatterns": ["kedify-proxy/Chart.yaml"],
+        "matchStrings": ["\\nversion: v(?<version>\\d+\\.\\d+\\.\\d+)\\n"],
+        "bumpType": "patch",
+      }],
     },
     {
       "matchManagers": ["custom.regex"],

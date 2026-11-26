@@ -1,6 +1,3 @@
-{{- $image := printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) -}}
-{{- $helper := .Values.image.drainHelperImage | default (printf "ghcr.io/kedify/envoy:%s" .Chart.AppVersion) -}}
-{{- $copyHelper := ne $image $helper -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,23 +30,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if $copyHelper }}
-      initContainers:
-        - name: install-envoy-drain
-          image: {{ $helper | quote }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/usr/local/bin/envoy-drain", "-install=/var/run/kedify-drain/envoy-drain"]
-          securityContext:
-            {{- include "kedify-proxy.containerSecurityContext" . | nindent 12 }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            - name: kedify-drain
-              mountPath: /var/run/kedify-drain
-      {{- end }}
       containers:
         - name: envoy
-          image: {{ $image | quote }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           args:
             {{- if eq .Values.logging.format "json" }}
             - "--log-format"
@@ -63,13 +46,17 @@ spec:
             - "$(ENVOY_CONFIG)"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           lifecycle:
+            {{- with .Values.pod.lifecycle }}
+            {{- toYaml . | nindent 12 }}
+            {{- else }}
             preStop:
               exec:
                 command:
-                  - {{ ternary "/var/run/kedify-drain/envoy-drain" "/usr/local/bin/envoy-drain" $copyHelper }}
+                  - /usr/local/bin/envoy-drain
                   - "-admin-port={{ .Values.service.adminPort }}"
                   - "-timeout={{ .Values.pod.terminationGracePeriodSeconds }}s"
                   - "-wait={{ .Values.pod.preStopHookWaitSeconds }}s"
+            {{- end }}
           env:
             {{- if and .Values.pod.containerSecurityContext.runAsUser (not .Values.openshift) }}
             - name: ENVOY_UID
@@ -81,7 +68,11 @@ spec:
 {{ tpl ($.Files.Get "files/envoy-config.yaml") $ | indent 16 }}
 
           securityContext:
-            {{- include "kedify-proxy.containerSecurityContext" . | nindent 12 }}
+            {{- if .Values.openshift }}
+            {{- toYaml (omit .Values.pod.containerSecurityContext "runAsUser") | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.pod.containerSecurityContext | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.httpPort }}
@@ -105,26 +96,13 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if or $copyHelper .Values.volumeMounts }}
+          {{- with .Values.volumeMounts }}
           volumeMounts:
-            {{- if $copyHelper }}
-            - name: kedify-drain
-              mountPath: /var/run/kedify-drain
-              readOnly: true
-            {{- end }}
-            {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
           {{- end }}
-      {{- if or $copyHelper .Values.volumes }}
+      {{- with .Values.volumes }}
       volumes:
-        {{- if $copyHelper }}
-        - name: kedify-drain
-          emptyDir: {}
-        {{- end }}
-        {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
       securityContext:

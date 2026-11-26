@@ -2,7 +2,7 @@ apiVersion: v2
 name: kedify-proxy
 description: A Helm chart for Kedify proxy
 type: application
-version: v0.0.14
+version: v0.0.15
 
-# Upstream Envoy version shipped in the default proxy image.
+# Default Kedify Envoy image tag.
 appVersion: "v1.40.2"
