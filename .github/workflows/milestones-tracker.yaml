@@ -64,7 +64,10 @@ jobs:
           previous=$(git show "${MERGE_SHA}^1:$chart" | yq -er '.version')
           version=$(git show "${MERGE_SHA}:$chart" | yq -er '.version')
           if [[ "$version" == "$previous" ]]; then exit 0; fi
+          base=$(gh pr view "$PR_NUMBER" -R kedify/charts --json baseRefName --jq .baseRefName)
+          if [[ "$base" != main ]]; then exit 0; fi
           [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf '%s\n' "$previous" "$version" | sort -VC
           milestone="kedify-proxy/$version"
           if git rev-parse --verify --quiet "refs/tags/$milestone" >/dev/null; then
             [[ "$(git rev-list -n 1 "refs/tags/$milestone")" == "$MERGE_SHA" ]]
