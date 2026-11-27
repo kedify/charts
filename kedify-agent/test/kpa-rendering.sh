@@ -18,8 +18,9 @@ if grep -q '^# Source: kedify-agent/charts/kpa/' "${dependency_render}"; then
   exit 1
 fi
 
+kube_version=$(bash "${chart_dir}/../scripts/kubernetes.sh" matrix pull_request | jq -er '.[0].kubectlVersion')
 for multicluster_type in distributed dedicated; do
-  helm template test "${chart_dir}" --namespace keda --kube-version 1.34.0 \
+  helm template test "${chart_dir}" --namespace keda --kube-version "${kube_version}" \
     --values "${chart_dir}/test/test-values.yaml" \
     --set global.features.multicluster.enabled=false \
     --set global.features.multicluster.type="${multicluster_type}" \
