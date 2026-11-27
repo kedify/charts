@@ -58,6 +58,9 @@ jobs:
       - name: Lint chart
         run: helm lint kedify-agent --values kedify-agent/test/test-values.yaml
 
+      - name: Test CPU throttling permissions
+        run: kedify-agent/test/cpu-throttling-rendering.sh
+
       - name: Test KPA rendering
         run: kedify-agent/test/kpa-rendering.sh
 

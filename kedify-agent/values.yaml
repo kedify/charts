@@ -157,6 +157,12 @@ agent:
   # comma-separated list of namespaces where pod utilization metrics should be collected
   # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
   metricsWatchNamespace: ""
+  insights:
+    cpuThrottling:
+      # -- Collect CPU throttling for monitored containers when Kubernetes resource telemetry is active.
+      # Uses existing Pod and Node reads and kubelet access (get on nodes/proxy).
+      # Enabling collection does not grant additional kubelet permissions.
+      enabled: true
   # if anything else than 'false', the log will not print the ascii logo
   noBanner: false
   # if anything else than 'false', the log will not contain colors
