@@ -334,7 +334,7 @@ keda:
     webhooks:
       enabled: true
 kpa:
-  # -- Install the optional Kedify Pod Autoscaler controller and CRD. Requires Kubernetes 1.33–1.35. This controls KPA installation independently from multicluster mode; dedicated mode configures remote reconciliation only when this dependency is enabled.
+  # -- Install the optional Kedify Pod Autoscaler controller and CRD. The cluster must satisfy the bundled KPA chart’s `kubeVersion` constraint. This controls KPA installation independently from multicluster mode; dedicated mode configures remote reconciliation only when this dependency is enabled.
   enabled: false
   # For all available values: helm show values oci://ghcr.io/kedify/charts/kpa
   fullnameOverride: kpa

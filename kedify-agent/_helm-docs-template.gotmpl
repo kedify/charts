@@ -17,8 +17,9 @@
 ## Optional KPA installation
 
 Set `kpa.enabled=true` to install the Kedify Pod Autoscaler controller and CRD
-with the Agent chart on Kubernetes 1.33–1.35. KPA installation is independent
-from multicluster mode.
+with the Agent chart. The bundled KPA chart declares its supported Kubernetes
+versions in its `kubeVersion` field. KPA installation is independent from
+multicluster mode.
 
 For dedicated multicluster reconciliation, enable KPA and the dedicated mode:
 
