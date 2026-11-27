@@ -48,7 +48,8 @@ rules:
     - get
     - list
     - watch
-{{- if not .Values.permissions.operator.restrict.secret }}
+{{- $globalMulticluster := (.Values.global.features.multicluster | default dict) }}
+{{- if and (not .Values.permissions.operator.restrict.secret) (not $globalMulticluster.vClusterSecretDiscoveryEnabled) }}
 - apiGroups:
   - ""
   resources:
@@ -78,12 +79,14 @@ rules:
   - patch
   - update
   - watch
+{{- if not (and $globalMulticluster.vClusterSecretDiscoveryEnabled (eq .kind "*") (or (eq .apiGroup "*") (eq .apiGroup ""))) }}
 - apiGroups:
   - {{ .apiGroup | quote }}
   resources:
   - {{ .kind | quote }}
   verbs:
   - get
+{{- end }}
   {{- end }}
 {{- end }}
 - apiGroups:

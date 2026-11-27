@@ -10,6 +10,13 @@
 {{- fail "dedicated multicluster scaling requires kpa.enabled=true" -}}
 {{- end -}}
 {{- $vClusterDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterDiscoveryEnabled")) "true" -}}
+{{- $vClusterSecretDiscoveryEnabled := eq (include "kedify-agent.multiclusterFeatureEnabled" (list . "vClusterSecretDiscoveryEnabled")) "true" -}}
+{{- if and $vClusterSecretDiscoveryEnabled (or $vClusterDiscoveryEnabled (not $dedicatedMulticlusterEnabled) .Values.agent.multicluster.localCluster.enabled) -}}
+{{- fail "namespaced vCluster Secret discovery requires dedicated multicluster scaling, native discovery disabled and localCluster.enabled=false" -}}
+{{- end -}}
+{{- if and $vClusterSecretDiscoveryEnabled (not .Values.global.features.multicluster.vClusterSecretDiscoveryEnabled) (or (not .Values.keda.permissions.operator.restrict.secret) .Values.keda.rbac.enabledCustomScaledRefKinds) -}}
+{{- fail "Agent-local vCluster Secret discovery requires keda.permissions.operator.restrict.secret=true and keda.rbac.enabledCustomScaledRefKinds=false; prefer the global discovery switch" -}}
+{{- end -}}
 {{- $scalingPoliciesEnabled := eq (include "kedify-agent.featureEnabled" (list . "scalingPoliciesEnabled")) "true" -}}
 {{- $distributedScaledJobsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledJobsEnabled")) "true") -}}
 {{- $distributedScaledObjectsEnabled := or $distributedMulticlusterEnabled (eq (include "kedify-agent.featureEnabled" (list . "distributedScaledObjectsEnabled")) "true") -}}
@@ -129,6 +136,10 @@ spec:
               value: {{ $distributedScaledJobsEnabled | quote }}
             {{- if $vClusterDiscoveryEnabled }}
             - name: MULTICLUSTER_VCLUSTER_DISCOVERY_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if $vClusterSecretDiscoveryEnabled }}
+            - name: MULTICLUSTER_VCLUSTER_SECRET_DISCOVERY_ENABLED
               value: "true"
             {{- end }}
             - name: DSO_ENABLED

@@ -1,0 +1,40 @@
+# Provisioned inside the virtual cluster. The exporter creates the ServiceAccount
+# and its binding through serviceAccount.name and serviceAccount.clusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kedify-runtime
+rules:
+  - apiGroups: [keda.sh]
+    resources: [scaledobjects, scaledobjects/status, scaledobjects/finalizers, scaledjobs, scaledjobs/status, scaledjobs/finalizers]
+    verbs: [get, list, watch, update, patch]
+  - apiGroups: [keda.sh]
+    resources: [triggerauthentications, clustertriggerauthentications]
+    verbs: [get, list, watch]
+  - apiGroups: [keda.sh]
+    resources: [triggerauthentications/status, clustertriggerauthentications/status]
+    verbs: [get, update, patch]
+  - apiGroups: [autoscaling.kedify.io]
+    resources: [kedifypodautoscalers, kedifypodautoscalers/status, kedifypodautoscalers/finalizers]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, replicasets]
+    verbs: [get, list, watch, update, patch]
+  - apiGroups: [apps]
+    resources: [deployments/scale, statefulsets/scale]
+    verbs: [get, list, watch, update, patch]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods, secrets, configmaps, namespaces, services]
+    verbs: [get, list, watch]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods, nodes]
+    verbs: [get, list]
+  - apiGroups: ["", events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch, create, patch]
