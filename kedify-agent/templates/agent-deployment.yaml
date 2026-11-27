@@ -153,10 +153,9 @@ spec:
             - name: METRICS_FOR_LABELED_NAMESPACES_ENABLED
               value: {{ $recommendationsForLabeledNamespaces | quote }}
             {{- end }}
-            {{- if .Values.agent.metricsCPUThrottlingEnabled }}
+            {{- /* Preserve an explicit opt-out from earlier chart previews. */}}
             - name: METRICS_CPU_THROTTLING_ENABLED
-              value: "true"
-            {{- end }}
+              value: {{ and .Values.agent.insights.cpuThrottling.enabled (dig "metricsCPUThrottlingEnabled" true .Values.agent) | quote }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
             - name: RBAC_READ_NODES
