@@ -532,14 +532,16 @@ rules:
   - pods/status
   verbs:
   - patch
-# kubelet stats/summary via apiserver node proxy
+{{- end }}
+{{- end }}
+{{- if or (and .Values.agent.rbac.readPods (or $podResourceProfilesEnabled $podResourceAutoscalersEnabled)) (and .Values.agent.metricsCPUThrottlingEnabled .Values.agent.rbac.readNodes (or .Values.agent.rbac.readPods .Values.agent.rbac.readMetrics)) }}
+# kubelet stats/summary and cAdvisor metrics via the API server
 - apiGroups:
   - ""
   resources:
   - nodes/proxy
   verbs:
   - get
-{{- end }}
 {{- end }}
 {{- if or .Values.agent.rbac.readMetrics (and $shardingEnabled (not $recommendationsForLabeledNamespaces)) }}
 # Shard enrollment watches namespace identity independently of telemetry.

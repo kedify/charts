@@ -157,6 +157,8 @@ agent:
   # comma-separated list of namespaces where pod utilization metrics should be collected
   # or if unset denotes all namespaces, the collecting itself needs to be also enabled by KubernetesMetricsScraping flag
   metricsWatchNamespace: ""
+  # -- Collect per-container CPU throttling from kubelet cAdvisor. Requires Pod and Node reads and grants get on nodes/proxy.
+  metricsCPUThrottlingEnabled: false
   # if anything else than 'false', the log will not print the ascii logo
   noBanner: false
   # if anything else than 'false', the log will not contain colors
