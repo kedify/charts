@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "CPU throttling render check failed at line $LINENO" >&2' ERR
 
 chart_dir="$(cd "$(dirname "$0")/.." && pwd)"
 render() {
@@ -14,5 +15,10 @@ restricted=$(render --set agent.metricsCPUThrottlingEnabled=true --set agent.rba
 profiles=$(render --set agent.features.podResourceProfilesEnabled=true)
 [[ "$disabled" != *METRICS_CPU_THROTTLING_ENABLED* && "$disabled" != *nodes/proxy* ]]
 [[ "$enabled" == *METRICS_CPU_THROTTLING_ENABLED* && "$enabled" == *nodes/proxy* && "$enabled" != *pods/resize* ]]
-[[ "$restricted" != *nodes/proxy* ]]
+# The Agent reports denied collection when Node access is disabled.
+[[ "$restricted" == *METRICS_CPU_THROTTLING_ENABLED* && "$restricted" != *nodes/proxy* ]]
 [[ "$profiles" == *nodes/proxy* && "$profiles" == *pods/resize* ]]
+autoscalers=$(render --set agent.features.podResourceAutoscalersEnabled=true)
+[[ "$autoscalers" == *nodes/proxy* && "$autoscalers" == *pods/resize* ]]
+restricted_profiles=$(render --set agent.features.podResourceProfilesEnabled=true --set agent.rbac.readPods=false)
+[[ "$restricted_profiles" != *nodes/proxy* && "$restricted_profiles" != *pods/resize* ]]
