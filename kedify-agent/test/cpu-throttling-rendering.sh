@@ -16,6 +16,11 @@ standard=$(render)
 [[ "$(collector_value <<< "$standard")" == '"true"' && "$standard" == *nodes/proxy* ]]
 disabled=$(render --set agent.insights.cpuThrottling.enabled=false)
 [[ "$(collector_value <<< "$disabled")" == '"false"' ]]
+# Helm --reuse-values can supply an older values tree with no Insights group.
+legacy_tree=$(render --set agent.insights=null)
+[[ "$(collector_value <<< "$legacy_tree")" == '"true"' ]]
+string_opt_out=$(render --set-string agent.insights.cpuThrottling.enabled=false)
+[[ "$(collector_value <<< "$string_opt_out")" == '"false"' ]]
 preview_opt_out=$(render --set agent.metricsCPUThrottlingEnabled=false)
 [[ "$(collector_value <<< "$preview_opt_out")" == '"false"' ]]
 

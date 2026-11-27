@@ -155,7 +155,9 @@ spec:
             {{- end }}
             {{- /* Preserve an explicit opt-out from earlier chart previews. */}}
             - name: METRICS_CPU_THROTTLING_ENABLED
-              value: {{ and .Values.agent.insights.cpuThrottling.enabled (dig "metricsCPUThrottlingEnabled" true .Values.agent) | quote }}
+              {{- $collector := dig "insights" "cpuThrottling" "enabled" true .Values.agent }}
+              {{- $previewCollector := dig "metricsCPUThrottlingEnabled" true .Values.agent }}
+              value: {{ and (eq (toString $collector) "true") (eq (toString $previewCollector) "true") | quote }}
             - name: METRICS_WATCH_NAMESPACE
               value: {{ .Values.agent.metricsWatchNamespace | quote }}
             - name: RBAC_READ_NODES
